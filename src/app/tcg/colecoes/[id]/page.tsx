@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SetCoverArt } from "@/components/tcg/set-cover";
 import { notFound } from "next/navigation";
 import { getSet } from "@/lib/tcg/api";
 import { setLogo } from "@/lib/tcg/prices";
@@ -18,7 +19,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SetPage({ params }: Props) {
   const set = await getSet((await params).id);
   if (!set) notFound();
-  const logo = setLogo(set.logo);
   const released = set.releaseDate
     ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "UTC" }).format(new Date(set.releaseDate))
     : null;
@@ -29,7 +29,9 @@ export default async function SetPage({ params }: Props) {
         <Link href="/tcg" className="hover:text-ink">TCG</Link> / <span>{set.serie.name}</span>
       </nav>
       <header className="flex flex-col gap-6 rounded-[2rem] border border-line bg-surface p-6 sm:flex-row sm:items-center sm:p-8">
-        {logo && <img src={logo} alt={set.name} className="max-h-28 w-auto max-w-[260px] object-contain" />}
+        <div className="grid w-full max-w-[260px] shrink-0 place-items-center">
+          <SetCoverArt set={set} size="lg" />
+        </div>
         <div className="space-y-2">
           <h1 className="font-display text-4xl font-extrabold leading-tight">{set.namePt ?? set.name}</h1>
           {set.namePt && set.namePt !== set.name && <p className="text-ink-soft">{set.name}</p>}

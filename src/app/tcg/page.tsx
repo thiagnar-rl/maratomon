@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getCard, getRates, getSeries } from "@/lib/tcg/api";
 import { featuredCardIds } from "@/lib/tcg/featured";
-import { cardImage, setLogo, tcgplayerVariants } from "@/lib/tcg/prices";
+import { cardImage, tcgplayerVariants } from "@/lib/tcg/prices";
 import { MarketDashboard, type MarketRow } from "@/components/tcg/market-dashboard";
 import { CardSearchForm } from "@/components/tcg/card-search-form";
 import { MonArt } from "@/components/mon-art";
 import { TcgNav } from "@/components/tcg/tcg-nav";
+import { SetCoverArt } from "@/components/tcg/set-cover";
 import { TermometroBR } from "@/components/tcg/termometro-br";
 
 export const metadata: Metadata = {
@@ -85,7 +86,6 @@ export default async function TcgPage() {
             </h3>
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {serie.sets.map((set) => {
-                const logo = setLogo(set.logo);
                 return (
                   <li key={set.id}>
                     <Link
@@ -93,11 +93,7 @@ export default async function TcgPage() {
                       className="flex h-full flex-col gap-2 rounded-2xl border border-line bg-surface p-3 transition hover:-translate-y-0.5 hover:border-ink-soft"
                     >
                       <div className="grid h-16 place-items-center">
-                        {logo ? (
-                          <img src={logo} alt="" loading="lazy" className="max-h-16 max-w-full object-contain" />
-                        ) : (
-                          <span className="font-display text-sm font-bold text-ink-soft">{set.id.toUpperCase()}</span>
-                        )}
+                        <SetCoverArt set={set} />
                       </div>
                       <span className="text-sm font-semibold leading-tight">{set.namePt ?? set.name}</span>
                       <span className="mt-auto text-xs text-ink-soft">
