@@ -36,8 +36,8 @@ export const SOURCES: Source[] = [
 const RULES: [NewsCategory, RegExp][] = [
   ["tcg", /\b(tcg|estampas ilustradas|trading card|card game|cartas?|booster|expans[aã]o|expansion|elite trainer|deck|baralho|pocket)\b/i],
   ["go", /pok[eé]mon go|\bgo fest|community day|dia comunit[aá]rio|reide|raid hour|go tour|go battle/i],
-  ["competitivo", /world championships|campeonato mundial|mundial|regional championships?|internacional|\bvgc\b|play! pok[eé]mon/i],
-  ["anime", /\banime\b|epis[oó]dio|episode|horizons|horizontes|\bfilme\b|\bmovie\b|pok[eé]toon|animated|animad[oa]|netflix/i],
+  ["competitivo", /championships?|campeonato|mundial|\b(laic|naic|euic|ocic)\b|internacional|\bvgc\b|play! pok[eé]mon/i],
+  ["anime", /\banime\b|epis[oó]dio|episode|horizons|horizontes|\bfilme\b|\bmovie\b|pok[eé]toon|animated|animad[oa]|netflix|the series|a s[eé]rie|official clip/i],
   ["games", /scarlet|violet|escarlate|legends|z-a|switch|nintendo|\bjogo\b|\bgame\b|unite|sleep|pok[eé]mon home|champions|pokopia|masters ex|caf[eé] remix|snap|mystery dungeon/i],
 ];
 
@@ -80,7 +80,8 @@ export function parseFeed(xml: string, source: Source): NewsItem[] {
   for (const entry of asArray(doc.feed?.entry)) {
     const videoId = text(entry["yt:videoId"]);
     const link = asArray(entry.link).find((l: Record<string, string>) => l["@rel"] === "alternate")?.["@href"] ?? asArray(entry.link)[0]?.["@href"];
-    if (!link || /\/shorts\//.test(link)) continue; // Shorts não entram no feed
+    // Shorts só do canal brasileiro (é onde sai a maior parte das novidades em português).
+    if (!link || (/\/shorts\//.test(link) && source.lang !== "pt")) continue;
     const title = decode(text(entry.title));
     items.push({
       id: videoId || link,
