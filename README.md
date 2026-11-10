@@ -2,6 +2,8 @@
 
 Guia de fãs para assistir **todos os episódios dublados** do anime, na ordem certa: checklist por temporada, progresso salvo (no aparelho ou na conta), próximo episódio e onde assistir em **fontes oficiais**.
 
+🌐 **No ar:** https://maratomon.vercel.app
+
 > Projeto de fãs, independente e não oficial. Sem ligação com Nintendo, Game Freak, Creatures ou The Pokémon Company. O site não hospeda vídeos.
 
 ## Tecnologias
