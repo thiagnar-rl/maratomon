@@ -9,7 +9,7 @@ import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
-  title: { default: `${siteConfig.name} — maratone o anime inteiro, dublado`, template: `%s · ${siteConfig.name}` },
+  title: { default: `${siteConfig.name} — anime, cartas e coleção`, template: `%s · ${siteConfig.name}` },
   description: siteConfig.description,
   openGraph: { siteName: siteConfig.name, locale: "pt_BR", type: "website" },
 };

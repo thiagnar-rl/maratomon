@@ -10,7 +10,7 @@ export function Header() {
       <div className="h-1.5 bg-gradient-to-r from-accent via-accent-2 to-accent-3" aria-hidden="true" />
       <div className="border-b border-line/70 bg-bg/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
-          <Link href="/" aria-label="Maratomon, página inicial">
+          <Link href="/" aria-label="Maratomon TCG, página inicial">
             <Logo />
           </Link>
           <nav aria-label="Principal" className="ml-auto hidden items-center gap-1 lg:flex">

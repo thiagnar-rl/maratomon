@@ -1,4 +1,4 @@
-# Checklist legal do Maratomon
+# Checklist legal do Maratomon TCG
 
 > Isto não é aconselhamento jurídico. Antes de ganhar dinheiro com o site, converse com um(a) advogado(a) de propriedade intelectual.
 
@@ -17,6 +17,14 @@ O site usa **imagens oficiais de Pokémon e de cartas** (via PokeAPI e TCGdex) p
 - **Preços** vêm da TCGdex, que repassa os preços públicos do TCGplayer e do Cardmarket. Nada de raspagem de lojas.
 - **Aviso de não afiliação** no rodapé de todas as páginas.
 - **LGPD:** progresso sem conta fica só no navegador; com conta, guardamos e-mail, progresso e coleção. Fotos e vídeos ficam em armazenamento **privado** (só o dono acessa, por links temporários). Política de privacidade publicada.
+
+## Marca "Maratomon TCG" e a loja física
+
+- O nome **não usa** a marca "Pokémon", o que ajuda, mas **não protege sozinho**: o risco jurídico vem das imagens e do uso da marca Pokémon no conteúdo, não do nome do site.
+- **Registre a marca no INPI** antes de abrir a loja: faça a busca de anterioridade em busca.inpi.gov.br e registre "Maratomon TCG" nas classes **28** (jogos e cartas), **35** (comércio varejista) e **41** (eventos e torneios).
+- **Revender produtos oficiais é legal.** No Brasil, o Pokémon TCG é distribuído pela **Copag**: compre de distribuidores autorizados e guarde as notas.
+- **Na fachada, nas redes e nos anúncios da loja**, não use logos, personagens ou o nome Pokémon como se fossem seus. Para mostrar os produtos, use fotos dos produtos que você vende.
+- **Torneios oficiais:** lojas podem se cadastrar no programa **Play! Pokémon** para sediar eventos oficiais. É um caminho legítimo para atrair público e usar o material de divulgação autorizado.
 
 ## Antes de monetizar
 

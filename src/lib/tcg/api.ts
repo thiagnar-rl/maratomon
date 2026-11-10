@@ -68,7 +68,7 @@ export async function searchCards(query: string, limit = 60): Promise<CardBrief[
   return results ?? [];
 }
 
-/** Cotação do dólar e do euro em reais (AwesomeAPI). Usa um valor aproximado se a API falhar. */
+/** Cotação do dólar e do euro em reais: AwesomeAPI, depois Frankfurter (BCE), depois um valor aproximado. */
 export async function getRates(): Promise<Rates> {
   try {
     const response = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL", {
@@ -76,8 +76,20 @@ export async function getRates(): Promise<Rates> {
     });
     if (!response.ok) throw new Error(String(response.status));
     const data = (await response.json()) as Record<string, { bid: string; create_date: string }>;
-    return { USD: Number(data.USDBRL.bid), EUR: Number(data.EURBRL.bid), updated: data.USDBRL.create_date, fallback: false };
+    const usd = Number(data.USDBRL?.bid);
+    const eur = Number(data.EURBRL?.bid);
+    if (usd > 0 && eur > 0) return { USD: usd, EUR: eur, updated: data.USDBRL.create_date, fallback: false };
+    throw new Error("cotação inválida");
   } catch {
-    return { USD: 5.6, EUR: 6.2, updated: "", fallback: true };
+    try {
+      const response = await fetch("https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL,EUR", {
+        next: { revalidate: REVALIDATE.rates },
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      const data = (await response.json()) as { date: string; rates: { BRL: number; EUR: number } };
+      return { USD: data.rates.BRL, EUR: data.rates.BRL / data.rates.EUR, updated: data.date, fallback: false };
+    } catch {
+      return { USD: 5.6, EUR: 6.2, updated: "", fallback: true };
+    }
   }
 }

@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Termos de uso" };
 export default function TermsPage() {
   return (
     <ProsePage title="Termos de uso" updated="10/11/2026">
-      <p>Ao usar o Maratomon você concorda com estes termos.</p>
+      <p>Ao usar o Maratomon TCG você concorda com estes termos.</p>
 
       <h2>1. O que é o serviço</h2>
       <p>

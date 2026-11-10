@@ -1,4 +1,4 @@
-# Maratomon
+# Maratomon TCG
 
 Plataforma de fãs de Pokémon:
 
