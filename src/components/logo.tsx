@@ -1,22 +1,10 @@
-/** Marca do Maratomon TCG: anel de progresso (vermelho/amarelo) com um "play". */
+import { Mascot } from "./mascot";
+
+/** Marca do Maratomon TCG: o mascote fantasminha + nome. */
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 font-display text-xl font-extrabold tracking-tight ${className}`}>
-      <svg viewBox="0 0 32 32" className="size-8" aria-hidden="true">
-        <circle cx="16" cy="16" r="13" fill="none" stroke="var(--accent-2)" strokeWidth="4" />
-        <circle
-          cx="16"
-          cy="16"
-          r="13"
-          fill="none"
-          stroke="var(--accent)"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray="60 82"
-          transform="rotate(-90 16 16)"
-        />
-        <path d="M13 11.5v9l7.5-4.5z" fill="var(--ink)" />
-      </svg>
+      <Mascot className="size-10 -my-1 drop-shadow-[0_4px_10px_rgba(139,92,246,0.45)]" />
       <span className="flex items-baseline gap-1.5">
         <span>
           Marato<span className="text-accent">mon</span>

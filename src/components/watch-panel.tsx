@@ -23,7 +23,10 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
   return (
     <div className="space-y-4">
       {episode.youtubeId ? (
-        <div id="assistir" className="relative aspect-video scroll-mt-24 overflow-hidden rounded-3xl border border-line bg-black shadow-[var(--glow)]">
+        <div
+          id="assistir"
+          className="relative aspect-video scroll-mt-24 overflow-hidden rounded-3xl border border-line bg-black shadow-[var(--glow)]"
+        >
           {playing ? (
             <iframe
               className="absolute inset-0 size-full"
@@ -63,35 +66,38 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
         </div>
       )}
 
-      {episode.youtubeAudio === "multi" && episode.youtubeId && <AudioTip videoId={episode.youtubeId} />}
+      {episode.youtubeAudio === "multi" && <AudioTip />}
 
       <ul className="grid gap-2 sm:grid-cols-2">
-        {providers.map((provider) => (
-          <li key={provider.url + provider.label}>
-            <a
-              href={provider.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-full items-center gap-3 rounded-2xl border border-line bg-surface p-4 transition hover:border-ink-soft"
-            >
-              <span
-                className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase ${
-                  provider.free ? "bg-good/15 text-good" : "bg-surface-2 text-ink-soft"
-                }`}
+        {providers
+          // Se o episódio já toca aqui, não mandamos a pessoa para fora do site.
+          .filter((provider) => !(episode.youtubeId && provider.type === "youtube"))
+          .map((provider) => (
+            <li key={provider.url + provider.label}>
+              <a
+                href={provider.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-full items-center gap-3 rounded-2xl border border-line bg-surface p-4 transition hover:border-ink-soft"
               >
-                {provider.free ? "Grátis" : "Assinatura"}
-              </span>
-              <span className="text-sm font-semibold">{provider.label}</span>
-            </a>
-          </li>
-        ))}
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase ${
+                    provider.free ? "bg-good/15 text-good" : "bg-surface-2 text-ink-soft"
+                  }`}
+                >
+                  {provider.free ? "Grátis" : "Assinatura"}
+                </span>
+                <span className="text-sm font-semibold">{provider.label}</span>
+              </a>
+            </li>
+          ))}
       </ul>
     </div>
   );
 }
 
 /** Os vídeos do canal Pokémon TV têm várias dublagens e o player embutido sempre abre no áudio original (inglês). */
-function AudioTip({ videoId }: { videoId: string }) {
+function AudioTip() {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-accent-2/60 bg-accent-2/10 p-4 sm:flex-row sm:items-center">
       <div className="flex-1 space-y-1">
@@ -107,14 +113,6 @@ function AudioTip({ videoId }: { videoId: string }) {
           O vídeo oficial tem várias dublagens e o YouTube não deixa sites escolherem o idioma automaticamente.
         </p>
       </div>
-      <a
-        href={`https://www.youtube.com/watch?v=${videoId}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="shrink-0 rounded-full border border-line bg-surface px-4 py-2 text-center text-sm font-bold hover:border-ink-soft"
-      >
-        Abrir no YouTube ↗
-      </a>
     </div>
   );
 }

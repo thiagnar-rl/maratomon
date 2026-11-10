@@ -6,8 +6,8 @@ import { HeaderProgress } from "./header-progress";
 export function Header() {
   return (
     <header className="sticky top-0 z-40">
-      {/* Faixa vermelha estilo Pokédex */}
-      <div className="h-1.5 bg-gradient-to-r from-accent via-accent-2 to-accent-3" aria-hidden="true" />
+      {/* Faixa da marca: roxo do mascote, rosa e amarelo das cartas */}
+      <div className="h-1.5 bg-gradient-to-r from-accent via-[#ff5c8a] to-accent-2" aria-hidden="true" />
       <div className="border-b border-line/70 bg-bg/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
           <Link href="/" aria-label="Maratomon TCG, página inicial">

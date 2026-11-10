@@ -3,8 +3,16 @@ import { catalog, eraColor, getEras } from "@/lib/catalog";
 import { eraMons, type Mon } from "@/lib/pokemon";
 import { movies } from "@/data/movies";
 import { games } from "@/data/games";
+import { getNews } from "@/lib/news";
 import { ContinueCard } from "@/components/continue-card";
 import { MonArt } from "@/components/mon-art";
+import { Mascot } from "@/components/mascot";
+import { Ticker } from "@/components/news/ticker";
+import { FeaturedNews, NewsCard, NewsRow } from "@/components/news/news-card";
+import { NewsGrid } from "@/components/news/news-grid";
+
+/** A página inicial é um portal de notícias: refaz a busca nas fontes oficiais a cada hora. */
+export const revalidate = 3600;
 
 const hubs: { href: string; title: string; text: string; stat: string; mon: Mon; color: string }[] = [
   {
@@ -49,50 +57,110 @@ const hubs: { href: string; title: string; text: string; stat: string; mon: Mon;
   },
 ];
 
-export default function HomePage() {
+const hoje = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long", day: "numeric", month: "long" });
+
+export default async function HomePage() {
   const eras = getEras();
+  const { items } = await getNews(48);
+  const [featured, ...rest] = items;
+  const side = rest.slice(0, 5);
+  const videos = items.filter((i) => i.kind === "video").slice(0, 10);
 
   return (
     <>
+      <Ticker items={items} />
+
       <section className="relative isolate overflow-hidden">
-        <div aria-hidden="true" className="stage-lights animate-drift absolute -inset-20 -z-10" />
+        <div aria-hidden="true" className="stage-lights animate-drift absolute -inset-20 -z-10 opacity-70" />
         <div aria-hidden="true" className="grain absolute inset-0 -z-10 opacity-40" />
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-14 pt-12 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:pt-16">
-          <div className="relative space-y-6">
-            <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-3 py-1 text-xs font-bold uppercase tracking-widest text-ink-soft backdrop-blur">
-              <span className="size-2 rounded-full bg-accent" /> Para treinadores de todas as gerações
+        <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 pt-8 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Mascot className="size-16 animate-float" />
+              <div>
+                <p className="text-sm font-bold capitalize text-ink-soft">{hoje.format(new Date())}</p>
+                <h1 className="font-display text-4xl font-extrabold leading-none tracking-tight sm:text-5xl">
+                  Hoje no mundo <span className="bg-gradient-to-r from-accent via-[#ff5c8a] to-accent-2 bg-clip-text text-transparent">Pokémon</span>
+                </h1>
+              </div>
+            </div>
+            <p className="max-w-sm text-sm text-ink-soft">
+              TCG, games, Pokémon GO, anime e competitivo. Direto das fontes oficiais, atualizado o dia todo.
             </p>
-            <h1 className="font-display text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
-              Sua jornada Pokémon <span className="text-accent">completa</span>.
-            </h1>
-            <p className="max-w-lg text-lg leading-relaxed text-ink-soft">
-              Maratone os {catalog.totalEpisodes.toLocaleString("pt-BR")} episódios dublados, os filmes e os clássicos do
-              Game Boy. E cuide da sua coleção de cartas com preços atualizados.
+          </div>
+
+          {featured ? (
+            <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
+              <FeaturedNews item={featured} />
+              <aside aria-labelledby="ultimas" className="flex flex-col rounded-[2rem] border border-line bg-surface/80 p-4 backdrop-blur">
+                <div className="flex items-center justify-between px-2 pb-2">
+                  <h2 id="ultimas" className="font-display text-xl font-extrabold">Últimas</h2>
+                  <Link href="/noticias" className="text-sm font-bold text-accent">Ver tudo →</Link>
+                </div>
+                <ol className="flex-1 space-y-1">
+                  {side.map((item, i) => (
+                    <li key={item.id}>
+                      <NewsRow item={item} index={i} />
+                    </li>
+                  ))}
+                </ol>
+              </aside>
+            </div>
+          ) : (
+            <p className="rounded-[2rem] border border-dashed border-line p-10 text-center text-ink-soft">
+              As notícias estão sendo carregadas. Volte em alguns minutos.
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/temporadas" className="rounded-full bg-accent px-6 py-3 font-bold text-accent-ink shadow-lg transition hover:brightness-110">
-                Começar a maratona
-              </Link>
-              <Link href="/tcg" className="rounded-full border border-line bg-surface/70 px-6 py-3 font-bold backdrop-blur transition hover:border-ink-soft">
-                Ver cartas e preços
-              </Link>
-            </div>
-          </div>
-          <div className="relative">
-            <div aria-hidden="true" className="pointer-events-none absolute -top-24 right-0 hidden lg:block">
-              <MonArt mon={{ id: 6, name: "Charizard" }} size={220} eager className="animate-float opacity-95" />
-            </div>
-            <div aria-hidden="true" className="pointer-events-none absolute -left-10 -top-16 hidden lg:block">
-              <MonArt mon={{ id: 25, name: "Pikachu" }} size={150} eager className="animate-float [animation-delay:-2s]" />
-            </div>
-            <div className="relative pt-0 lg:pt-28">
-              <ContinueCard />
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
       <div className="mx-auto max-w-6xl space-y-16 px-4 sm:px-6">
+        <section aria-labelledby="jornada" className="grid items-center gap-6 rounded-[2rem] border border-line bg-gradient-to-br from-accent/20 via-surface to-surface p-6 lg:grid-cols-[1fr_1.2fr]">
+          <div className="space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-accent">Sua maratona</p>
+            <h2 id="jornada" className="font-display text-3xl font-extrabold leading-tight">
+              {catalog.totalEpisodes.toLocaleString("pt-BR")} episódios dublados esperando por você
+            </h2>
+            <p className="text-ink-soft">Marque o que já assistiu, continue de onde parou e acompanhe sua coleção de cartas.</p>
+            <div className="flex flex-wrap gap-3 pt-1">
+              <Link href="/temporadas" className="rounded-full bg-accent px-5 py-2.5 font-bold text-white shadow-lg transition hover:brightness-110">
+                Começar a maratona
+              </Link>
+              <Link href="/tcg" className="rounded-full border border-line bg-surface px-5 py-2.5 font-bold transition hover:border-ink-soft">
+                Cartas e preços
+              </Link>
+            </div>
+          </div>
+          <ContinueCard />
+        </section>
+
+        <section aria-labelledby="noticias" className="space-y-5">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-accent">Notícias oficiais</p>
+              <h2 id="noticias" className="font-display text-3xl font-extrabold">Tudo o que rolou</h2>
+            </div>
+            <Link href="/noticias" className="shrink-0 text-sm font-bold text-accent">Todas as notícias →</Link>
+          </div>
+          <NewsGrid items={rest.slice(5)} limit={12} />
+        </section>
+
+        {videos.length > 0 && (
+          <section aria-labelledby="videos" className="space-y-5">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-accent">Canais oficiais</p>
+              <h2 id="videos" className="font-display text-3xl font-extrabold">Vídeos novos</h2>
+            </div>
+            <ul className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-3 sm:-mx-6 sm:px-6">
+              {videos.map((item) => (
+                <li key={item.id} className="w-72 shrink-0 snap-start">
+                  <NewsCard item={item} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section aria-labelledby="hub" className="space-y-5">
           <h2 id="hub" className="font-display text-3xl font-extrabold">Escolha sua aventura</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">

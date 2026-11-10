@@ -1,9 +1,8 @@
 @import "tailwindcss";
 
 /*
- * Identidade visual do Maratomon: clima de Pokédex.
- * Vermelho Pokédex, amarelo elétrico e azul, fundo noturno, artes dos Pokémon
- * como protagonistas e anéis de progresso.
+ * Identidade visual do Maratomon TCG: roxo fantasma (cor do mascote),
+ * amarelo elétrico das cartas, fundo noturno e artes dos Pokémon como protagonistas.
  */
 :root {
   --bg: #f6f5fb;
@@ -13,7 +12,7 @@
   --ink: #15131f;
   --ink-soft: #5c5871;
   --line: #e2e0ec;
-  --accent: #e3350d;
+  --accent: #7c3aed;
   --accent-ink: #ffffff;
   --accent-2: #ffcb05;
   --accent-3: #3d7dca;
@@ -29,20 +28,20 @@
   --era-6: #10b39a; /* Jornadas */
   --era-7: #c03dff; /* Horizontes */
 
-  --glow: 0 18px 50px -18px rgb(227 53 13 / 0.45);
+  --glow: 0 18px 50px -18px rgb(124 58 237 / 0.5);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0b0a12;
+    --bg: #0c0916;
     --bg-elevated: #12101c;
     --surface: #171525;
     --surface-2: #211e33;
     --ink: #f4f2ff;
     --ink-soft: #a7a2c2;
     --line: #2a2740;
-    --accent: #ff4b2b;
+    --accent: #8b5cf6;
     --accent-2: #ffd43b;
     --accent-3: #5b9bff;
     --good: #35d07f;
@@ -136,7 +135,19 @@ h3 {
   animation: pop 0.28s ease-out;
 }
 
+/* Faixa de manchetes rolando (pausa ao passar o mouse) */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-ticker {
+  animation: ticker 60s linear infinite;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .animate-drift, .animate-pop, .animate-float { animation: none; }
+  .animate-drift, .animate-pop, .animate-float, .animate-ticker { animation: none; }
 }
