@@ -59,6 +59,8 @@ const hubs: { href: string; title: string; text: string; stat: string; mon: Mon;
 
 const hoje = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long", day: "numeric", month: "long" });
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 export default async function HomePage() {
   const eras = getEras();
   const { items } = await getNews(48);
@@ -78,7 +80,7 @@ export default async function HomePage() {
             <div className="flex items-center gap-3">
               <Mascot className="size-16 animate-float" />
               <div>
-                <p className="text-sm font-bold capitalize text-ink-soft">{hoje.format(new Date())}</p>
+                <p className="text-sm font-bold text-ink-soft">{capitalize(hoje.format(new Date()))}</p>
                 <h1 className="font-display text-4xl font-extrabold leading-none tracking-tight sm:text-5xl">
                   Hoje no mundo <span className="bg-gradient-to-r from-accent via-[#ff5c8a] to-accent-2 bg-clip-text text-transparent">Pokémon</span>
                 </h1>
