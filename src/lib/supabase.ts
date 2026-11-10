@@ -1,10 +1,10 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 /** true quando as variáveis do Supabase estão configuradas (.env.local / Vercel). */
-export const isSupabaseConfigured = Boolean(url && anonKey);
+export const isSupabaseConfigured = Boolean(url && publishableKey);
 
 let client: SupabaseClient | null = null;
 
@@ -14,7 +14,7 @@ let client: SupabaseClient | null = null;
  */
 export function getSupabase(): SupabaseClient | null {
   if (!isSupabaseConfigured || typeof window === "undefined") return null;
-  client ??= createClient(url!, anonKey!, {
+  client ??= createClient(url!, publishableKey!, {
     auth: { flowType: "pkce", persistSession: true, detectSessionInUrl: true },
   });
   return client;

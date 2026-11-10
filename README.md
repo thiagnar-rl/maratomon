@@ -52,7 +52,7 @@ src/lib/              catálogo, Supabase e store de progresso
 1. Crie um projeto grátis em https://supabase.com.
 2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/schema.sql`.
 3. Em **Authentication › URL Configuration**, coloque o endereço do site em *Site URL* e adicione `http://localhost:3000/**` e `https://SEU-DOMINIO/**` em *Redirect URLs*.
-4. Em **Project Settings › API**, copie *Project URL* e *anon public key* para `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` no `.env.local`.
+4. Copie a *Project URL* (Project Settings › General) e a *Publishable key* (Project Settings › API Keys) para `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` no `.env.local`.
 
 ## Vídeos oficiais gratuitos
 
