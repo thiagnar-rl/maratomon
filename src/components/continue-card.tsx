@@ -35,7 +35,7 @@ export function ContinueCard() {
             <p className="text-sm text-ink-soft">{season.title}</p>
             <div className="flex flex-wrap justify-center gap-2 pt-1 sm:justify-start">
               <Link
-                href={`/episodios/${next.slug}`}
+                href={`/episodios/${next.slug}${next.youtubeId ? "#assistir" : ""}`}
                 className="rounded-full bg-accent px-5 py-3 text-sm font-bold text-accent-ink shadow-lg transition hover:brightness-110"
               >
                 {next.youtubeId ? "Assistir agora" : "Ver episódio"}

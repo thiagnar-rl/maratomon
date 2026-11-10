@@ -6,7 +6,7 @@
     "handle": "@OfficialPokémonTV"
   },
   "seasons": {
-    "1-10": [
+    "1-11": [
       { "type": "youtube", "label": "Grátis no canal oficial Pokémon TV", "free": true, "url": "https://www.youtube.com/@OfficialPok%C3%A9monTV/playlists" }
     ],
     "1-28": [

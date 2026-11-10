@@ -94,9 +94,13 @@ export function EpisodeChecklist({ season, color }: { season: Season; color: str
                 </span>
               )}
               {episode.youtubeId && (
-                <span className="hidden rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-bold text-ink-soft sm:inline">
-                  Grátis
-                </span>
+                <Link
+                  href={`/episodios/${episode.slug}#assistir`}
+                  className="shrink-0 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-ink transition hover:scale-105"
+                  aria-label={`Assistir "${episode.title}" agora`}
+                >
+                  ▶ Assistir
+                </Link>
               )}
             </li>
           );

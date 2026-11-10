@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import type { Episode, Provider } from "@/lib/catalog";
 
 /**
@@ -11,12 +11,19 @@ import type { Episode, Provider } from "@/lib/catalog";
  * - Sempre lista as fontes oficiais da temporada.
  */
 export function WatchPanel({ episode, providers }: { episode: Episode; providers: Provider[] }) {
-  const [playing, setPlaying] = useState(false);
+  const [clicked, setPlaying] = useState(false);
+  // Vindo da lista com "Assistir" (#assistir), o player já abre carregado.
+  const fromList = useSyncExternalStore(
+    () => () => {},
+    () => window.location.hash === "#assistir",
+    () => false,
+  );
+  const playing = clicked || fromList;
 
   return (
     <div className="space-y-4">
       {episode.youtubeId ? (
-        <div className="relative aspect-video overflow-hidden rounded-3xl border border-line bg-black shadow-[var(--glow)]">
+        <div id="assistir" className="relative aspect-video scroll-mt-24 overflow-hidden rounded-3xl border border-line bg-black shadow-[var(--glow)]">
           {playing ? (
             <iframe
               className="absolute inset-0 size-full"
