@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { eraColor, getSeason, getSeasons, pad2 } from "@/lib/catalog";
 import { EpisodeChecklist } from "@/components/episode-checklist";
 import { SeasonProgress } from "@/components/season-progress";
+import { MonArt } from "@/components/mon-art";
+import { seasonMons } from "@/lib/pokemon";
 
 type Props = { params: Promise<{ numero: string }> };
 
@@ -27,6 +29,7 @@ export default async function SeasonPage({ params }: Props) {
   const color = eraColor(season.eraIndex);
   const prev = getSeason(season.number - 1);
   const next = getSeason(season.number + 1);
+  const mons = seasonMons[season.number] ?? [];
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-10 sm:px-6">
@@ -49,7 +52,14 @@ export default async function SeasonPage({ params }: Props) {
             <h1 className="font-display text-4xl font-extrabold leading-tight sm:text-5xl">{season.title}</h1>
             <p className="opacity-85">{season.titleEn} · {season.episodes.length} episódios dublados</p>
           </div>
-          <SeasonProgress episodes={season.episodes} />
+          <div className="flex items-end gap-2">
+            <div aria-hidden="true" className="hidden items-end sm:flex">
+              {mons.map((mon, i) => (
+                <MonArt key={mon.id + "-" + i} mon={mon} size={i === 0 ? 150 : 110} eager className={i === 0 ? "animate-float" : "-ml-10"} />
+              ))}
+            </div>
+            <SeasonProgress episodes={season.episodes} />
+          </div>
         </div>
       </header>
 

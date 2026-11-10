@@ -13,7 +13,8 @@ export default function PrivacyPage() {
       <h2>Dados que tratamos</h2>
       <ul>
         <li><strong>Sem conta:</strong> seu progresso fica só no seu navegador (armazenamento local). Não recebemos esses dados.</li>
-        <li><strong>Com conta:</strong> seu e-mail e a lista de episódios que você marcou como assistidos, com data.</li>
+        <li><strong>Com conta:</strong> seu e-mail, o que você marcou como assistido ou jogado e sua coleção (decks, pastas, cartas, preço pago).</li>
+        <li><strong>Fotos e vídeos:</strong> os arquivos que você envia para a sua coleção ficam em armazenamento privado. Só você acessa, por links temporários. Você pode apagá-los quando quiser.</li>
         <li><strong>Vídeos:</strong> o player do YouTube só é carregado quando você clica para assistir. A partir daí, o Google pode tratar dados conforme a política dele.</li>
       </ul>
 

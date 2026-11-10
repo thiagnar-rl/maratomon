@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { catalog, eraColor, getEras } from "@/lib/catalog";
-import { useProgress } from "@/lib/progress/hooks";
+import { useEpisodesWatched, useProgress } from "@/lib/progress/hooks";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { ProgressRing } from "./progress-ring";
 
@@ -18,15 +18,16 @@ const statusText = {
 
 export function JourneyStats() {
   const { watched, status, email } = useProgress();
+  const episodesSeen = useEpisodesWatched();
   const seasonsDone = catalog.seasons.filter((s) => s.episodes.every((e) => watched.has(e.key))).length;
-  const hours = Math.round((watched.size * MINUTES_PER_EPISODE) / 60);
-  const hoursLeft = Math.round(((catalog.totalEpisodes - watched.size) * MINUTES_PER_EPISODE) / 60);
+  const hours = Math.round((episodesSeen * MINUTES_PER_EPISODE) / 60);
+  const hoursLeft = Math.round(((catalog.totalEpisodes - episodesSeen) * MINUTES_PER_EPISODE) / 60);
 
   return (
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Episódios assistidos", value: watched.size.toLocaleString("pt-BR") },
+          { label: "Episódios assistidos", value: episodesSeen.toLocaleString("pt-BR") },
           { label: "Temporadas completas", value: `${seasonsDone}/${catalog.seasons.length}` },
           { label: "Horas de maratona", value: `${hours}h` },
           { label: "Faltam aproximadamente", value: `${hoursLeft}h` },

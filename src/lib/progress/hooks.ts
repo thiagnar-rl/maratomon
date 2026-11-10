@@ -16,6 +16,14 @@ export function useWatchedCount(episodes: Episode[]) {
   return useMemo(() => episodes.reduce((n, e) => n + (watched.has(e.key) ? 1 : 0), 0), [episodes, watched]);
 }
 
+const EPISODE_KEY = /^\d+-\d+$/;
+
+/** Quantos episódios do anime já foram assistidos (sem contar filmes e jogos). */
+export function useEpisodesWatched() {
+  const { watched } = useProgress();
+  return useMemo(() => [...watched].filter((key) => EPISODE_KEY.test(key)).length, [watched]);
+}
+
 /** Primeiro episódio ainda não assistido, na ordem de lançamento. */
 export function useNextEpisode(): Episode | undefined {
   const { watched } = useProgress();

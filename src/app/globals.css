@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 /*
- * Identidade visual do Maratomon (original, sem arte oficial).
- * Ideia: fundo noturno profundo, "luzes de estádio" coloridas por série
- * e anéis de progresso como elemento principal.
+ * Identidade visual do Maratomon: clima de Pokédex.
+ * Vermelho Pokédex, amarelo elétrico e azul, fundo noturno, artes dos Pokémon
+ * como protagonistas e anéis de progresso.
  */
 :root {
   --bg: #f6f5fb;
@@ -13,13 +13,14 @@
   --ink: #15131f;
   --ink-soft: #5c5871;
   --line: #e2e0ec;
-  --accent: #ff3d57;
+  --accent: #e3350d;
   --accent-ink: #ffffff;
-  --accent-2: #ffc928;
+  --accent-2: #ffcb05;
+  --accent-3: #3d7dca;
   --good: #14a85a;
 
   /* Uma cor por série do anime */
-  --era-0: #ff3d57; /* Série Original */
+  --era-0: #e3350d; /* Série Original */
   --era-1: #ff7a1f; /* Rubi e Safira */
   --era-2: #5b6cff; /* Diamante e Pérola */
   --era-3: #3d3a4f; /* Preto e Branco */
@@ -28,7 +29,7 @@
   --era-6: #10b39a; /* Jornadas */
   --era-7: #c03dff; /* Horizontes */
 
-  --glow: 0 18px 50px -18px rgb(255 61 87 / 0.45);
+  --glow: 0 18px 50px -18px rgb(227 53 13 / 0.45);
   color-scheme: light;
 }
 
@@ -41,8 +42,9 @@
     --ink: #f4f2ff;
     --ink-soft: #a7a2c2;
     --line: #2a2740;
-    --accent: #ff4d66;
-    --accent-2: #ffd23f;
+    --accent: #ff4b2b;
+    --accent-2: #ffd43b;
+    --accent-3: #5b9bff;
     --good: #35d07f;
     --era-3: #b9b4d6;
     color-scheme: dark;
@@ -60,6 +62,7 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
   --color-good: var(--good);
   --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
@@ -91,9 +94,9 @@ h3 {
 /* Luzes coloridas atrás do herói da página inicial */
 .stage-lights {
   background:
-    radial-gradient(40% 60% at 15% 20%, color-mix(in oklab, var(--era-0) 55%, transparent), transparent 70%),
-    radial-gradient(35% 55% at 85% 10%, color-mix(in oklab, var(--era-5) 45%, transparent), transparent 70%),
-    radial-gradient(45% 60% at 70% 90%, color-mix(in oklab, var(--era-6) 40%, transparent), transparent 70%);
+    radial-gradient(40% 60% at 15% 20%, color-mix(in oklab, var(--accent) 55%, transparent), transparent 70%),
+    radial-gradient(35% 55% at 85% 10%, color-mix(in oklab, var(--accent-2) 45%, transparent), transparent 70%),
+    radial-gradient(45% 60% at 70% 90%, color-mix(in oklab, var(--accent-3) 45%, transparent), transparent 70%);
   filter: blur(10px);
 }
 
@@ -111,6 +114,19 @@ h3 {
   animation: drift 14s ease-in-out infinite alternate;
 }
 
+@keyframes float {
+  from { transform: translateY(0) rotate(-2deg); }
+  to { transform: translateY(-10px) rotate(2deg); }
+}
+.animate-float {
+  animation: float 4.5s ease-in-out infinite alternate;
+}
+
+/* Arte de Pokémon com sombra suave */
+.mon-art {
+  filter: drop-shadow(0 14px 22px rgb(0 0 0 / 0.35));
+}
+
 @keyframes pop {
   0% { transform: scale(0.6); }
   60% { transform: scale(1.15); }
@@ -122,5 +138,5 @@ h3 {
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .animate-drift, .animate-pop { animation: none; }
+  .animate-drift, .animate-pop, .animate-float { animation: none; }
 }

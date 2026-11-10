@@ -1,6 +1,12 @@
 # Maratomon
 
-Guia de fãs para assistir **todos os episódios dublados** do anime, na ordem certa: checklist por temporada, progresso salvo (no aparelho ou na conta), próximo episódio e onde assistir em **fontes oficiais**.
+Plataforma de fãs de Pokémon:
+
+- **Anime:** checklist dos 1.361 episódios dublados, temporada por temporada, com os Pokémon marcantes de cada uma.
+- **Filmes:** todos os longas em ordem, com onde assistir no Brasil.
+- **Jogos clássicos:** Game Boy, Color e Advance, onde jogar oficialmente e emuladores legais.
+- **TCG:** todas as coleções desde 1999 (TCGdex), preços do TCGplayer e do Cardmarket em reais, painel do mercado, comparador e gráficos.
+- **Minha coleção:** decks e pastas com cartas, fotos e vídeos, e o valor atualizado.
 
 🌐 **No ar:** https://maratomon.vercel.app
 
@@ -14,6 +20,9 @@ Guia de fãs para assistir **todos os episódios dublados** do anime, na ordem c
 | Estilo | **Tailwind CSS 4** + fontes Bricolage Grotesque e Plus Jakarta Sans | Visual próprio, tema claro/escuro automático |
 | Login e banco | **Supabase** (Postgres + Auth por link mágico) | Progresso na nuvem, com segurança por linha (RLS) |
 | Vídeos | **YouTube Data API v3** (script) + player `youtube-nocookie` | Liga cada episódio ao vídeo oficial dublado |
+| Cartas e preços | **TCGdex** (sem chave) + **AwesomeAPI** (câmbio) | Catálogo do TCG, preços TCGplayer/Cardmarket e conversão para R$ |
+| Gráficos | **Recharts** | Painel do mercado, comparador e dashboard da coleção |
+| Arquivos | **Supabase Storage** (bucket privado `colecao`) | Fotos e vídeos dos decks e pastas |
 | Hospedagem | **Vercel** | Deploy automático a cada `git push` |
 
 ## Rodando no seu computador
@@ -52,7 +61,7 @@ src/lib/              catálogo, Supabase e store de progresso
 ## Supabase (login e progresso na nuvem)
 
 1. Crie um projeto grátis em https://supabase.com.
-2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/schema.sql`.
+2. Em **SQL Editor**, cole e rode `supabase/schema.sql` e depois `supabase/002_colecao.sql` (coleção, fotos e vídeos).
 3. Em **Authentication › URL Configuration**, coloque o endereço do site em *Site URL* e adicione `http://localhost:3000/**` e `https://SEU-DOMINIO/**` em *Redirect URLs*.
 4. Copie a *Project URL* (Project Settings › General) e a *Publishable key* (Project Settings › API Keys) para `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` no `.env.local`.
 
@@ -73,4 +82,4 @@ O script só aceita vídeos publicados pelo canal oficial Pokémon TV, nunca reu
 
 ## Regras do projeto (legal)
 
-Veja [LEGAL.md](LEGAL.md). Resumo: só fontes oficiais, nada de logo ou arte oficial, aviso de projeto não oficial em todas as páginas, LGPD desde o começo.
+Veja [LEGAL.md](LEGAL.md). Resumo: o site usa imagens oficiais por escolha do dono (risco assumido, principalmente se monetizar), não hospeda episódios nem ROMs e segue a LGPD.

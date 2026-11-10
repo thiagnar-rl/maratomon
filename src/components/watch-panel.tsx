@@ -32,7 +32,6 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
               className="group absolute inset-0 grid place-items-center"
               aria-label={`Assistir "${episode.title}" no player do YouTube`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- miniatura servida pelo próprio YouTube */}
               <img
                 src={`https://i.ytimg.com/vi/${episode.youtubeId}/hqdefault.jpg`}
                 alt=""
