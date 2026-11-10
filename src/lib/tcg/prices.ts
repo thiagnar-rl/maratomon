@@ -55,3 +55,24 @@ export function cardmarketSeries(pricing: Pricing | undefined, rates: Rates) {
     .filter((p): p is { label: string; eur: number } => typeof p.eur === "number" && p.eur > 0)
     .map((p) => ({ ...p, brl: Math.round(p.eur * rates.EUR * 100) / 100 }));
 }
+
+/** Onde conferir o preço praticado no Brasil (não há API pública desses sites). */
+export function brazilPriceLinks(card: { name: string; localId: string; setOfficial?: number }) {
+  const number = card.setOfficial ? `${card.localId}/${card.setOfficial}` : card.localId;
+  const query = `${card.name} ${number}`;
+  return [
+    { label: "Liga Pokémon", note: "referência de preço entre lojas brasileiras", url: `https://www.ligapokemon.com.br/?view=cards/search&card=${encodeURIComponent(card.name)}` },
+    { label: "Mercado Livre", note: "anúncios no Brasil", url: `https://lista.mercadolivre.com.br/${encodeURIComponent(`carta pokemon ${query}`).replace(/%20/g, "-")}` },
+  ];
+}
+
+/** Lê um valor em reais digitado ("1.234,56", "1234,56" ou "1234.56"). Retorna null se vazio ou inválido. */
+export function parseBRL(text: string): number | null {
+  const t = text.trim();
+  if (!t) return null;
+  const normalized = t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t;
+  const digits = normalized.replace(/[^0-9.]/g, "");
+  if (!digits) return null;
+  const value = Number(digits);
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}

@@ -23,6 +23,8 @@ export type CollectionCard = {
   quantity: number;
   condition: string | null;
   paid_brl: number | null;
+  /** Preço de mercado no Brasil (R$, por unidade) conferido pelo dono. */
+  market_brl: number | null;
 };
 
 export type CollectionMedia = {
@@ -74,11 +76,11 @@ export async function listCards(collectionId?: string): Promise<CollectionCard[]
   return check(await query);
 }
 
-export async function addCard(input: Omit<CollectionCard, "id" | "quantity" | "condition" | "paid_brl"> & Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl">>) {
+export async function addCard(input: Omit<CollectionCard, "id" | "quantity" | "condition" | "paid_brl" | "market_brl"> & Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl" | "market_brl">>) {
   return check<CollectionCard>(await client().from("collection_cards").insert(input).select().single());
 }
 
-export async function updateCard(id: string, patch: Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl">>) {
+export async function updateCard(id: string, patch: Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl" | "market_brl">>) {
   check(await client().from("collection_cards").update(patch).eq("id", id));
 }
 
@@ -121,6 +123,10 @@ export async function signedUrls(paths: string[]): Promise<Record<string, string
   for (const item of data ?? []) if (item.path && item.signedUrl) urls[item.path] = item.signedUrl;
   return urls;
 }
+
+/** Valor unitário em R$: preço no Brasil informado pelo dono ou, se não houver, o internacional convertido. */
+export const unitValue = (card: CollectionCard, estimates: Record<string, number | null>) =>
+  card.market_brl ?? estimates[card.card_id] ?? null;
 
 /** Busca o preço atual de várias cartas (valor estimado em reais). */
 export async function fetchCardValues(ids: string[]): Promise<Record<string, number | null>> {

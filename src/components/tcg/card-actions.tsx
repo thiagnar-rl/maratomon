@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { addCard, CONDITIONS, listCollections, type Collection } from "@/lib/collection";
 import { addToCompare, MAX_COMPARE, useCompareIds } from "@/lib/tcg/compare-store";
 import { useProgress } from "@/lib/progress/hooks";
+import { parseBRL } from "@/lib/tcg/prices";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 type CardInfo = { id: string; name: string; set: string; image: string | null };
@@ -81,7 +82,7 @@ function AddToCollection({ card }: { card: CardInfo }) {
         image: card.image,
         quantity,
         condition,
-        paid_brl: paid ? Number(paid.replace(",", ".")) : null,
+        paid_brl: parseBRL(paid),
       });
       setStatus("saved");
       setMessage(`Adicionada a “${collections?.find((c) => c.id === collectionId)?.name}”.`);

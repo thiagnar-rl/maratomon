@@ -19,8 +19,9 @@ import {
   type Collection,
   type CollectionCard,
   type CollectionMedia,
+  unitValue,
 } from "@/lib/collection";
-import { formatMoney } from "@/lib/tcg/prices";
+import { formatMoney, parseBRL } from "@/lib/tcg/prices";
 import { CardPicker } from "@/components/tcg/card-picker";
 import { RequireLogin } from "./require-login";
 
@@ -62,7 +63,7 @@ function Detail({ id }: { id: string }) {
     })();
   }, [id, refreshMedia]);
 
-  const total = useMemo(() => cards.reduce((n, c) => n + (values[c.card_id] ?? 0) * c.quantity, 0), [cards, values]);
+  const total = useMemo(() => cards.reduce((n, c) => n + (unitValue(c, values) ?? 0) * c.quantity, 0), [cards, values]);
 
   if (error) return <p role="alert" className="text-accent">{error}</p>;
   if (collection === undefined) return <p className="text-ink-soft">Carregando…</p>;
@@ -184,7 +185,7 @@ function CardsPanel({
       {cards.length === 0 && <p className="text-ink-soft">Nenhuma carta ainda. Busque acima para adicionar.</p>}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((c) => {
-          const unit = values[c.card_id];
+          const intl = values[c.card_id];
           return (
             <li key={c.id} className="flex gap-3 rounded-2xl border border-line bg-surface p-3">
               <Link href={`/tcg/cartas/${c.card_id}`} className="shrink-0">
@@ -198,9 +199,32 @@ function CardsPanel({
                 <p className="truncate font-bold">{c.card_name}</p>
                 <p className="truncate text-xs text-ink-soft">{c.set_name}</p>
                 <p className="text-xs">
-                  {unit == null ? "Sem preço" : `${formatMoney(unit, "BRL")} cada`}
+                  {c.market_brl != null ? (
+                    <><strong>{formatMoney(c.market_brl, "BRL")}</strong> no Brasil</>
+                  ) : intl == null ? (
+                    "Sem preço"
+                  ) : (
+                    <>{formatMoney(intl, "BRL")} <span className="text-ink-soft">(internacional)</span></>
+                  )}
                   {c.paid_brl != null && <span className="text-ink-soft"> · paguei {formatMoney(c.paid_brl, "BRL")}</span>}
                 </p>
+                <label className="flex items-center gap-1.5 text-xs text-ink-soft" htmlFor={`br-${c.id}`}>
+                  Preço BR (R$)
+                  <input
+                    id={`br-${c.id}`}
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    defaultValue={c.market_brl ?? ""}
+                    onBlur={async (e) => {
+                      const market_brl = parseBRL(e.target.value);
+                      if (market_brl !== c.market_brl) {
+                        await updateCard(c.id, { market_brl });
+                        onChange(c.id, { market_brl });
+                      }
+                    }}
+                    className="w-24 rounded-lg border border-line bg-bg px-2 py-1 text-ink"
+                  />
+                </label>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <label className="sr-only" htmlFor={`q-${c.id}`}>Quantidade</label>
                   <input

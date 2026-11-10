@@ -11,6 +11,7 @@ import {
   type Collection,
   type CollectionCard,
   type CollectionKind,
+  unitValue,
 } from "@/lib/collection";
 import { formatMoney } from "@/lib/tcg/prices";
 import { RequireLogin } from "./require-login";
@@ -55,7 +56,7 @@ function Dashboard() {
   }, []);
 
   const stats = useMemo(() => {
-    const valueOf = (c: CollectionCard) => (values[c.card_id] ?? 0) * c.quantity;
+    const valueOf = (c: CollectionCard) => (unitValue(c, values) ?? 0) * c.quantity;
     const total = cards.reduce((n, c) => n + valueOf(c), 0);
     const paid = cards.reduce((n, c) => n + (c.paid_brl ?? 0) * c.quantity, 0);
     const count = cards.reduce((n, c) => n + c.quantity, 0);
@@ -65,7 +66,7 @@ function Dashboard() {
       value: Math.round(cards.filter((c) => c.collection_id === col.id).reduce((n, c) => n + valueOf(c), 0) * 100) / 100,
     }));
     const top = [...cards]
-      .map((c) => ({ ...c, unit: values[c.card_id] ?? null, value: valueOf(c) }))
+      .map((c) => ({ ...c, unit: unitValue(c, values), value: valueOf(c) }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
     return { total, paid, count, byCollection, top };
@@ -80,7 +81,7 @@ function Dashboard() {
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Valor estimado hoje", value: pricesLoaded ? formatMoney(stats.total, "BRL") : "Calculando…" },
+          { label: "Valor da coleção (R$)", value: pricesLoaded ? formatMoney(stats.total, "BRL") : "Calculando…" },
           { label: "Quanto você pagou", value: formatMoney(stats.paid, "BRL") },
           {
             label: "Valorização",
