@@ -30,7 +30,10 @@ const read = <T>(file: string): T => JSON.parse(readFileSync(join(root, file), "
 
 const rawSeasons = read<RawSeason[]>("data/source/episodes.json");
 const providers = read<ProvidersFile>("data/source/providers.json");
+/** Canal Pokémon TV: vídeos com várias dublagens (o player embutido abre no áudio original). */
 const youtubeLinks = read<Record<string, string>>("data/source/youtube-links.json");
+/** Canal oficial brasileiro: áudio só em português, tem prioridade. */
+const youtubePt = read<Record<string, string>>("data/source/youtube-links-pt.json");
 
 /** Episódios que nunca receberam dublagem brasileira ficam fora do catálogo. */
 const NOT_DUBBED = new Set<string>([]);
@@ -85,7 +88,8 @@ const seasons: Season[] = rawSeasons.map((raw) => {
       titlePt: pt || null,
       titleEn: en || null,
       slug: `t${pad(raw.n)}e${pad(number)}-${slugify(title)}`,
-      youtubeId: youtubeLinks[key] ?? null,
+      youtubeId: youtubePt[key] ?? youtubeLinks[key] ?? null,
+      youtubeAudio: youtubePt[key] ? "pt" : youtubeLinks[key] ? "multi" : null,
     });
   });
 

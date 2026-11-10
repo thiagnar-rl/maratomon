@@ -18,6 +18,8 @@ export type Episode = {
   slug: string;
   /** Vídeo oficial (dublado) no YouTube, quando existir. */
   youtubeId: string | null;
+  /** "pt": vídeo só com áudio em português. "multi": várias dublagens, é preciso escolher Português (Brasil) no player. */
+  youtubeAudio: "pt" | "multi" | null;
 };
 
 export type Season = {

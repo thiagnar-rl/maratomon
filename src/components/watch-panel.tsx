@@ -27,7 +27,7 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
           {playing ? (
             <iframe
               className="absolute inset-0 size-full"
-              src={`https://www.youtube-nocookie.com/embed/${episode.youtubeId}?autoplay=1&hl=pt-BR&cc_lang_pref=pt-BR`}
+              src={`https://www.youtube-nocookie.com/embed/${episode.youtubeId}?autoplay=1&hl=pt-BR&rel=0`}
               title={`${episode.title} — vídeo oficial`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
@@ -63,11 +63,7 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
         </div>
       )}
 
-      {episode.youtubeId && (
-        <p className="text-xs text-ink-soft">
-          Se o áudio não começar em português, escolha <strong>Português (Brasil)</strong> em Configurações › Faixa de áudio no player.
-        </p>
-      )}
+      {episode.youtubeAudio === "multi" && episode.youtubeId && <AudioTip videoId={episode.youtubeId} />}
 
       <ul className="grid gap-2 sm:grid-cols-2">
         {providers.map((provider) => (
@@ -90,6 +86,35 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** Os vídeos do canal Pokémon TV têm várias dublagens e o player embutido sempre abre no áudio original (inglês). */
+function AudioTip({ videoId }: { videoId: string }) {
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-accent-2/60 bg-accent-2/10 p-4 sm:flex-row sm:items-center">
+      <div className="flex-1 space-y-1">
+        <p className="font-bold">🇧🇷 Para ouvir dublado em português</p>
+        <ol className="flex flex-wrap items-center gap-1.5 text-sm text-ink-soft">
+          <li className="rounded-lg bg-surface px-2 py-1 font-semibold text-ink">⚙ Configurações</li>
+          <li aria-hidden="true">›</li>
+          <li className="rounded-lg bg-surface px-2 py-1 font-semibold text-ink">Faixa de áudio</li>
+          <li aria-hidden="true">›</li>
+          <li className="rounded-lg bg-surface px-2 py-1 font-semibold text-ink">Português (Brasil)</li>
+        </ol>
+        <p className="text-xs text-ink-soft">
+          O vídeo oficial tem várias dublagens e o YouTube não deixa sites escolherem o idioma automaticamente.
+        </p>
+      </div>
+      <a
+        href={`https://www.youtube.com/watch?v=${videoId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="shrink-0 rounded-full border border-line bg-surface px-4 py-2 text-center text-sm font-bold hover:border-ink-soft"
+      >
+        Abrir no YouTube ↗
+      </a>
     </div>
   );
 }
