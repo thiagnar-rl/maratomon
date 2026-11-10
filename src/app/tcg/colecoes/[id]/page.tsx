@@ -3,7 +3,6 @@ import Link from "next/link";
 import { SetCoverArt } from "@/components/tcg/set-cover";
 import { notFound } from "next/navigation";
 import { getSet } from "@/lib/tcg/api";
-import { setLogo } from "@/lib/tcg/prices";
 import { CardTile } from "@/components/tcg/card-tile";
 
 type Props = { params: Promise<{ id: string }> };
