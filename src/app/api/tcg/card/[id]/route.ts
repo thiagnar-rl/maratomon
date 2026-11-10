@@ -11,6 +11,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     {
       id: card.id,
       name: card.name,
+      localId: card.localId,
+      official: card.set.cardCount.official,
       set: card.set.name,
       setId: card.set.id,
       rarity: card.rarity ?? null,

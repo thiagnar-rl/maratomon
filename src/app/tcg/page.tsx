@@ -7,6 +7,7 @@ import { MarketDashboard, type MarketRow } from "@/components/tcg/market-dashboa
 import { CardSearchForm } from "@/components/tcg/card-search-form";
 import { MonArt } from "@/components/mon-art";
 import { TcgNav } from "@/components/tcg/tcg-nav";
+import { TermometroBR } from "@/components/tcg/termometro-br";
 
 export const metadata: Metadata = {
   title: "TCG: coleções, preços e comparador",
@@ -67,6 +68,8 @@ export default async function TcgPage() {
       ) : (
         <p className="rounded-3xl border border-line bg-surface p-6 text-ink-soft">Não foi possível carregar os preços agora. Tente de novo em alguns minutos.</p>
       )}
+
+      <TermometroBR />
 
       <section className="space-y-10" aria-label="Coleções por série">
         <h2 className="font-display text-3xl font-extrabold">Todas as coleções</h2>

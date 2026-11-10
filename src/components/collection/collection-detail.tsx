@@ -8,22 +8,29 @@ import {
   CONDITIONS,
   deleteCollection,
   deleteMedia,
-  fetchCardValues,
+  fetchCardInfo,
   getCollection,
+  KIND_LABEL,
   listCards,
+  listCollections,
   listMedia,
   removeCard,
   signedUrls,
+  unitValue,
   updateCard,
   uploadMedia,
+  valueSource,
+  type CardInfo,
   type Collection,
   type CollectionCard,
   type CollectionMedia,
-  unitValue,
 } from "@/lib/collection";
+import { liga } from "@/lib/liga";
+import { radarSummary, type RadarSummary } from "@/lib/radar";
 import { formatMoney, parseBRL } from "@/lib/tcg/prices";
 import { CardPicker } from "@/components/tcg/card-picker";
 import { RequireLogin } from "./require-login";
+import { ShoppingList, type ShoppingItem } from "./shopping-list";
 
 export function CollectionDetail({ id }: { id: string }) {
   return (
@@ -33,13 +40,24 @@ export function CollectionDetail({ id }: { id: string }) {
   );
 }
 
+/** Quantas cópias de cada carta você tem nas suas pastas (para o "quanto falta" dos decks). */
+async function ownedInBinders(): Promise<Record<string, number>> {
+  const [cols, cards] = await Promise.all([listCollections(), listCards()]);
+  const binders = new Set(cols.filter((c) => c.kind === "pasta").map((c) => c.id));
+  const owned: Record<string, number> = {};
+  for (const card of cards) if (binders.has(card.collection_id)) owned[card.card_id] = (owned[card.card_id] ?? 0) + card.quantity;
+  return owned;
+}
+
 function Detail({ id }: { id: string }) {
   const router = useRouter();
   const [collection, setCollection] = useState<Collection | null | undefined>(undefined);
   const [cards, setCards] = useState<CollectionCard[]>([]);
   const [media, setMedia] = useState<CollectionMedia[]>([]);
   const [urls, setUrls] = useState<Record<string, string>>({});
-  const [values, setValues] = useState<Record<string, number | null>>({});
+  const [info, setInfo] = useState<Record<string, CardInfo>>({});
+  const [radar, setRadar] = useState<Record<string, RadarSummary>>({});
+  const [owned, setOwned] = useState<Record<string, number>>({});
   const [tab, setTab] = useState<"cartas" | "midia">("cartas");
   const [error, setError] = useState("");
 
@@ -56,24 +74,52 @@ function Detail({ id }: { id: string }) {
         setCollection(col);
         setCards(items);
         await refreshMedia();
-        setValues(await fetchCardValues(items.map((c) => c.card_id)));
+        const ids = items.map((c) => c.card_id);
+        const [cardInfo, radarData, binders] = await Promise.all([
+          fetchCardInfo(ids),
+          radarSummary(ids),
+          col?.kind === "deck" ? ownedInBinders() : Promise.resolve({}),
+        ]);
+        setInfo(cardInfo);
+        setRadar(radarData);
+        setOwned(binders);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erro ao carregar.");
       }
     })();
   }, [id, refreshMedia]);
 
-  const total = useMemo(() => cards.reduce((n, c) => n + (unitValue(c, values) ?? 0) * c.quantity, 0), [cards, values]);
+  const total = useMemo(() => cards.reduce((n, c) => n + (unitValue(c, info, radar) ?? 0) * c.quantity, 0), [cards, info, radar]);
+
+  /** Lista de compras: desejos = tudo; deck = o que falta nas suas pastas. */
+  const shopping = useMemo<ShoppingItem[]>(() => {
+    if (!collection || collection.kind === "pasta") return [];
+    return cards
+      .map((c) => {
+        const missing = collection.kind === "deck" ? Math.max(0, c.quantity - (owned[c.card_id] ?? 0)) : c.quantity;
+        const ref = info[c.card_id];
+        return {
+          quantity: missing,
+          name: c.card_name,
+          localId: ref?.localId ?? c.card_id.split("-").pop() ?? c.card_id,
+          official: ref?.official,
+          unitBRL: unitValue(c, info, radar),
+        };
+      })
+      .filter((item) => item.quantity > 0);
+  }, [cards, collection, info, owned, radar]);
 
   if (error) return <p role="alert" className="text-accent">{error}</p>;
   if (collection === undefined) return <p className="text-ink-soft">Carregando…</p>;
   if (collection === null) {
     return (
       <p>
-        Não encontramos esse deck ou pasta. <Link href="/colecao" className="font-bold text-accent underline">Voltar para a coleção</Link>
+        Não encontramos essa coleção. <Link href="/colecao" className="font-bold text-accent underline">Voltar para a coleção</Link>
       </p>
     );
   }
+
+  const label = KIND_LABEL[collection.kind];
 
   async function handleDelete() {
     if (!collection) return;
@@ -86,21 +132,30 @@ function Detail({ id }: { id: string }) {
   return (
     <div className="space-y-6">
       <nav aria-label="Navegação" className="text-sm font-semibold text-ink-soft">
-        <Link href="/colecao" className="hover:text-ink">Minha coleção</Link> / {collection.kind === "deck" ? "Deck" : "Pasta"}
+        <Link href="/colecao" className="hover:text-ink">Minha coleção</Link> / {label}
       </nav>
       <header className="flex flex-wrap items-end justify-between gap-4 rounded-[2rem] border border-line bg-surface p-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-accent">{collection.kind === "deck" ? "Deck" : "Pasta"}</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-accent">{label}</p>
           <h1 className="font-display text-4xl font-extrabold">{collection.name}</h1>
           <p className="text-ink-soft">
             {cards.reduce((n, c) => n + c.quantity, 0)} cartas · {media.length} fotos/vídeos
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-semibold text-ink-soft">Valor estimado</p>
+          <p className="text-sm font-semibold text-ink-soft">{collection.kind === "desejos" ? "Para completar" : "Valor estimado"}</p>
           <p className="font-display text-4xl font-extrabold tabular-nums">{formatMoney(total, "BRL")}</p>
         </div>
       </header>
+
+      {collection.kind === "deck" && cards.length > 0 && (
+        <p className="rounded-2xl bg-surface-2 p-4 text-sm">
+          {shopping.length === 0
+            ? "✅ Você já tem todas as cartas deste deck nas suas pastas."
+            : `Faltam ${shopping.reduce((n, i) => n + i.quantity, 0)} cartas nas suas pastas para montar este deck. Veja a lista de compras abaixo.`}
+        </p>
+      )}
+      <ShoppingList title={collection.kind === "deck" ? `O que falta para o deck ${collection.name}` : `Lista de compras: ${collection.name}`} items={shopping} />
 
       <div role="tablist" aria-label="Conteúdo" className="flex gap-2">
         {(["cartas", "midia"] as const).map((t) => (
@@ -119,12 +174,14 @@ function Detail({ id }: { id: string }) {
 
       {tab === "cartas" ? (
         <CardsPanel
-          collectionId={collection.id}
+          collection={collection}
           cards={cards}
-          values={values}
-          onAdded={(card, value) => {
+          info={info}
+          radar={radar}
+          owned={owned}
+          onAdded={(card, cardInfo) => {
             setCards((prev) => [card, ...prev]);
-            setValues((prev) => ({ ...prev, [card.card_id]: value }));
+            setInfo((prev) => ({ ...prev, [card.card_id]: cardInfo }));
           }}
           onChange={(cardId, patch) => setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, ...patch } : c)))}
           onRemoved={(cardId) => setCards((prev) => prev.filter((c) => c.id !== cardId))}
@@ -135,25 +192,48 @@ function Detail({ id }: { id: string }) {
 
       <div className="border-t border-line pt-6">
         <button type="button" onClick={handleDelete} className="rounded-full border border-accent px-4 py-2 text-sm font-bold text-accent">
-          Apagar {collection.kind === "deck" ? "deck" : "pasta"}
+          Apagar {label.toLowerCase()}
         </button>
       </div>
     </div>
   );
 }
 
+function PriceInput({ id, label, value, onSave }: { id: string; label: string; value: number | null; onSave: (v: number | null) => Promise<void> }) {
+  return (
+    <label className="flex items-center gap-1.5 text-xs text-ink-soft" htmlFor={id}>
+      {label}
+      <input
+        id={id}
+        inputMode="decimal"
+        placeholder="0,00"
+        defaultValue={value ?? ""}
+        onBlur={async (e) => {
+          const next = parseBRL(e.target.value);
+          if (next !== value) await onSave(next);
+        }}
+        className="w-24 rounded-lg border border-line bg-bg px-2 py-1 text-ink"
+      />
+    </label>
+  );
+}
+
 function CardsPanel({
-  collectionId,
+  collection,
   cards,
-  values,
+  info,
+  radar,
+  owned,
   onAdded,
   onChange,
   onRemoved,
 }: {
-  collectionId: string;
+  collection: Collection;
   cards: CollectionCard[];
-  values: Record<string, number | null>;
-  onAdded: (card: CollectionCard, value: number | null) => void;
+  info: Record<string, CardInfo>;
+  radar: Record<string, RadarSummary>;
+  owned: Record<string, number>;
+  onAdded: (card: CollectionCard, info: CardInfo) => void;
   onChange: (id: string, patch: Partial<CollectionCard>) => void;
   onRemoved: (id: string) => void;
 }) {
@@ -167,15 +247,17 @@ function CardsPanel({
           setError("");
           try {
             const response = await fetch(`/api/tcg/card/${encodeURIComponent(picked.id)}`);
-            const data = response.ok ? ((await response.json()) as { set: string; estimate: { brl: number } | null }) : null;
+            const data = response.ok
+              ? ((await response.json()) as { set: string; localId: string; official?: number; estimate: { brl: number } | null })
+              : null;
             const card = await addCard({
-              collection_id: collectionId,
+              collection_id: collection.id,
               card_id: picked.id,
               card_name: picked.name,
               set_name: data?.set ?? null,
               image: picked.image,
             });
-            onAdded(card, data?.estimate?.brl ?? null);
+            onAdded(card, { brl: data?.estimate?.brl ?? null, localId: data?.localId ?? picked.localId, official: data?.official });
           } catch (e) {
             setError(e instanceof Error ? e.message : "Não foi possível adicionar.");
           }
@@ -185,9 +267,13 @@ function CardsPanel({
       {cards.length === 0 && <p className="text-ink-soft">Nenhuma carta ainda. Busque acima para adicionar.</p>}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((c) => {
-          const intl = values[c.card_id];
+          const unit = unitValue(c, info, radar);
+          const ref = info[c.card_id];
+          const ligaRef = { name: c.card_name, localId: ref?.localId ?? c.card_id.split("-").pop() ?? "", official: ref?.official };
+          const hit = collection.kind === "desejos" && c.target_brl != null && unit != null && unit <= c.target_brl;
+          const have = owned[c.card_id] ?? 0;
           return (
-            <li key={c.id} className="flex gap-3 rounded-2xl border border-line bg-surface p-3">
+            <li key={c.id} className={`flex gap-3 rounded-2xl border bg-surface p-3 ${hit ? "border-good" : "border-line"}`}>
               <Link href={`/tcg/cartas/${c.card_id}`} className="shrink-0">
                 {c.image ? (
                   <img src={c.image} alt={c.card_name} loading="lazy" className="aspect-[5/7] w-20 rounded-lg object-cover" />
@@ -199,32 +285,26 @@ function CardsPanel({
                 <p className="truncate font-bold">{c.card_name}</p>
                 <p className="truncate text-xs text-ink-soft">{c.set_name}</p>
                 <p className="text-xs">
-                  {c.market_brl != null ? (
-                    <><strong>{formatMoney(c.market_brl, "BRL")}</strong> no Brasil</>
-                  ) : intl == null ? (
-                    "Sem preço"
-                  ) : (
-                    <>{formatMoney(intl, "BRL")} <span className="text-ink-soft">(internacional)</span></>
-                  )}
+                  {unit == null ? "Sem preço" : <><strong>{formatMoney(unit, "BRL")}</strong> <span className="text-ink-soft">({valueSource(c, radar)})</span></>}
                   {c.paid_brl != null && <span className="text-ink-soft"> · paguei {formatMoney(c.paid_brl, "BRL")}</span>}
                 </p>
-                <label className="flex items-center gap-1.5 text-xs text-ink-soft" htmlFor={`br-${c.id}`}>
-                  Preço BR (R$)
-                  <input
-                    id={`br-${c.id}`}
-                    inputMode="decimal"
-                    placeholder="0,00"
-                    defaultValue={c.market_brl ?? ""}
-                    onBlur={async (e) => {
-                      const market_brl = parseBRL(e.target.value);
-                      if (market_brl !== c.market_brl) {
-                        await updateCard(c.id, { market_brl });
-                        onChange(c.id, { market_brl });
-                      }
-                    }}
-                    className="w-24 rounded-lg border border-line bg-bg px-2 py-1 text-ink"
-                  />
-                </label>
+                {hit && <p className="text-xs font-bold text-good">🎯 Chegou no seu preço-alvo!</p>}
+                {collection.kind === "deck" && (
+                  <p className={`text-xs font-semibold ${have >= c.quantity ? "text-good" : "text-accent"}`}>
+                    Nas suas pastas: {have}/{c.quantity}
+                  </p>
+                )}
+                {collection.kind === "desejos" ? (
+                  <PriceInput id={`alvo-${c.id}`} label="Alvo (R$)" value={c.target_brl} onSave={async (target_brl) => {
+                    await updateCard(c.id, { target_brl });
+                    onChange(c.id, { target_brl });
+                  }} />
+                ) : (
+                  <PriceInput id={`br-${c.id}`} label="Preço BR (R$)" value={c.market_brl} onSave={async (market_brl) => {
+                    await updateCard(c.id, { market_brl });
+                    onChange(c.id, { market_brl });
+                  }} />
+                )}
                 <div className="flex flex-wrap items-center gap-1.5">
                   <label className="sr-only" htmlFor={`q-${c.id}`}>Quantidade</label>
                   <input
@@ -242,20 +322,27 @@ function CardsPanel({
                     }}
                     className="w-16 rounded-lg border border-line bg-bg px-2 py-1"
                   />
-                  <label className="sr-only" htmlFor={`c-${c.id}`}>Estado</label>
-                  <select
-                    id={`c-${c.id}`}
-                    value={c.condition ?? ""}
-                    onChange={async (e) => {
-                      const condition = e.target.value || null;
-                      await updateCard(c.id, { condition });
-                      onChange(c.id, { condition });
-                    }}
-                    className="rounded-lg border border-line bg-bg px-2 py-1"
-                  >
-                    <option value="">Estado</option>
-                    {CONDITIONS.map((cond) => <option key={cond}>{cond}</option>)}
-                  </select>
+                  {collection.kind !== "desejos" && (
+                    <>
+                      <label className="sr-only" htmlFor={`c-${c.id}`}>Estado</label>
+                      <select
+                        id={`c-${c.id}`}
+                        value={c.condition ?? ""}
+                        onChange={async (e) => {
+                          const condition = e.target.value || null;
+                          await updateCard(c.id, { condition });
+                          onChange(c.id, { condition });
+                        }}
+                        className="rounded-lg border border-line bg-bg px-2 py-1"
+                      >
+                        <option value="">Estado</option>
+                        {CONDITIONS.map((cond) => <option key={cond}>{cond}</option>)}
+                      </select>
+                    </>
+                  )}
+                  <a href={liga.card(ligaRef)} target="_blank" rel="noopener noreferrer" className="rounded-lg px-2 py-1 text-xs font-bold text-accent-3 hover:bg-surface-2" title="Ver ofertas desta carta na Liga Pokémon">
+                    Liga ↗
+                  </a>
                   <button
                     type="button"
                     onClick={async () => {

@@ -61,7 +61,7 @@ src/lib/              catálogo, Supabase e store de progresso
 ## Supabase (login e progresso na nuvem)
 
 1. Crie um projeto grátis em https://supabase.com.
-2. Em **SQL Editor**, cole e rode `supabase/schema.sql` e depois `supabase/002_colecao.sql` (coleção, fotos e vídeos) e `supabase/003_preco_brasil.sql` (preço no Brasil).
+2. Em **SQL Editor**, cole e rode `supabase/schema.sql` e depois `supabase/002_colecao.sql` (coleção, fotos e vídeos) e `supabase/003_preco_brasil.sql` (preço no Brasil) e `supabase/004_radar_br.sql` (Radar BR, lista de desejos e preço-alvo).
 3. Em **Authentication › URL Configuration**, coloque o endereço do site em *Site URL* e adicione `http://localhost:3000/**` e `https://SEU-DOMINIO/**` em *Redirect URLs*.
 4. Copie a *Project URL* (Project Settings › General) e a *Publishable key* (Project Settings › API Keys) para `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` no `.env.local`.
 

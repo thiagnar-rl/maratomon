@@ -15,6 +15,8 @@ O site usa **imagens oficiais de Pokémon e de cartas** (via PokeAPI e TCGdex) p
 - **Não hospeda episódios, filmes nem jogos.** Vídeos só pelo player oficial do YouTube. Filmes apontam para o JustWatch e serviços oficiais.
 - **Sem ROMs.** A página de jogos lista emuladores legais (mGBA, SameBoy, RetroArch, Delta), leitores para copiar os próprios cartuchos e onde jogar oficialmente (Nintendo Switch Online). Não adicione links de download de ROMs: é pirataria e derruba o site rápido.
 - **Preços** vêm da TCGdex, que repassa os preços públicos do TCGplayer e do Cardmarket. Nada de raspagem de lojas.
+- **Liga Pokémon só por link.** Os termos da Liga proíbem reproduzir o conteúdo e o banco de dados dela. O Maratomon só abre links para as páginas da Liga (carta, histórico, decks, compra por lista); não copia preços, estoque nem textos de lá.
+- **Radar BR** é um banco próprio, feito com anotações dos usuários. Cada anotação é privada; o site só mostra mediana, mínimo e máximo, e só a partir de 2 anotações, sem identificar ninguém. Limite de 20 anotações por dia por conta.
 - **Aviso de não afiliação** no rodapé de todas as páginas.
 - **LGPD:** progresso sem conta fica só no navegador; com conta, guardamos e-mail, progresso e coleção. Fotos e vídeos ficam em armazenamento **privado** (só o dono acessa, por links temporários). Política de privacidade publicada.
 

@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCard, getRates } from "@/lib/tcg/api";
-import { brazilPriceLinks, cardImage, cardmarketSeries, estimateBRL, formatMoney, tcgplayerVariants, variantLabel } from "@/lib/tcg/prices";
+import { cardImage, cardmarketSeries, estimateBRL, formatMoney, tcgplayerVariants, variantLabel } from "@/lib/tcg/prices";
 import { typeColors } from "@/lib/pokemon";
 import { PriceTrendChart } from "@/components/tcg/price-trend-chart";
 import { CardActions } from "@/components/tcg/card-actions";
+import { RadarBR } from "@/components/tcg/radar-br";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -74,7 +75,7 @@ export default async function CardPage({ params }: Props) {
 
           <section className="space-y-4 rounded-3xl border border-line bg-gradient-to-br from-surface to-surface-2 p-6">
             <div>
-              <p className="text-sm font-semibold text-ink-soft">Valor estimado em reais (mercado internacional convertido)</p>
+              <p className="text-sm font-semibold text-ink-soft">Mercado internacional convertido para real</p>
               <p className="font-display text-5xl font-extrabold tabular-nums">{estimate ? formatMoney(estimate.brl, "BRL") : "Sem preço"}</p>
               <p className="text-xs text-ink-soft">
                 {estimate ? `Baseado em ${estimate.source}. ` : ""}
@@ -82,21 +83,12 @@ export default async function CardPage({ params }: Props) {
                 {rates.fallback && " (aproximada)"}
               </p>
             </div>
-            <div className="rounded-2xl bg-bg/60 p-4">
-              <p className="text-sm font-bold">Preço no Brasil 🇧🇷</p>
-              <p className="text-xs text-ink-soft">
-                No Brasil a carta costuma ter preço próprio (versão em português, frete e importação). Confira quanto está
-                saindo por aqui e anote na sua coleção:
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {brazilPriceLinks({ name: card.name, localId: card.localId, setOfficial: card.set.cardCount.official }).map((link) => (
-                  <a key={link.label} href={link.url} target="_blank" rel="noopener noreferrer" className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-bold hover:border-ink-soft" title={link.note}>
-                    {link.label} ↗
-                  </a>
-                ))}
-              </div>
-            </div>
           </section>
+
+          <RadarBR
+            card={{ id: card.id, name: card.name, localId: card.localId, official: card.set.cardCount.official }}
+            internationalBRL={estimate?.brl ?? null}
+          />
 
           {trend.length > 1 && (
             <section className="space-y-3 rounded-3xl border border-line bg-surface p-6">

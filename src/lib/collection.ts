@@ -3,7 +3,9 @@
 import { getSupabase } from "@/lib/supabase";
 
 /** Minha coleção: decks e pastas no Supabase (tabelas e Storage protegidos por RLS). */
-export type CollectionKind = "deck" | "pasta";
+export type CollectionKind = "deck" | "pasta" | "desejos";
+
+export const KIND_LABEL: Record<CollectionKind, string> = { deck: "Deck", pasta: "Pasta", desejos: "Lista de desejos" };
 
 export type Collection = {
   id: string;
@@ -25,6 +27,8 @@ export type CollectionCard = {
   paid_brl: number | null;
   /** Preço de mercado no Brasil (R$, por unidade) conferido pelo dono. */
   market_brl: number | null;
+  /** Lista de desejos: avisa quando o preço chegar neste valor (R$). */
+  target_brl: number | null;
 };
 
 export type CollectionMedia = {
@@ -76,11 +80,11 @@ export async function listCards(collectionId?: string): Promise<CollectionCard[]
   return check(await query);
 }
 
-export async function addCard(input: Omit<CollectionCard, "id" | "quantity" | "condition" | "paid_brl" | "market_brl"> & Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl" | "market_brl">>) {
+export async function addCard(input: Omit<CollectionCard, "id" | "quantity" | "condition" | "paid_brl" | "market_brl" | "target_brl"> & Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl" | "market_brl" | "target_brl">>) {
   return check<CollectionCard>(await client().from("collection_cards").insert(input).select().single());
 }
 
-export async function updateCard(id: string, patch: Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl" | "market_brl">>) {
+export async function updateCard(id: string, patch: Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl" | "market_brl" | "target_brl">>) {
   check(await client().from("collection_cards").update(patch).eq("id", id));
 }
 
@@ -124,22 +128,36 @@ export async function signedUrls(paths: string[]): Promise<Record<string, string
   return urls;
 }
 
-/** Valor unitário em R$: preço no Brasil informado pelo dono ou, se não houver, o internacional convertido. */
-export const unitValue = (card: CollectionCard, estimates: Record<string, number | null>) =>
-  card.market_brl ?? estimates[card.card_id] ?? null;
+/** Informações de preço e numeração de uma carta (vindas de /api/tcg/card). */
+export type CardInfo = { brl: number | null; localId: string; official?: number };
 
-/** Busca o preço atual de várias cartas (valor estimado em reais). */
-export async function fetchCardValues(ids: string[]): Promise<Record<string, number | null>> {
+/**
+ * Valor unitário em R$, do mais confiável para o menos:
+ * 1) preço que o dono anotou, 2) mediana do Radar BR, 3) mercado internacional convertido.
+ */
+export function unitValue(card: CollectionCard, info: Record<string, CardInfo>, radar: Record<string, { median_brl: number }> = {}) {
+  return card.market_brl ?? radar[card.card_id]?.median_brl ?? info[card.card_id]?.brl ?? null;
+}
+
+export function valueSource(card: CollectionCard, radar: Record<string, { median_brl: number }>) {
+  if (card.market_brl != null) return "anotado por você";
+  if (radar[card.card_id]) return "Radar BR";
+  return "internacional";
+}
+
+/** Busca preço internacional (R$) e numeração de várias cartas. */
+export async function fetchCardInfo(ids: string[]): Promise<Record<string, CardInfo>> {
   const unique = [...new Set(ids)];
   const entries = await Promise.all(
-    unique.map(async (id) => {
+    unique.map(async (id): Promise<[string, CardInfo]> => {
+      const fallback: CardInfo = { brl: null, localId: id.split("-").pop() ?? id };
       try {
         const response = await fetch(`/api/tcg/card/${encodeURIComponent(id)}`);
-        if (!response.ok) return [id, null] as const;
-        const data = (await response.json()) as { estimate: { brl: number } | null };
-        return [id, data.estimate?.brl ?? null] as const;
+        if (!response.ok) return [id, fallback];
+        const data = (await response.json()) as { estimate: { brl: number } | null; localId: string; official?: number };
+        return [id, { brl: data.estimate?.brl ?? null, localId: data.localId, official: data.official }];
       } catch {
-        return [id, null] as const;
+        return [id, fallback];
       }
     }),
   );
