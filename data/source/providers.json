@@ -1,0 +1,16 @@
+{
+  "_info": "Onde assistir, por temporada. Só fontes oficiais com áudio em português do Brasil. Revise periodicamente: catálogos de streaming mudam.",
+  "youtubeChannel": {
+    "name": "Pokémon TV (canal oficial no YouTube)",
+    "url": "https://www.youtube.com/@OfficialPok%C3%A9monTV",
+    "handle": "@OfficialPokémonTV"
+  },
+  "seasons": {
+    "1-10": [
+      { "type": "youtube", "label": "Grátis no canal oficial Pokémon TV", "free": true, "url": "https://www.youtube.com/@OfficialPok%C3%A9monTV/playlists" }
+    ],
+    "1-28": [
+      { "type": "netflix", "label": "Netflix (assinatura) — confira se a temporada está no catálogo", "free": false, "url": "https://www.netflix.com/br/search?q=Pok%C3%A9mon" }
+    ]
+  }
+}
