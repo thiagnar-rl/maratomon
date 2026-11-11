@@ -1,6 +1,6 @@
 /**
  * Imagens das cartas que a TCGdex ainda não tem em inglês.
- * Fonte: Pokémon TCG API (images.pokemontcg.io) e, nas coleções mais novas, Scrydex.
+ * Fonte: Pokémon TCG API (images.pokemontcg.io) e Scrydex (coleções novas, promos, kits e TCG Pocket).
  * Associação feita carta a carta por número e nome (veja o histórico do repositório).
  *
  * Formato: coleção TCGdex -> [coleção na Pokémon TCG API, host, números diferentes, cartas sem imagem]
@@ -31,7 +31,7 @@ const SETS: Record<string, Entry> = {
   xy8: ["xy8", "p"],
   "2015xy": ["mcd15", "p"],
   "2016xy": ["mcd16", "p"],
-  smp: ["smp", "p", {}, ["SM248"]],
+  smp: ["smp", "s"],
   sm2: ["sm2", "p"],
   "2017sm": ["mcd17", "p"],
   "sm3.5": ["sm35", "p"],
@@ -58,10 +58,25 @@ const SETS: Record<string, Entry> = {
   swsh11tg: ["swsh11tg", "p"],
   swsh12tg: ["swsh12tg", "p"],
   "swsh12.5gg": ["swsh12pt5gg", "p"],
-  sve: ["sve", "p", {}, ["017", "018", "019", "020", "021", "022", "023", "024"]],
-  // Promos: só as cartas com o mesmo número nas duas bases (as outras ficam com a imagem em outro idioma).
-  svp: ["svp", "p", {}, ["175", "176", "190", "191", "192", "204", "205", "208", "209", "210", "211", "212", "213", "214", "215", "216", "217", "218", "219", "220", "221", "222", "223", "224", "225", "500"]],
-  swshp: ["swshp", "p", {}, ["SWSH075", "SWSH251", "SWSH282", "SWSH283", "SWSH284", "SWSH287", "SWSH288", "SWSH289", "SWSH290", "SWSH292", "SWSH293", "SWSH299", "SWSH300", "SWSH301", "SWSH302", "SWSH303", "SWSH304", "SWSH305", "SWSH306", "SWSH307"]],
+  sve: ["sve", "s"],
+  svp: ["svp", "s", {}, ["500"]],
+  swshp: ["swshp", "s"],
+  // Kits de treinador (Scrydex numera tk3..tk10)
+  "tk-dp-m": ["tk3a", "s"],
+  "tk-dp-l": ["tk3b", "s"],
+  "tk-hs-r": ["tk4a", "s"],
+  "tk-hs-g": ["tk4b", "s"],
+  "tk-bw-z": ["tk5a", "s"],
+  "tk-bw-e": ["tk5b", "s"],
+  "tk-sm-r": ["tk10b", "s"],
+  "2023sv": ["mcd23", "s"],
+  "2024sv": ["mcd24", "s"],
+  mep: ["mep", "s", {}, ["Museum"]],
+  mee: ["mee", "s"],
+  // TCG Pocket
+  "P-A": ["tcgp-PA", "s"],
+  B1a: ["tcgp-B1a", "s"],
+  B2a: ["tcgp-B2a", "s"],
   "30th-c": [
     "me55c",
     "s",
