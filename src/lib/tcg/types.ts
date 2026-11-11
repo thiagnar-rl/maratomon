@@ -97,3 +97,7 @@ export type PriceSnapshot = {
   change7d: number | null;
   change30d: number | null;
 };
+
+/** Dados extras para filtros nas grades (raridade, versões, ilustrador). */
+export type CardMeta = { rarity: string | null; illustrator: string | null; variants: string[] };
+export type PricedCard = PriceSnapshot & { meta?: CardMeta };

@@ -1,4 +1,4 @@
-import type { CardDetail, PriceSnapshot, Pricing, Rates, TcgplayerVariant } from "./types";
+import type { CardDetail, CardMeta, PriceSnapshot, Pricing, Rates, TcgplayerVariant } from "./types";
 
 /**
  * URL da imagem da carta. A TCGdex entrega uma "base" sem extensão; as imagens que completamos
@@ -96,3 +96,22 @@ export function priceSnapshot(card: Pick<CardDetail, "pricing">, rates: Rates): 
 /** "+3,2%" / "−1,0%" */
 export const formatPct = (value: number | null | undefined) =>
   typeof value === "number" ? `${value > 0 ? "+" : value < 0 ? "−" : ""}${Math.abs(value).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—";
+
+const VARIANT_PT: Record<string, string> = {
+  normal: "Normal",
+  reverse: "Reverse holo",
+  holo: "Holo",
+  firstEdition: "1ª edição",
+  wPromo: "Promo W",
+};
+
+/** Raridade, versões e ilustrador, para os filtros. */
+export function cardMeta(card: Pick<CardDetail, "rarity" | "illustrator" | "variants">): CardMeta {
+  return {
+    rarity: card.rarity ?? null,
+    illustrator: card.illustrator ?? null,
+    variants: Object.entries(card.variants ?? {})
+      .filter(([, on]) => on)
+      .map(([k]) => VARIANT_PT[k] ?? k),
+  };
+}

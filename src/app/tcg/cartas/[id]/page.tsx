@@ -102,7 +102,7 @@ export default async function CardPage({ params }: Props) {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,380px)_1fr]">
         {/* Coluna da carta */}
         <div className="space-y-4 lg:sticky lg:top-40 lg:self-start">
-          <HoloCard strong className="mx-auto max-w-[320px] overflow-hidden rounded-[1.4rem] shadow-2xl lg:max-w-none">
+          <HoloCard strong className="mx-auto max-w-[320px] lg:max-w-none" faceClassName="rounded-[1.4rem] shadow-2xl">
             <div style={{ boxShadow: typeColor ? `0 30px 80px -30px ${typeColor}` : undefined }}>
               {image ? (
                 <img src={image} alt={card.name} className="w-full" />
@@ -113,6 +113,7 @@ export default async function CardPage({ params }: Props) {
               )}
             </div>
           </HoloCard>
+          <p className="text-center text-xs text-ink-soft">↔ Segure e arraste a carta para girar e ver o verso</p>
           <CardActions card={{ id: card.id, name: card.name, set: card.set.name, image: cardImage(card.image, "low") }} />
           <div className="grid grid-cols-3 gap-2">
             {markets.map((m) => (

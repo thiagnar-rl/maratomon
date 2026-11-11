@@ -13,7 +13,7 @@ export function CardTile({ card, subtitle, price }: { card: CardBrief; subtitle?
       href={`/tcg/cartas/${card.id}`}
       className="group block rounded-2xl p-1.5 transition hover:bg-surface-2"
     >
-      <HoloCard className="aspect-[5/7] overflow-hidden rounded-xl bg-surface-2 shadow-md transition group-hover:shadow-xl">
+      <HoloCard className="aspect-[5/7]" faceClassName="size-full rounded-xl bg-surface-2 shadow-md">
         {src ? (
           <img src={src} alt={card.name} loading="lazy" decoding="async" className="size-full object-cover" />
         ) : (
