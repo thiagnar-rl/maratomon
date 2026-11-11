@@ -61,7 +61,7 @@ src/lib/              catálogo, Supabase e store de progresso
 ## Supabase (login e progresso na nuvem)
 
 1. Crie um projeto grátis em https://supabase.com.
-2. Em **SQL Editor**, cole e rode `supabase/schema.sql` e depois `supabase/002_colecao.sql` (coleção, fotos e vídeos) e `supabase/003_preco_brasil.sql` (preço no Brasil) e `supabase/004_radar_br.sql` (Radar BR, lista de desejos e preço-alvo).
+2. Em **SQL Editor**, cole e rode `supabase/schema.sql` e depois `supabase/002_colecao.sql` (coleção, fotos e vídeos) e `supabase/003_preco_brasil.sql` (preço no Brasil) `supabase/004_radar_br.sql` (Radar BR, lista de desejos e preço-alvo) e `supabase/005_contas.sql` (perfil, endereços e exclusão de conta).
 3. Em **Authentication › URL Configuration**, coloque o endereço do site em *Site URL* e adicione `http://localhost:3000/**` e `https://SEU-DOMINIO/**` em *Redirect URLs*.
 4. Copie a *Project URL* (Project Settings › General) e a *Publishable key* (Project Settings › API Keys) para `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` no `.env.local`.
 
@@ -83,3 +83,20 @@ O script só aceita vídeos publicados pelo canal oficial Pokémon TV, nunca reu
 ## Regras do projeto (legal)
 
 Veja [LEGAL.md](LEGAL.md). Resumo: o site usa imagens oficiais por escolha do dono (risco assumido, principalmente se monetizar), não hospeda episódios nem ROMs e segue a LGPD.
+
+## Login com Google, Facebook e Apple
+
+O site já tem os botões; cada provedor fica "em breve" até ser ligado no Supabase
+(Authentication › Sign In / Providers). Em todos, a URL de retorno (callback) é:
+
+`https://qtesnnuytuxugskbfuus.supabase.co/auth/v1/callback`
+
+- **Google:** Google Cloud Console › APIs e serviços › Credenciais › Criar ID do cliente OAuth (Aplicativo da Web).
+  Origem: `https://maratomon.vercel.app`. URI de redirecionamento: a callback acima. Cole o Client ID e o Client Secret no Supabase.
+- **Facebook:** developers.facebook.com › Criar app (Consumidor) › Login do Facebook › Configurações:
+  callback acima em "URIs de redirecionamento do OAuth válidos". Cole o ID e a Chave secreta do app no Supabase.
+  Para o público geral entrar, o app precisa estar em modo "Ao vivo" (exige política de privacidade: `/privacidade`).
+- **Apple:** exige Apple Developer Program (US$ 99/ano). Crie um Services ID com "Sign in with Apple",
+  domínio `qtesnnuytuxugskbfuus.supabase.co` e a callback acima; gere a chave (.p8) e informe no Supabase.
+
+"Allow manual linking" está ligado, então cada pessoa pode vincular várias formas de entrar em "Minha conta".

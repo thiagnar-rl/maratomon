@@ -25,10 +25,10 @@ export function HeaderProgress() {
       </Link>
       {isSupabaseConfigured && (
         <Link
-          href="/entrar"
+          href={email ? "/conta" : "/entrar"}
           className="rounded-full bg-ink px-3 py-1.5 text-sm font-semibold text-bg transition hover:opacity-85"
         >
-          {email ? "Conta" : "Entrar"}
+          {email ? "Minha conta" : "Entrar"}
         </Link>
       )}
     </div>

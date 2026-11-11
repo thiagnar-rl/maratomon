@@ -16,7 +16,7 @@ export function RequireLogin({ children }: { children: React.ReactNode }) {
       <div className="rounded-3xl border border-line bg-surface p-8 text-center">
         <p className="font-display text-2xl font-bold">Entre para montar sua coleção</p>
         <p className="mt-1 text-ink-soft">Suas cartas, fotos e vídeos ficam guardados na sua conta e só você vê.</p>
-        <Link href="/entrar" className="mt-4 inline-block rounded-full bg-accent px-6 py-3 font-bold text-accent-ink">Entrar com e-mail</Link>
+        <Link href="/entrar" className="mt-4 inline-block rounded-full bg-accent px-6 py-3 font-bold text-accent-ink">Entrar ou criar conta</Link>
       </div>
     );
   }
