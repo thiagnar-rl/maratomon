@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { formatMoney } from "@/lib/tcg/prices";
+import { formatMoney, parseBRL } from "@/lib/tcg/prices";
 import type { CardBrief, PricedCard } from "@/lib/tcg/types";
 import { CardTile } from "./card-tile";
 
@@ -24,6 +24,15 @@ function tally(values: (string | null | undefined)[]) {
   return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
 }
 
+/** Faixas rápidas de preço em reais. */
+const RANGES: { label: string; min: number | null; max: number | null }[] = [
+  { label: "Até R$ 10", min: null, max: 10 },
+  { label: "R$ 10–50", min: 10, max: 50 },
+  { label: "R$ 50–200", min: 50, max: 200 },
+  { label: "R$ 200–1.000", min: 200, max: 1000 },
+  { label: "Acima de R$ 1.000", min: 1000, max: null },
+];
+
 const select = "rounded-full border border-line bg-surface px-3 py-2 text-sm font-semibold outline-none focus:border-accent";
 
 /** Grade de cartas com preço do dia, filtros (raridade, versão, ilustrador) e ordenação. */
@@ -35,6 +44,10 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
   const [variant, setVariant] = useState("");
   const [illustrator, setIllustrator] = useState("");
   const [query, setQuery] = useState("");
+  const [minText, setMinText] = useState("");
+  const [maxText, setMaxText] = useState("");
+  const minPrice = parseBRL(minText);
+  const maxPrice = parseBRL(maxText);
 
   useEffect(() => {
     let active = true;
@@ -69,9 +82,15 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
       if (rarity && m?.rarity !== rarity) return false;
       if (variant && !m?.variants.includes(variant)) return false;
       if (illustrator && m?.illustrator !== illustrator) return false;
+      if (minPrice != null || maxPrice != null) {
+        const brl = data[c.id]?.brl;
+        if (brl == null) return false;
+        if (minPrice != null && brl < minPrice) return false;
+        if (maxPrice != null && brl > maxPrice) return false;
+      }
       return true;
     });
-  }, [cards, data, query, rarity, variant, illustrator]);
+  }, [cards, data, query, rarity, variant, illustrator, minPrice, maxPrice]);
 
   const sorted = useMemo(() => {
     if (sort === "numero") return filtered;
@@ -91,7 +110,7 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
   }, [filtered, data, sort]);
 
   const total = filtered.reduce((sum, c) => sum + (data[c.id]?.brl ?? 0), 0);
-  const active = Boolean(rarity || variant || illustrator || query);
+  const active = Boolean(rarity || variant || illustrator || query || minPrice != null || maxPrice != null);
   const loadingMeta = !done && rarities.length === 0;
 
   return (
@@ -138,6 +157,44 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
             ))}
           </select>
         </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
+          <span className="text-sm font-bold">Preço (R$)</span>
+          <input
+            inputMode="decimal"
+            value={minText}
+            onChange={(e) => setMinText(e.target.value)}
+            placeholder="mín."
+            aria-label="Preço mínimo em reais"
+            className="w-24 rounded-full border border-line bg-bg px-3 py-1.5 text-sm outline-none focus:border-accent"
+          />
+          <span className="text-ink-soft">–</span>
+          <input
+            inputMode="decimal"
+            value={maxText}
+            onChange={(e) => setMaxText(e.target.value)}
+            placeholder="máx."
+            aria-label="Preço máximo em reais"
+            className="w-24 rounded-full border border-line bg-bg px-3 py-1.5 text-sm outline-none focus:border-accent"
+          />
+          {RANGES.map((r) => {
+            const on = minPrice === r.min && maxPrice === r.max;
+            return (
+              <button
+                key={r.label}
+                type="button"
+                aria-pressed={on}
+                onClick={() => {
+                  setMinText(on || r.min == null ? "" : String(r.min));
+                  setMaxText(on || r.max == null ? "" : String(r.max));
+                }}
+                className="rounded-full border border-line px-3 py-1.5 text-xs font-bold transition hover:border-ink-soft aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-white"
+              >
+                {r.label}
+              </button>
+            );
+          })}
+          {!done && (minPrice != null || maxPrice != null) && <span className="text-xs text-ink-soft">carregando preços…</span>}
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <p className="text-ink-soft">
             <strong className="text-ink">{filtered.length}</strong> de {cards.length} cartas
@@ -149,6 +206,8 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
                   setVariant("");
                   setIllustrator("");
                   setQuery("");
+                  setMinText("");
+                  setMaxText("");
                 }}
                 className="ml-3 font-bold text-accent"
               >
