@@ -8,7 +8,7 @@ import { catalog } from "@/lib/catalog";
 import { Mascot } from "./mascot";
 
 const perks = [
-  ["✅", "Marque episódios, filmes e jogos e veja sua porcentagem subir"],
+  ["✅", "Marque episódios e veja sua porcentagem subir"],
   ["▶️", "“Continue de onde parou” em qualquer aparelho"],
   ["🃏", "Monte sua coleção de cartas com valor em reais"],
   ["🏆", "Conquistas e estatísticas da sua maratona"],

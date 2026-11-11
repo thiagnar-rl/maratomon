@@ -18,7 +18,7 @@ export function useWatchedCount(episodes: Episode[]) {
 
 const EPISODE_KEY = /^\d+-\d+$/;
 
-/** Quantos episódios do anime já foram assistidos (sem contar filmes e jogos). */
+/** Quantos episódios do anime já foram assistidos . */
 export function useEpisodesWatched() {
   const { watched } = useProgress();
   return useMemo(() => [...watched].filter((key) => EPISODE_KEY.test(key)).length, [watched]);

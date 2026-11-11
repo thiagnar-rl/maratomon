@@ -24,7 +24,6 @@ export default function AboutPage() {
           Título em português quando existe título oficial brasileiro publicado. Nos demais, mostramos o título oficial
           em inglês até a versão brasileira ser confirmada.
         </li>
-        <li>Filmes e especiais ainda não estão no catálogo.</li>
       </ul>
 
       <h2>De onde vêm os vídeos</h2>

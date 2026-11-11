@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { catalog, eraColor, getEras } from "@/lib/catalog";
 import { eraMons, type Mon } from "@/lib/pokemon";
-import { movies } from "@/data/movies";
-import { games } from "@/data/games";
 import { getNews } from "@/lib/news";
 import { ContinueCard } from "@/components/continue-card";
 import { MonArt } from "@/components/mon-art";
@@ -22,22 +20,6 @@ const hubs: { href: string; title: string; text: string; stat: string; mon: Mon;
     stat: `${catalog.totalEpisodes.toLocaleString("pt-BR")} episódios`,
     mon: { id: 25, name: "Pikachu" },
     color: "var(--accent-2)",
-  },
-  {
-    href: "/filmes",
-    title: "Filmes",
-    text: "Todos os filmes em ordem, com onde assistir.",
-    stat: `${movies.length} filmes`,
-    mon: { id: 150, name: "Mewtwo" },
-    color: "#a35bd6",
-  },
-  {
-    href: "/jogos",
-    title: "Jogos clássicos",
-    text: "Game Boy, Color e Advance: fichas, onde jogar e emuladores.",
-    stat: `${games.length} jogos`,
-    mon: { id: 6, name: "Charizard" },
-    color: "var(--accent)",
   },
   {
     href: "/tcg",
@@ -165,7 +147,7 @@ export default async function HomePage() {
 
         <section aria-labelledby="hub" className="space-y-5">
           <h2 id="hub" className="font-display text-3xl font-extrabold">Escolha sua aventura</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-3">
             {hubs.map((hub) => (
               <Link
                 key={hub.href}

@@ -8,8 +8,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: base, priority: 1 },
     { url: `${base}/temporadas`, priority: 0.9 },
     { url: `${base}/noticias`, priority: 0.9, changeFrequency: "hourly" },
-    { url: `${base}/filmes`, priority: 0.8 },
-    { url: `${base}/jogos`, priority: 0.8 },
     { url: `${base}/tcg`, priority: 0.9 },
     { url: `${base}/tcg/comparar`, priority: 0.6 },
     ...getSeasons().map((s) => ({ url: `${base}/temporadas/${s.number}`, priority: 0.8 })),

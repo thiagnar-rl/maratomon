@@ -12,8 +12,6 @@ export function Footer() {
         </div>
         <nav aria-label="Rodapé" className="grid grid-cols-2 gap-2 text-sm font-semibold">
           <Link className="text-ink-soft hover:text-ink" href="/temporadas">Anime</Link>
-          <Link className="text-ink-soft hover:text-ink" href="/filmes">Filmes</Link>
-          <Link className="text-ink-soft hover:text-ink" href="/jogos">Jogos</Link>
           <Link className="text-ink-soft hover:text-ink" href="/tcg">TCG</Link>
           <Link className="text-ink-soft hover:text-ink" href="/colecao">Minha coleção</Link>
           <Link className="text-ink-soft hover:text-ink" href="/minha-jornada">Minha jornada</Link>

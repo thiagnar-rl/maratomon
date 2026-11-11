@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: "Maratomon TCG",
   description:
-    "Guia de fãs de Pokémon: anime dublado em ordem, filmes, jogos clássicos, cartas do TCG com preços em reais e sua coleção pessoal.",
+    "Guia de fãs de Pokémon: anime dublado em ordem, cartas do TCG com preços em reais e sua coleção pessoal.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "contato@exemplo.com",
   disclaimer:

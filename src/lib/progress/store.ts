@@ -1,5 +1,5 @@
 /**
- * Progresso do usuário (episódios, filmes e jogos marcados).
+ * Progresso do usuário (episódios marcados).
  *
  * - Só conta com a pessoa conectada: o progresso vive na conta (tabela `watched_episodes`).
  * - Sem login, marcar um episódio abre o convite para criar conta. O que ela tentou marcar
