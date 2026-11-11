@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthPanel } from "@/components/account/auth-panel";
 import { Mascot } from "@/components/mascot";
 
@@ -33,7 +34,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           ))}
         </ul>
       </section>
-      <AuthPanel initialMode={modo === "criar" ? "criar" : "entrar"} />
+      <Suspense>
+        <AuthPanel initialMode={modo === "criar" ? "criar" : "entrar"} />
+      </Suspense>
     </div>
   );
 }

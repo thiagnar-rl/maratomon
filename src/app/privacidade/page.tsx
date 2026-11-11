@@ -12,7 +12,7 @@ export default function PrivacyPage() {
 
       <h2>Dados que tratamos</h2>
       <ul>
-        <li><strong>Sem conta:</strong> seu progresso fica só no seu navegador (armazenamento local). Não recebemos esses dados.</li>
+        <li><strong>Sem conta:</strong> você assiste e navega livremente, mas o progresso não é registrado. Não guardamos dados seus.</li>
         <li><strong>Com conta:</strong> seu e-mail, o que você marcou como assistido ou jogado e sua coleção (decks, pastas, cartas, preço pago).</li>
         <li><strong>Perfil (opcional):</strong> nome, apelido, celular, Pokémon favorito e se aceita receber ofertas. Você edita ou apaga em “Minha conta”.</li>
         <li><strong>Endereços (opcional):</strong> endereços de entrega que você salvar, usados só para enviar compras da loja.</li>

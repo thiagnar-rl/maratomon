@@ -3,7 +3,7 @@
 import { toggleWatched, useProgress } from "@/lib/progress/hooks";
 import { WatchedCheckbox } from "./watched-checkbox";
 
-/** Checkbox ligado ao progresso (filmes, jogos…). A chave fica salva no aparelho e na conta. */
+/** Checkbox ligado ao progresso (filmes, jogos…). Só conta com login; sem conta, abre o convite. */
 export function CheckButton({ itemKey, label, color, doneText, todoText }: {
   itemKey: string;
   label: string;

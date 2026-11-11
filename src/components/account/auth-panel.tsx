@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { sendPasswordReset, signInWithEmail, signUpWithEmail, useUser } from "@/lib/account";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -13,6 +13,9 @@ const input = "w-full rounded-xl border border-line bg-bg px-4 py-3 outline-none
 /** Painel de login e criação de conta com e-mail e senha. */
 export function AuthPanel({ initialMode = "entrar" }: { initialMode?: "entrar" | "criar" }) {
   const router = useRouter();
+  const params = useSearchParams();
+  const back = params.get("voltar");
+  const destination = back && back.startsWith("/") && !back.startsWith("//") ? back : "/conta";
   const user = useUser();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState("");
@@ -25,8 +28,8 @@ export function AuthPanel({ initialMode = "entrar" }: { initialMode?: "entrar" |
   const [done, setDone] = useState("");
 
   useEffect(() => {
-    if (user) router.replace("/conta");
-  }, [user, router]);
+    if (user) router.replace(destination);
+  }, [user, router, destination]);
 
   if (!isSupabaseConfigured) {
     return <p className="rounded-2xl border border-line bg-surface-2 p-4 text-sm text-ink-soft">O login ainda não foi configurado.</p>;

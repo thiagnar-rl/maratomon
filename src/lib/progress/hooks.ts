@@ -4,7 +4,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import { getAllEpisodes, type Episode } from "@/lib/catalog";
 import { getServerSnapshot, getSnapshot, subscribe } from "./store";
 
-export { setWatched, toggleWatched } from "./store";
+export { closeAccountPrompt, openAccountPrompt, setWatched, toggleWatched } from "./store";
 
 export function useProgress() {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
