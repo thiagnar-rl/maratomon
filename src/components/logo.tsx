@@ -1,10 +1,10 @@
-import { Mascot } from "./mascot";
+import { BrandMark } from "./brand-mark";
 
-/** Marca do Maratomon TCG: o mascote fantasminha + nome. */
+/** Marca do Maratomon TCG: símbolo (fantasminha + carta) e nome. */
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 font-display text-xl font-extrabold tracking-tight ${className}`}>
-      <Mascot className="size-10 -my-1 drop-shadow-[0_4px_10px_rgba(139,92,246,0.45)]" />
+      <BrandMark className="size-10 -my-1 drop-shadow-[0_4px_10px_rgba(139,92,246,0.45)]" />
       <span className="flex items-baseline gap-1.5">
         <span>
           Marato<span className="text-accent">mon</span>
