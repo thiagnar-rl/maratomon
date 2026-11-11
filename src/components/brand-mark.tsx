@@ -1,49 +1,48 @@
-import { useId } from "react";
-
 /**
- * Símbolo da marca Maratomon TCG: o fantasminha da casa espiando por trás de uma carta.
- * Desenho original (não usa elementos registrados da franquia).
+ * Símbolo da marca Maratomon TCG: o fantasminha da casa, grande, saindo do círculo amarelo
+ * e segurando uma carta. Desenho original (não usa elementos registrados da franquia).
  */
 export function BrandMark({ className = "", title }: { className?: string; title?: string }) {
-  const id = useId().replace(/:/g, "");
   return (
-    <svg viewBox="0 0 64 64" className={className} role={title ? "img" : undefined} aria-hidden={title ? undefined : true}>
+    <svg
+      viewBox="0 0 100 100"
+      className={className}
+      role={title ? "img" : undefined}
+      aria-hidden={title ? undefined : true}
+    >
       {title && <title>{title}</title>}
-      <defs>
-        <linearGradient id={`g${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#c4a6ff" />
-          <stop offset="1" stopColor="#6d28d9" />
-        </linearGradient>
-        <linearGradient id={`c${id}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#2a1650" />
-          <stop offset="1" stopColor="#120a24" />
-        </linearGradient>
-        <linearGradient id={`s${id}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#ff7eb6" />
-          <stop offset="0.5" stopColor="#ffd43b" />
-          <stop offset="1" stopColor="#5effc8" />
-        </linearGradient>
-      </defs>
-      {/* fantasma atrás da carta */}
-      <path d="M17 30c0-11 6.8-19 15-19s15 8 15 19v8H17z" fill={`url(#g${id})`} />
-      <ellipse cx="27" cy="25" rx="3.6" ry="4.4" fill="#fff" />
-      <ellipse cx="37.5" cy="25" rx="3.6" ry="4.4" fill="#fff" />
-      <circle cx="28.2" cy="26.1" r="2" fill="#1b1033" />
-      <circle cx="38.7" cy="26.1" r="2" fill="#1b1033" />
-      <circle cx="28.9" cy="25.3" r="0.7" fill="#fff" />
-      <circle cx="39.4" cy="25.3" r="0.7" fill="#fff" />
-      {/* carta */}
-      <g transform="rotate(-7 32 46)">
-        <rect x="12" y="31" width="40" height="30" rx="6" fill={`url(#c${id})`} stroke="#ffcb05" strokeWidth="3" />
-        <rect x="17" y="36" width="30" height="20" rx="3" fill="none" stroke={`url(#s${id})`} strokeWidth="1.6" opacity="0.9" />
-        {/* monograma M em forma de raio */}
-        <path d="M23 52V40l5.5 7 3.5-5 3.5 5 5.5-7v12" fill="none" stroke="#ffcb05" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="50" cy="56" r="42" fill="#ffcb05" />
+      <path
+        d="M22 50c0-18 12.5-33 28-33s28 15 28 33v29c-3.1 5.5-7.8 5.5-10.9 0-3.1-5.5-7.8-5.5-10.9 0-3.1 5.5-7.8 5.5-10.9 0-3.1-5.5-7.8-5.5-10.9 0-3 5.1-7.4 5.5-10.4.5z"
+        fill="#7c3aed"
+        stroke="#2a1061"
+        strokeWidth="3"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M33 31c4-6 9.5-9 16-9"
+        stroke="#fff"
+        strokeOpacity=".45"
+        strokeWidth="4"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <circle cx="40" cy="48" r="7" fill="#fff" />
+      <circle cx="60" cy="48" r="7" fill="#fff" />
+      <circle cx="42" cy="46.5" r="3.4" fill="#15131f" />
+      <circle cx="62" cy="46.5" r="3.4" fill="#15131f" />
+      <circle cx="43.2" cy="45.3" r="1.2" fill="#fff" />
+      <circle cx="63.2" cy="45.3" r="1.2" fill="#fff" />
+      <ellipse cx="32" cy="60" rx="4.5" ry="2.6" fill="#ff7eb6" opacity=".85" />
+      <ellipse cx="68" cy="60" rx="4.5" ry="2.6" fill="#ff7eb6" opacity=".85" />
+      <path d="M44 61q6 6 12 0" stroke="#fff" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <g transform="rotate(16 80 66)">
+        <rect x="70" y="52" width="21" height="29" rx="4" fill="#fff" stroke="#2a1061" strokeWidth="3" />
+        <rect x="74.5" y="57" width="12" height="9" rx="2" fill="#ff5c8a" />
+        <rect x="74.5" y="69.5" width="12" height="2.4" rx="1.2" fill="#2a1061" opacity=".5" />
+        <rect x="74.5" y="74" width="8" height="2.4" rx="1.2" fill="#2a1061" opacity=".5" />
       </g>
-      {/* mãozinhas segurando a carta */}
-      <ellipse cx="18.5" cy="33.5" rx="3.6" ry="2.8" fill="#8b5cf6" transform="rotate(-20 18.5 33.5)" />
-      <ellipse cx="45.5" cy="31" rx="3.6" ry="2.8" fill="#8b5cf6" transform="rotate(15 45.5 31)" />
-      {/* brilho */}
-      <path d="M52 9l1.2 3.3 3.3 1.2-3.3 1.2L52 18l-1.2-3.3-3.3-1.2 3.3-1.2z" fill="#ffd43b" />
+      <ellipse cx="72" cy="69" rx="5" ry="4" fill="#7c3aed" stroke="#2a1061" strokeWidth="2.5" />
     </svg>
   );
 }
