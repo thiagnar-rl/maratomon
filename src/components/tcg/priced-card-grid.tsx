@@ -166,7 +166,7 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
                 key={r.label}
                 type="button"
                 aria-pressed={on}
-                onClick={() => setRanges(on ? ranges.filter((x) => x !== r.label) : [...ranges, r.label])}
+                onClick={() => setRanges((prev) => (prev.includes(r.label) ? prev.filter((x) => x !== r.label) : [...prev, r.label]))}
                 className="rounded-full border border-line px-3 py-1.5 text-xs font-bold transition hover:border-ink-soft aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-white"
               >
                 {r.label}
