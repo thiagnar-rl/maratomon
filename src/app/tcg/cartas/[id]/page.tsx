@@ -102,7 +102,7 @@ export default async function CardPage({ params }: Props) {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,380px)_1fr]">
         {/* Coluna da carta */}
         <div className="space-y-4 lg:sticky lg:top-40 lg:self-start">
-          <HoloCard strong className="overflow-hidden rounded-[1.4rem] shadow-2xl">
+          <HoloCard strong className="mx-auto max-w-[320px] overflow-hidden rounded-[1.4rem] shadow-2xl lg:max-w-none">
             <div style={{ boxShadow: typeColor ? `0 30px 80px -30px ${typeColor}` : undefined }}>
               {image ? (
                 <img src={image} alt={card.name} className="w-full" />
@@ -189,9 +189,11 @@ export default async function CardPage({ params }: Props) {
               {card.types?.length ? (
                 <Spec label="Tipo">
                   {card.types.map((t) => (
-                    <Energy key={t} type={t} size="sm" />
+                    <span key={t} className="flex items-center gap-1">
+                      <Energy type={t} size="sm" />
+                      <span aria-hidden="true">{TYPE_PT[t] ?? t}</span>
+                    </span>
                   ))}
-                  {card.types.map((t) => TYPE_PT[t] ?? t).join(", ")}
                 </Spec>
               ) : null}
               {card.weaknesses?.length ? (

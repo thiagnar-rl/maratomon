@@ -33,7 +33,7 @@ export function CardTile({ card, subtitle, price }: { card: CardBrief; subtitle?
               <span className="flex items-baseline justify-between gap-1">
                 <strong className="text-sm text-ink">{formatMoney(price.brl, "BRL")}</strong>
                 {typeof change === "number" && Math.abs(change) >= 0.1 && (
-                  <span className={`font-bold ${change > 0 ? "text-good" : "text-accent"}`} title="Variação em 7 dias">
+                  <span className={`font-bold ${change > 0 ? "text-good" : "text-[#ff5c8a]"}`} title="Variação em 7 dias">
                     {change > 0 ? "▲" : "▼"} {formatPct(change).replace(/^[+−]/, "")}
                   </span>
                 )}
