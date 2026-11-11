@@ -1,8 +1,16 @@
 import type { CardDetail, Pricing, Rates, TcgplayerVariant } from "./types";
 
 /** Imagem da carta: "low" (miniatura) ou "high" (detalhe). */
-export const cardImage = (base: string | undefined, quality: "low" | "high" = "low") =>
-  base ? `${base}/${quality}.webp` : null;
+/**
+ * URL da imagem da carta. A TCGdex entrega uma "base" sem extensão; as imagens que completamos
+ * de outras fontes (Pokémon TCG API / Scrydex) já vêm como URL do tamanho pequeno.
+ */
+export function cardImage(base: string | undefined, quality: "low" | "high" = "low") {
+  if (!base) return null;
+  if (base.startsWith("https://images.pokemontcg.io/")) return quality === "high" ? base.replace(/\.png$/, "_hires.png") : base;
+  if (base.startsWith("https://images.scrydex.com/")) return quality === "high" ? base.replace(/\/small$/, "/large") : base;
+  return `${base}/${quality}.webp`;
+}
 
 export const setLogo = (base: string | undefined) => (base ? `${base}.webp` : null);
 

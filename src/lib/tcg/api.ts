@@ -1,5 +1,6 @@
 import "server-only";
 import type { CardBrief, CardDetail, Rates, SerieDetail, SetBrief, SetDetail } from "./types";
+import { extraImage } from "./missing-images";
 
 /**
  * Dados do TCG: TCGdex (gratuita, sem chave). Preços: TCGplayer (EUA, atualizado de hora em hora)
@@ -48,15 +49,46 @@ export async function getSeries(): Promise<SerieWithSets[]> {
     .sort((a, b) => (b.releaseDate ?? "").localeCompare(a.releaseDate ?? ""));
 }
 
+/** Idiomas em que a TCGdex às vezes tem a imagem que falta em inglês (mesma arte). */
+const IMAGE_LANGS = ["es", "it", "de", "fr", "pt"] as const;
+
+/**
+ * Completa as imagens que a TCGdex não tem em inglês:
+ * 1. Pokémon TCG API / Scrydex (tabela em missing-images.ts);
+ * 2. a mesma carta em outro idioma na própria TCGdex.
+ */
+async function fillSetImages(setId: string, cards: CardBrief[]): Promise<CardBrief[]> {
+  let filled = cards.map((c) => (c.image ? c : { ...c, image: extraImage(setId, c.localId) ?? undefined }));
+  if (filled.every((c) => c.image)) return filled;
+  const others = await Promise.all(
+    IMAGE_LANGS.map((lang) => tcgdex<SetDetail>(`${lang}/sets/${encodeURIComponent(setId)}`, REVALIDATE.catalog)),
+  );
+  const byLocalId = new Map<string, string>();
+  for (const other of others) for (const c of other?.cards ?? []) if (c.image && !byLocalId.has(c.localId)) byLocalId.set(c.localId, c.image);
+  filled = filled.map((c) => (c.image ? c : { ...c, image: byLocalId.get(c.localId) }));
+  return filled;
+}
+
 export async function getSet(id: string): Promise<(SetDetail & { namePt?: string }) | null> {
   const [set, pt] = await Promise.all([
     tcgdex<SetDetail>(`en/sets/${encodeURIComponent(id)}`, REVALIDATE.catalog),
     portugueseNames(),
   ]);
-  return set ? { ...set, namePt: pt.get(set.id) } : null;
+  if (!set) return null;
+  return { ...set, cards: await fillSetImages(set.id, set.cards ?? []), namePt: pt.get(set.id) };
 }
 
-export const getCard = (id: string) => tcgdex<CardDetail>(`en/cards/${encodeURIComponent(id)}`, REVALIDATE.card);
+export async function getCard(id: string): Promise<CardDetail | null> {
+  const card = await tcgdex<CardDetail>(`en/cards/${encodeURIComponent(id)}`, REVALIDATE.card);
+  if (!card || card.image) return card;
+  const extra = extraImage(card.set.id, card.localId);
+  if (extra) return { ...card, image: extra };
+  for (const lang of IMAGE_LANGS) {
+    const other = await tcgdex<CardBrief>(`${lang}/cards/${encodeURIComponent(id)}`, REVALIDATE.catalog);
+    if (other?.image) return { ...card, image: other.image };
+  }
+  return card;
+}
 
 export async function searchCards(query: string, limit = 60): Promise<CardBrief[]> {
   const q = query.trim();
@@ -65,7 +97,11 @@ export async function searchCards(query: string, limit = 60): Promise<CardBrief[
     `en/cards?name=like:${encodeURIComponent(q)}&pagination:itemsPerPage=${limit}`,
     REVALIDATE.card,
   );
-  return results ?? [];
+  return (results ?? []).map((c) => {
+    if (c.image) return c;
+    const setId = c.id.slice(0, c.id.length - c.localId.length - 1);
+    return { ...c, image: extraImage(setId, c.localId) ?? undefined };
+  });
 }
 
 /** Cotação do dólar e do euro em reais: AwesomeAPI, depois Frankfurter (BCE), depois um valor aproximado. */

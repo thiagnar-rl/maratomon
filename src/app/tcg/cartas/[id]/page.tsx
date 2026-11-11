@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CardPlaceholder } from "@/components/tcg/card-placeholder";
 import { notFound } from "next/navigation";
 import { getCard, getRates } from "@/lib/tcg/api";
 import { cardImage, cardmarketSeries, estimateBRL, formatMoney, tcgplayerVariants, variantLabel } from "@/lib/tcg/prices";
@@ -48,7 +49,9 @@ export default async function CardPage({ params }: Props) {
             {image ? (
               <img src={image} alt={card.name} className="w-full" />
             ) : (
-              <div className="grid aspect-[5/7] place-items-center bg-surface-2 text-ink-soft">Sem imagem</div>
+              <div className="aspect-[5/7]">
+                <CardPlaceholder name={card.name} size="lg" />
+              </div>
             )}
           </div>
           <CardActions
