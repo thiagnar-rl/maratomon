@@ -1,19 +1,8 @@
 "use client";
 
-import type { Provider, User } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { getSupabase } from "./supabase";
-
-/** Provedores de login social oferecidos no site. */
-export const SOCIAL = ["google", "facebook", "apple"] as const;
-export type SocialProvider = (typeof SOCIAL)[number];
-
-export const PROVIDER_LABEL: Record<SocialProvider | "email", string> = {
-  google: "Google",
-  facebook: "Facebook",
-  apple: "Apple",
-  email: "E-mail",
-};
 
 function client() {
   const supabase = getSupabase();
@@ -22,20 +11,6 @@ function client() {
 }
 
 const redirect = (path: string) => `${window.location.origin}${path}`;
-
-/** Quais provedores estão ligados no Supabase (para mostrar "em breve" nos outros). */
-export async function enabledProviders(): Promise<Record<SocialProvider, boolean>> {
-  const off = { google: false, facebook: false, apple: false };
-  try {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-    const response = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key! } });
-    const data = (await response.json()) as { external?: Record<string, boolean> };
-    return { google: !!data.external?.google, facebook: !!data.external?.facebook, apple: !!data.external?.apple };
-  } catch {
-    return off;
-  }
-}
 
 /** Conta atual, atualizada quando a pessoa entra ou sai. undefined = carregando. */
 export function useUser(): User | null | undefined {
@@ -59,14 +34,6 @@ export function useUser(): User | null | undefined {
 
 // ---------- Entrar / criar conta ----------
 
-export async function signInWithProvider(provider: SocialProvider, next = "/conta") {
-  const { error } = await client().auth.signInWithOAuth({
-    provider: provider as Provider,
-    options: { redirectTo: redirect(next), scopes: provider === "facebook" ? "email public_profile" : undefined },
-  });
-  if (error) throw new Error(translate(error.message));
-}
-
 export async function signUpWithEmail(input: { name: string; email: string; password: string; marketing: boolean }) {
   const { data, error } = await client().auth.signUp({
     email: input.email,
@@ -86,11 +53,6 @@ export async function signInWithEmail(email: string, password: string) {
   if (error) throw new Error(translate(error.message));
 }
 
-export async function sendMagicLink(email: string) {
-  const { error } = await client().auth.signInWithOtp({ email, options: { emailRedirectTo: redirect("/conta") } });
-  if (error) throw new Error(translate(error.message));
-}
-
 export async function sendPasswordReset(email: string) {
   const { error } = await client().auth.resetPasswordForEmail(email, { redirectTo: redirect("/conta/nova-senha") });
   if (error) throw new Error(translate(error.message));
@@ -103,21 +65,6 @@ export async function updatePassword(password: string) {
 
 export async function signOut() {
   await client().auth.signOut();
-}
-
-// ---------- Contas vinculadas ----------
-
-export async function linkProvider(provider: SocialProvider) {
-  const { error } = await client().auth.linkIdentity({ provider: provider as Provider, options: { redirectTo: redirect("/conta") } });
-  if (error) throw new Error(translate(error.message));
-}
-
-export async function unlinkProvider(user: User, provider: string) {
-  const identity = user.identities?.find((i) => i.provider === provider);
-  if (!identity) return;
-  if ((user.identities?.length ?? 0) < 2) throw new Error("Essa é a única forma de entrar na sua conta. Vincule outra antes de remover.");
-  const { error } = await client().auth.unlinkIdentity(identity);
-  if (error) throw new Error(translate(error.message));
 }
 
 // ---------- Perfil ----------
@@ -241,9 +188,6 @@ function translate(message: string): string {
   if (m.includes("email not confirmed")) return "Confirme seu e-mail pelo link que enviamos antes de entrar.";
   if (m.includes("user already registered")) return "Já existe uma conta com esse e-mail. Entre ou recupere a senha.";
   if (m.includes("password should be")) return "A senha precisa ter pelo menos 8 caracteres, com letras e números.";
-  if (m.includes("provider is not enabled") || m.includes("unsupported provider")) return "Esse login ainda não está ativado.";
-  if (m.includes("manual linking is disabled")) return "Vincular contas ainda não está ativado.";
-  if (m.includes("identity is already linked")) return "Essa conta já está vinculada a outro usuário.";
   if (m.includes("rate limit") || m.includes("security purposes")) return "Muitas tentativas. Espere um minuto e tente de novo.";
   if (m.includes("profiles_nickname_key") || m.includes("duplicate key")) return "Esse apelido já está em uso.";
   if (m.includes("nickname")) return "Apelido: 3 a 24 letras, números, ponto ou _.";

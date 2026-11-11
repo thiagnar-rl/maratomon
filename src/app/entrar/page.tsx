@@ -4,7 +4,7 @@ import { Mascot } from "@/components/mascot";
 
 export const metadata: Metadata = {
   title: "Entrar ou criar conta",
-  description: "Crie sua conta Maratomon TCG com Google, Facebook, Apple ou e-mail.",
+  description: "Crie sua conta Maratomon TCG com e-mail e senha.",
   robots: { index: false },
 };
 
@@ -23,7 +23,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <h1 className="font-display text-5xl font-extrabold leading-[0.95] tracking-tight">
           Sua conta de <span className="text-accent">treinador</span>
         </h1>
-        <p className="text-lg text-ink-soft">Uma conta só para o anime, as cartas e a loja. Entre em um clique com a conta que você já usa.</p>
+        <p className="text-lg text-ink-soft">Uma conta só para o anime, as cartas e a loja. Crie com seu e-mail e uma senha.</p>
         <ul className="space-y-3">
           {perks.map(([icon, text]) => (
             <li key={text} className="flex items-center gap-3 font-semibold">

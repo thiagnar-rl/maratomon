@@ -16,7 +16,7 @@ export default function PrivacyPage() {
         <li><strong>Com conta:</strong> seu e-mail, o que você marcou como assistido ou jogado e sua coleção (decks, pastas, cartas, preço pago).</li>
         <li><strong>Perfil (opcional):</strong> nome, apelido, celular, Pokémon favorito e se aceita receber ofertas. Você edita ou apaga em “Minha conta”.</li>
         <li><strong>Endereços (opcional):</strong> endereços de entrega que você salvar, usados só para enviar compras da loja.</li>
-        <li><strong>Login com Google, Facebook ou Apple:</strong> recebemos apenas nome, e-mail e foto de perfil que a plataforma compartilhar com a sua autorização. Nunca recebemos sua senha dessas contas. Com a Apple, você pode esconder o e-mail real.</li>
+        <li><strong>Senha:</strong> fica guardada de forma criptografada pelo provedor de login (Supabase). Ninguém da equipe consegue vê-la.</li>
         <li><strong>Fotos e vídeos:</strong> os arquivos que você envia para a sua coleção ficam em armazenamento privado. Só você acessa, por links temporários. Você pode apagá-los quando quiser.</li>
         <li><strong>Vídeos:</strong> o player do YouTube só é carregado quando você clica para assistir. A partir daí, o Google pode tratar dados conforme a política dele.</li>
       </ul>

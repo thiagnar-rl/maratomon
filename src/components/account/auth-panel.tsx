@@ -3,15 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { sendMagicLink, sendPasswordReset, signInWithEmail, signUpWithEmail, useUser } from "@/lib/account";
+import { sendPasswordReset, signInWithEmail, signUpWithEmail, useUser } from "@/lib/account";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { SocialButtons } from "./social-buttons";
 
-type Mode = "entrar" | "criar" | "link" | "senha";
+type Mode = "entrar" | "criar" | "senha";
 
 const input = "w-full rounded-xl border border-line bg-bg px-4 py-3 outline-none transition focus:border-accent";
 
-/** Painel de login e criação de conta (redes sociais + e-mail). */
+/** Painel de login e criação de conta com e-mail e senha. */
 export function AuthPanel({ initialMode = "entrar" }: { initialMode?: "entrar" | "criar" }) {
   const router = useRouter();
   const user = useUser();
@@ -85,18 +84,6 @@ export function AuthPanel({ initialMode = "entrar" }: { initialMode?: "entrar" |
         </div>
       )}
 
-      {(mode === "entrar" || mode === "criar") && (
-        <>
-          <SocialButtons />
-          <p className="text-center text-xs text-ink-soft">
-            Ao continuar com Google, Facebook ou Apple você aceita os <Link href="/termos" className="underline">Termos</Link> e a{" "}
-            <Link href="/privacidade" className="underline">Política de privacidade</Link>.
-          </p>
-          <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-ink-soft">
-            <span className="h-px flex-1 bg-line" /> ou com e-mail <span className="h-px flex-1 bg-line" />
-          </div>
-        </>
-      )}
 
       {mode === "entrar" && (
         <form
@@ -111,14 +98,9 @@ export function AuthPanel({ initialMode = "entrar" }: { initialMode?: "entrar" |
           <button disabled={busy} className="w-full rounded-full bg-accent px-5 py-3 font-bold text-white transition hover:brightness-110 disabled:opacity-50">
             {busy ? "Entrando…" : "Entrar"}
           </button>
-          <div className="flex flex-wrap justify-between gap-2 text-sm">
-            <button type="button" onClick={() => setMode("senha")} className="font-semibold text-ink-soft hover:text-ink">
-              Esqueci minha senha
-            </button>
-            <button type="button" onClick={() => setMode("link")} className="font-semibold text-accent">
-              Entrar sem senha (link no e-mail)
-            </button>
-          </div>
+          <button type="button" onClick={() => setMode("senha")} className="text-sm font-semibold text-ink-soft hover:text-ink">
+            Esqueci minha senha
+          </button>
         </form>
       )}
 
@@ -165,25 +147,19 @@ export function AuthPanel({ initialMode = "entrar" }: { initialMode?: "entrar" |
         </form>
       )}
 
-      {(mode === "link" || mode === "senha") && (
+      {mode === "senha" && (
         <form
           className="space-y-3"
           onSubmit={(e) => {
             e.preventDefault();
             void run(async () => {
-              if (mode === "link") {
-                await sendMagicLink(email);
-                return `Enviamos um link de acesso para ${email}. Abra neste mesmo navegador.`;
-              }
               await sendPasswordReset(email);
               return `Se existir uma conta com ${email}, você vai receber um link para criar uma nova senha.`;
             });
           }}
         >
-          <h2 className="font-display text-2xl font-extrabold">{mode === "link" ? "Entrar sem senha" : "Recuperar senha"}</h2>
-          <p className="text-sm text-ink-soft">
-            {mode === "link" ? "Mandamos um link mágico: é só clicar para entrar." : "Mandamos um link para você criar uma senha nova."}
-          </p>
+          <h2 className="font-display text-2xl font-extrabold">Recuperar senha</h2>
+          <p className="text-sm text-ink-soft">Mandamos um link para você criar uma senha nova.</p>
           <input className={input} type="email" required autoComplete="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="E-mail" />
           <button disabled={busy} className="w-full rounded-full bg-accent px-5 py-3 font-bold text-white transition hover:brightness-110 disabled:opacity-50">
             {busy ? "Enviando…" : "Enviar link"}

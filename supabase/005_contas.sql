@@ -29,8 +29,7 @@ begin new.updated_at = now(); return new; end $$;
 drop trigger if exists profiles_touch on public.profiles;
 create trigger profiles_touch before update on public.profiles for each row execute function public.touch_updated_at();
 
--- Cria o perfil automaticamente quando a conta nasce (e-mail, Google, Facebook ou Apple),
--- aproveitando nome e foto que o provedor devolve.
+-- Cria o perfil automaticamente quando a conta nasce, com o nome informado no cadastro.
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin

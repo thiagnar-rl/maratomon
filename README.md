@@ -84,19 +84,3 @@ O script só aceita vídeos publicados pelo canal oficial Pokémon TV, nunca reu
 
 Veja [LEGAL.md](LEGAL.md). Resumo: o site usa imagens oficiais por escolha do dono (risco assumido, principalmente se monetizar), não hospeda episódios nem ROMs e segue a LGPD.
 
-## Login com Google, Facebook e Apple
-
-O site já tem os botões; cada provedor fica "em breve" até ser ligado no Supabase
-(Authentication › Sign In / Providers). Em todos, a URL de retorno (callback) é:
-
-`https://qtesnnuytuxugskbfuus.supabase.co/auth/v1/callback`
-
-- **Google:** Google Cloud Console › APIs e serviços › Credenciais › Criar ID do cliente OAuth (Aplicativo da Web).
-  Origem: `https://maratomon.vercel.app`. URI de redirecionamento: a callback acima. Cole o Client ID e o Client Secret no Supabase.
-- **Facebook:** developers.facebook.com › Criar app (Consumidor) › Login do Facebook › Configurações:
-  callback acima em "URIs de redirecionamento do OAuth válidos". Cole o ID e a Chave secreta do app no Supabase.
-  Para o público geral entrar, o app precisa estar em modo "Ao vivo" (exige política de privacidade: `/privacidade`).
-- **Apple:** exige Apple Developer Program (US$ 99/ano). Crie um Services ID com "Sign in with Apple",
-  domínio `qtesnnuytuxugskbfuus.supabase.co` e a callback acima; gere a chave (.p8) e informe no Supabase.
-
-"Allow manual linking" está ligado, então cada pessoa pode vincular várias formas de entrar em "Minha conta".

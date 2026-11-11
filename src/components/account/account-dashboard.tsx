@@ -8,15 +8,11 @@ import {
   deleteAddress,
   deleteMyAccount,
   getProfile,
-  linkProvider,
   listAddresses,
   lookupCep,
-  PROVIDER_LABEL,
   saveAddress,
   setDefaultAddress,
   signOut,
-  SOCIAL,
-  unlinkProvider,
   updatePassword,
   updateProfile,
   useUser,
@@ -26,7 +22,6 @@ import {
 } from "@/lib/account";
 import { artwork } from "@/lib/pokemon";
 import { Mascot } from "@/components/mascot";
-import { ProviderIcon } from "./social-buttons";
 
 const input = "w-full rounded-xl border border-line bg-bg px-4 py-2.5 outline-none transition focus:border-accent";
 const card = "space-y-4 rounded-[2rem] border border-line bg-surface p-6";
@@ -96,9 +91,8 @@ function Dashboard({ user }: { user: User }) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {profile && <ProfileForm profile={profile} onSaved={setProfile} />}
-        <LinkedAccounts user={user} />
         <Addresses defaultRecipient={profile?.full_name ?? ""} />
-        <Security user={user} />
+        <Security />
       </div>
     </div>
   );
@@ -168,56 +162,6 @@ function ProfileForm({ profile, onSaved }: { profile: Profile; onSaved: (p: Prof
       <button disabled={busy} className="rounded-full bg-accent px-5 py-2.5 font-bold text-white disabled:opacity-50">{busy ? "Salvando…" : "Salvar perfil"}</button>
       {node}
     </form>
-  );
-}
-
-function LinkedAccounts({ user }: { user: User }) {
-  const [busy, setBusy] = useState<string | null>(null);
-  const [flash, node] = useFlash();
-  const linked = new Set((user.identities ?? []).map((i) => i.provider));
-
-  return (
-    <section className={card}>
-      <h2 className="font-display text-xl font-extrabold">Formas de entrar</h2>
-      <p className="text-sm text-ink-soft">Vincule suas contas para entrar com qualquer uma delas.</p>
-      <ul className="space-y-2">
-        <li className="flex items-center gap-3 rounded-2xl bg-surface-2 px-4 py-3">
-          <span className="text-lg">✉️</span>
-          <span className="flex-1 font-semibold">{PROVIDER_LABEL.email}</span>
-          <span className="text-xs font-bold text-good">{linked.has("email") ? "Vinculado" : "—"}</span>
-        </li>
-        {SOCIAL.map((provider) => {
-          const on = linked.has(provider);
-          return (
-            <li key={provider} className="flex items-center gap-3 rounded-2xl bg-surface-2 px-4 py-3">
-              <ProviderIcon provider={provider} />
-              <span className="flex-1 font-semibold">{PROVIDER_LABEL[provider]}</span>
-              <button
-                type="button"
-                disabled={busy !== null}
-                onClick={async () => {
-                  setBusy(provider);
-                  try {
-                    if (on) {
-                      await unlinkProvider(user, provider);
-                      flash(true, `${PROVIDER_LABEL[provider]} desvinculado.`);
-                    } else await linkProvider(provider);
-                  } catch (err) {
-                    flash(false, err instanceof Error ? err.message : "Não foi possível.");
-                  } finally {
-                    setBusy(null);
-                  }
-                }}
-                className={`rounded-full px-3 py-1 text-xs font-bold ${on ? "border border-line text-ink-soft hover:text-accent" : "bg-accent text-white"} disabled:opacity-50`}
-              >
-                {on ? "Desvincular" : "Vincular"}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      {node}
-    </section>
   );
 }
 
@@ -371,11 +315,10 @@ function AddressForm({ value, onSave, onCancel }: { value: AddressInput; onSave:
   );
 }
 
-function Security({ user }: { user: User }) {
+function Security() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [flash, node] = useFlash();
-  const hasEmail = (user.identities ?? []).some((i) => i.provider === "email");
 
   return (
     <section className={card}>
@@ -388,7 +331,7 @@ function Security({ user }: { user: User }) {
           try {
             await updatePassword(password);
             setPassword("");
-            flash(true, hasEmail ? "Senha alterada!" : "Senha criada! Agora você também pode entrar com e-mail e senha.");
+            flash(true, "Senha alterada!");
           } catch (err) {
             flash(false, err instanceof Error ? err.message : "Não foi possível.");
           } finally {
@@ -404,12 +347,12 @@ function Security({ user }: { user: User }) {
           pattern="(?=.*[A-Za-z])(?=.*[0-9]).{8,}"
           title="Pelo menos 8 caracteres, com letras e números"
           autoComplete="new-password"
-          placeholder={hasEmail ? "Nova senha" : "Criar uma senha"}
+          placeholder="Nova senha"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           aria-label="Nova senha"
         />
-        <button disabled={busy} className="rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-bg disabled:opacity-50">{hasEmail ? "Alterar senha" : "Criar senha"}</button>
+        <button disabled={busy} className="rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-bg disabled:opacity-50">Alterar senha</button>
       </form>
       {node}
       <div className="space-y-2 border-t border-line pt-4 text-sm text-ink-soft">
