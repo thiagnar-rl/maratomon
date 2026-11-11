@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { formatMoney, parseBRL } from "@/lib/tcg/prices";
 import type { CardBrief, PricedCard } from "@/lib/tcg/types";
 import { CardTile } from "./card-tile";
+import { MultiSelect } from "./multi-select";
 
 type Sort = "numero" | "maior" | "menor" | "alta" | "baixa";
 
@@ -40,9 +41,10 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
   const [data, setData] = useState<Record<string, PricedCard>>({});
   const [done, setDone] = useState(false);
   const [sort, setSort] = useState<Sort>("numero");
-  const [rarity, setRarity] = useState("");
-  const [variant, setVariant] = useState("");
-  const [illustrator, setIllustrator] = useState("");
+  const [rarity, setRarity] = useState<string[]>([]);
+  const [variant, setVariant] = useState<string[]>([]);
+  const [illustrator, setIllustrator] = useState<string[]>([]);
+  const [ranges, setRanges] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [minText, setMinText] = useState("");
   const [maxText, setMaxText] = useState("");
@@ -79,18 +81,20 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
     return cards.filter((c) => {
       const m = data[c.id]?.meta;
       if (q && !c.name.toLowerCase().includes(q) && !c.localId.toLowerCase().includes(q)) return false;
-      if (rarity && m?.rarity !== rarity) return false;
-      if (variant && !m?.variants.includes(variant)) return false;
-      if (illustrator && m?.illustrator !== illustrator) return false;
-      if (minPrice != null || maxPrice != null) {
+      // Dentro de cada filtro vale qualquer opção marcada (OU); entre filtros, todos precisam bater (E).
+      if (rarity.length && !rarity.includes(m?.rarity ?? "")) return false;
+      if (variant.length && !variant.some((v) => m?.variants.includes(v))) return false;
+      if (illustrator.length && !illustrator.includes(m?.illustrator ?? "")) return false;
+      if (minPrice != null || maxPrice != null || ranges.length) {
         const brl = data[c.id]?.brl;
         if (brl == null) return false;
         if (minPrice != null && brl < minPrice) return false;
         if (maxPrice != null && brl > maxPrice) return false;
+        if (ranges.length && !RANGES.some((r) => ranges.includes(r.label) && (r.min == null || brl >= r.min) && (r.max == null || brl < r.max))) return false;
       }
       return true;
     });
-  }, [cards, data, query, rarity, variant, illustrator, minPrice, maxPrice]);
+  }, [cards, data, query, rarity, variant, illustrator, minPrice, maxPrice, ranges]);
 
   const sorted = useMemo(() => {
     if (sort === "numero") return filtered;
@@ -110,7 +114,7 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
   }, [filtered, data, sort]);
 
   const total = filtered.reduce((sum, c) => sum + (data[c.id]?.brl ?? 0), 0);
-  const active = Boolean(rarity || variant || illustrator || query || minPrice != null || maxPrice != null);
+  const active = Boolean(rarity.length || variant.length || illustrator.length || ranges.length || query || minPrice != null || maxPrice != null);
   const loadingMeta = !done && rarities.length === 0;
 
   return (
@@ -125,30 +129,9 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
             aria-label="Filtrar por nome ou número"
             className="min-w-0 flex-1 rounded-full border border-line bg-bg px-4 py-2 text-sm outline-none focus:border-accent sm:max-w-xs"
           />
-          <select aria-label="Raridade" value={rarity} onChange={(e) => setRarity(e.target.value)} className={select} disabled={loadingMeta}>
-            <option value="">{loadingMeta ? "Carregando raridades…" : "Todas as raridades"}</option>
-            {rarities.map(([r, n]) => (
-              <option key={r} value={r}>
-                {r} ({n})
-              </option>
-            ))}
-          </select>
-          <select aria-label="Versão" value={variant} onChange={(e) => setVariant(e.target.value)} className={select} disabled={loadingMeta}>
-            <option value="">Todas as versões</option>
-            {variants.map(([v, n]) => (
-              <option key={v} value={v}>
-                {v} ({n})
-              </option>
-            ))}
-          </select>
-          <select aria-label="Ilustrador" value={illustrator} onChange={(e) => setIllustrator(e.target.value)} className={`${select} max-w-[14rem]`} disabled={loadingMeta}>
-            <option value="">Todos os ilustradores</option>
-            {illustrators.map(([v, n]) => (
-              <option key={v} value={v}>
-                {v} ({n})
-              </option>
-            ))}
-          </select>
+          <MultiSelect label="Raridade" options={rarities} selected={rarity} onChange={setRarity} disabled={loadingMeta} />
+          <MultiSelect label="Versão" options={variants} selected={variant} onChange={setVariant} disabled={loadingMeta} />
+          <MultiSelect label="Ilustrador" options={illustrators} selected={illustrator} onChange={setIllustrator} searchable disabled={loadingMeta} />
           <select aria-label="Ordenar" value={sort} onChange={(e) => setSort(e.target.value as Sort)} className={select}>
             {SORTS.map(([value, label]) => (
               <option key={value} value={value}>
@@ -177,24 +160,62 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
             className="w-24 rounded-full border border-line bg-bg px-3 py-1.5 text-sm outline-none focus:border-accent"
           />
           {RANGES.map((r) => {
-            const on = minPrice === r.min && maxPrice === r.max;
+            const on = ranges.includes(r.label);
             return (
               <button
                 key={r.label}
                 type="button"
                 aria-pressed={on}
-                onClick={() => {
-                  setMinText(on || r.min == null ? "" : String(r.min));
-                  setMaxText(on || r.max == null ? "" : String(r.max));
-                }}
+                onClick={() => setRanges(on ? ranges.filter((x) => x !== r.label) : [...ranges, r.label])}
                 className="rounded-full border border-line px-3 py-1.5 text-xs font-bold transition hover:border-ink-soft aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-white"
               >
                 {r.label}
               </button>
             );
           })}
+          <span className="ml-auto flex items-center gap-1 rounded-full bg-surface-2 p-1 text-xs font-bold" role="group" aria-label="Ordem de preço">
+            {(
+              [
+                ["maior", "Maior → menor"],
+                ["menor", "Menor → maior"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={sort === value}
+                onClick={() => setSort(sort === value ? "numero" : value)}
+                className="rounded-full px-3 py-1.5 aria-pressed:bg-accent aria-pressed:text-white"
+              >
+                {label}
+              </button>
+            ))}
+          </span>
           {!done && (minPrice != null || maxPrice != null) && <span className="text-xs text-ink-soft">carregando preços…</span>}
         </div>
+        {active && (
+          <div className="flex flex-wrap gap-1.5" aria-label="Filtros ativos">
+            {[
+              ...rarity.map((v) => ({ key: `r-${v}`, text: v, remove: () => setRarity(rarity.filter((x) => x !== v)) })),
+              ...variant.map((v) => ({ key: `v-${v}`, text: v, remove: () => setVariant(variant.filter((x) => x !== v)) })),
+              ...illustrator.map((v) => ({ key: `i-${v}`, text: `🎨 ${v}`, remove: () => setIllustrator(illustrator.filter((x) => x !== v)) })),
+              ...ranges.map((v) => ({ key: `p-${v}`, text: v, remove: () => setRanges(ranges.filter((x) => x !== v)) })),
+              ...(minPrice != null ? [{ key: "min", text: `Mín. ${formatMoney(minPrice, "BRL")}`, remove: () => setMinText("") }] : []),
+              ...(maxPrice != null ? [{ key: "max", text: `Máx. ${formatMoney(maxPrice, "BRL")}`, remove: () => setMaxText("") }] : []),
+              ...(query ? [{ key: "q", text: `“${query}”`, remove: () => setQuery("") }] : []),
+            ].map((chip) => (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={chip.remove}
+                className="flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-bold text-ink hover:bg-accent/25"
+                aria-label={`Remover filtro ${chip.text}`}
+              >
+                {chip.text} <span aria-hidden="true">×</span>
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <p className="text-ink-soft">
             <strong className="text-ink">{filtered.length}</strong> de {cards.length} cartas
@@ -202,9 +223,10 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
               <button
                 type="button"
                 onClick={() => {
-                  setRarity("");
-                  setVariant("");
-                  setIllustrator("");
+                  setRarity([]);
+                  setVariant([]);
+                  setIllustrator([]);
+                  setRanges([]);
                   setQuery("");
                   setMinText("");
                   setMaxText("");
