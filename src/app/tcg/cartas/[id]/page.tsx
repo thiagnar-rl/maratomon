@@ -113,7 +113,6 @@ export default async function CardPage({ params }: Props) {
               )}
             </div>
           </HoloCard>
-          <p className="text-center text-xs text-ink-soft">↔ Segure e arraste a carta para girar e ver o verso</p>
           <CardActions card={{ id: card.id, name: card.name, set: card.set.name, image: cardImage(card.image, "low") }} />
           <div className="grid grid-cols-3 gap-2">
             {markets.map((m) => (

@@ -147,33 +147,19 @@ h3 {
   animation-play-state: paused;
 }
 
-/* Carta holográfica e giratória (componente HoloCard) */
+/* Carta holográfica (componente HoloCard) */
 .holo-card {
   --rx: 0deg;
   --ry: 0deg;
-  --spin: 0deg;
   --mx: 50%;
   --my: 50%;
   position: relative;
-  container-type: inline-size;
-  transform: perspective(1000px) rotateX(var(--rx)) rotateY(calc(var(--ry) + var(--spin)));
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
   transform-style: preserve-3d;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-  touch-action: pan-y;
-  cursor: grab;
-  user-select: none;
   will-change: transform;
 }
-.holo-card[data-mode="tilt"] { transition: transform 0.08s linear; }
-.holo-card[data-mode="drag"] { transition: none; cursor: grabbing; }
-.holo-card[data-mode="settle"] { transition: transform 0.75s cubic-bezier(0.25, 1.35, 0.4, 1); }
-.holo-face {
-  overflow: hidden;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-.holo-back { transform: rotateY(180deg); }
-.holo-card img { -webkit-user-drag: none; pointer-events: none; }
+.holo-card[data-active="true"] { transition: transform 0.08s linear; }
 .holo-sheen,
 .holo-glare {
   pointer-events: none;
@@ -194,12 +180,11 @@ h3 {
   background: radial-gradient(circle at var(--mx) var(--my), rgb(255 255 255 / 0.55), transparent 45%);
   mix-blend-mode: overlay;
 }
-.holo-card[data-mode="tilt"] .holo-sheen { opacity: 0.35; }
-.holo-card[data-mode="tilt"] .holo-glare { opacity: 1; }
-.holo-card[data-mode="drag"] .holo-sheen { opacity: 0.25; }
+.holo-card[data-active="true"] .holo-sheen { opacity: 0.35; }
+.holo-card[data-active="true"] .holo-glare { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .holo-card[data-mode="tilt"] { transform: none; }
+  .holo-card { transform: none !important; }
   html { scroll-behavior: auto; }
   .animate-drift, .animate-pop, .animate-float, .animate-ticker { animation: none; }
 }
