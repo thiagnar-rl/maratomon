@@ -17,6 +17,10 @@ export type SetCover =
 const PTCG = (id: string) => `https://images.pokemontcg.io/${id}/logo.png`;
 
 const LOGOS: Record<string, string> = {
+  // logos da TCGdex que estão quebrados (arquivo não existe)
+  xy3: PTCG("xy3"),
+  hgss3: PTCG("hgss3"),
+  basep: PTCG("basep"),
   bog: PTCG("bp"),
   exu: PTCG("ex10"),
   "tk-ex-latio": PTCG("tk1b"),
@@ -98,8 +102,8 @@ const MONS: Record<string, [number, string]> = {
 };
 
 export function setCover(set: { id: string; logo?: string }): SetCover | null {
-  if (set.logo) return { type: "logo", src: `${set.logo}.webp` };
   if (LOGOS[set.id]) return { type: "logo", src: LOGOS[set.id] };
+  if (set.logo) return { type: "logo", src: `${set.logo}.webp` };
   if (CARD_FAN[set.id]) return { type: "cards", srcs: CARD_FAN[set.id].map((c) => `https://assets.tcgdex.net/en/tcgp/${c}/low.webp`) };
   const serie = SERIE_TAG[set.id];
   if (serie) return { type: "serie", src: SERIE_LOGO[serie.serie], tag: serie.tag };
