@@ -80,7 +80,7 @@ const TABS: Tab[] = [
       { href: "/colecao", title: "Minha coleção", text: "Decks e pastas com valor em reais.", icon: "folder", color: "#8b5cf6" },
       { href: "/colecao", title: "Lista de desejos", text: "Preço-alvo e alerta quando baixar.", icon: "heart", color: "#ff5c8a" },
       { href: "/tcg#termometro", title: "Termômetro Brasil", text: "Quanto as cartas custam aqui.", icon: "flag", color: "#2fd6a4" },
-      { href: "https://www.ligapokemon.com.br/?view=cards/lista", title: "Compra por lista", text: "Leve sua lista para a Liga Pokémon.", icon: "cart", color: "#ffcb05", external: true },
+      { href: "/tcg/comparar", title: "Comparador", text: "Compare preços de até 4 cartas.", icon: "compare", color: "#ffcb05" },
     ],
   },
 ];

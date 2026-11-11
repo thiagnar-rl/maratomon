@@ -2,19 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { liga } from "@/lib/liga";
 import { radarTrending } from "@/lib/radar";
 import { formatMoney } from "@/lib/tcg/prices";
 
 type Row = { card_id: string; notes: number; median_brl: number };
 
-const shortcuts = [
-  { label: "Em alta na Liga", href: liga.trendingUp() },
-  { label: "Mais vistas", href: liga.mostViewed() },
-  { label: "Leilões", href: liga.auctions() },
-  { label: "Bazar", href: liga.bazaar() },
-  { label: "Compra por lista", href: liga.buyByList() },
-];
 
 /** Cartas com mais preços anotados pela comunidade nos últimos 7 dias (Radar BR). */
 export function TermometroBR() {
@@ -66,14 +58,6 @@ export function TermometroBR() {
           ))}
         </ol>
       )}
-      <div className="flex flex-wrap gap-2 border-t border-line pt-4">
-        <span className="text-sm font-semibold text-ink-soft">Atalhos na Liga Pokémon:</span>
-        {shortcuts.map((s) => (
-          <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="rounded-full border border-line px-3 py-1 text-sm font-bold hover:border-ink">
-            {s.label} ↗
-          </a>
-        ))}
-      </div>
     </section>
   );
 }
