@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Comparator } from "@/components/tcg/comparator";
-import { TcgNav } from "@/components/tcg/tcg-nav";
 
 export const metadata: Metadata = {
   title: "Comparador de cartas",
@@ -14,7 +13,6 @@ export default function ComparePage() {
         <h1 className="font-display text-5xl font-extrabold tracking-tight">Comparador</h1>
         <p className="text-ink-soft">Até 4 cartas lado a lado, com preços convertidos para real.</p>
       </header>
-      <TcgNav />
       <Comparator />
     </div>
   );

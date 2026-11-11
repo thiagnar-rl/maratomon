@@ -61,10 +61,39 @@ export type CardDetail = CardBrief & {
   attacks?: { name: string; cost?: string[]; damage?: number | string; effect?: string }[];
   abilities?: { name: string; type: string; effect: string }[];
   weaknesses?: { type: string; value: string }[];
+  resistances?: { type: string; value: string }[];
   retreat?: number;
+  evolveFrom?: string;
+  suffix?: string;
+  dexId?: number[];
+  regulationMark?: string;
+  effect?: string;
+  trainerType?: string;
+  energyType?: string;
+  item?: { name: string; effect: string };
+  variants?: { normal?: boolean; reverse?: boolean; holo?: boolean; firstEdition?: boolean; wPromo?: boolean };
+  variants_detailed?: { type: string; size?: string; thirdParty?: { cardmarket?: number; tcgplayer?: number; cardtrader?: number } }[];
   legal?: { standard: boolean; expanded: boolean };
   pricing?: Pricing;
   updated?: string;
 };
 
-export type Rates = { USD: number; EUR: number; updated: string; fallback: boolean };
+export type Rates = {
+  USD: number;
+  EUR: number;
+  updated: string;
+  fallback: boolean;
+  /** Variação do dia em % (AwesomeAPI), quando disponível. */
+  USDchange?: number | null;
+  EURchange?: number | null;
+};
+
+/** Preço do dia de uma carta, em dólar, euro e real, com oscilações. */
+export type PriceSnapshot = {
+  usd: number | null;
+  eur: number | null;
+  brl: number | null;
+  /** % de variação: preço de ontem contra a média de 7 e 30 dias (Cardmarket). */
+  change7d: number | null;
+  change30d: number | null;
+};

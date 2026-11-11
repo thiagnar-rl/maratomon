@@ -147,7 +147,47 @@ h3 {
   animation-play-state: paused;
 }
 
+/* Carta holográfica (componente HoloCard) */
+.holo-card {
+  --rx: 0deg;
+  --ry: 0deg;
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
+  will-change: transform;
+}
+.holo-card[data-active="true"] {
+  transition: transform 0.08s linear, box-shadow 0.35s;
+}
+.holo-sheen,
+.holo-glare {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.holo-sheen {
+  background:
+    repeating-linear-gradient(115deg, #ff7eb6 0%, #ffd43b 8%, #5effc8 16%, #5b9bff 24%, #c084fc 32%, #ff7eb6 40%);
+  background-size: 300% 300%;
+  background-position: var(--mx) var(--my);
+  mix-blend-mode: color-dodge;
+  filter: saturate(1.4) brightness(0.8);
+}
+.holo-glare {
+  background: radial-gradient(circle at var(--mx) var(--my), rgb(255 255 255 / 0.55), transparent 45%);
+  mix-blend-mode: overlay;
+}
+.holo-card[data-active="true"] .holo-sheen { opacity: 0.35; }
+.holo-card[data-active="true"] .holo-glare { opacity: 1; }
+
 @media (prefers-reduced-motion: reduce) {
+  .holo-card { transform: none !important; }
   html { scroll-behavior: auto; }
   .animate-drift, .animate-pop, .animate-float, .animate-ticker { animation: none; }
 }

@@ -6,7 +6,6 @@ import { cardImage, tcgplayerVariants } from "@/lib/tcg/prices";
 import { MarketDashboard, type MarketRow } from "@/components/tcg/market-dashboard";
 import { CardSearchForm } from "@/components/tcg/card-search-form";
 import { MonArt } from "@/components/mon-art";
-import { TcgNav } from "@/components/tcg/tcg-nav";
 import { SetCoverArt } from "@/components/tcg/set-cover";
 import { TermometroBR } from "@/components/tcg/termometro-br";
 
@@ -62,7 +61,6 @@ export default async function TcgPage() {
         </div>
       </header>
 
-      <TcgNav />
 
       {rows.length > 0 ? (
         <MarketDashboard rows={rows} rates={rates} />
@@ -72,11 +70,11 @@ export default async function TcgPage() {
 
       <TermometroBR />
 
-      <section className="space-y-10" aria-label="Coleções por série">
+      <section id="colecoes" className="scroll-mt-40 space-y-10" aria-label="Coleções por série">
         <h2 className="font-display text-3xl font-extrabold">Todas as coleções</h2>
         {series.length === 0 && <p className="text-ink-soft">O catálogo está indisponível no momento.</p>}
         {series.map((serie) => (
-          <div key={serie.id} className="space-y-4">
+          <div key={serie.id} id={`serie-${serie.id}`} className="scroll-mt-40 space-y-4">
             <h3 className="flex flex-wrap items-baseline gap-x-3 font-display text-2xl font-bold">
               {serie.name}
               <span className="text-sm font-semibold text-ink-soft">

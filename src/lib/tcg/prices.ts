@@ -1,6 +1,5 @@
-import type { CardDetail, Pricing, Rates, TcgplayerVariant } from "./types";
+import type { CardDetail, PriceSnapshot, Pricing, Rates, TcgplayerVariant } from "./types";
 
-/** Imagem da carta: "low" (miniatura) ou "high" (detalhe). */
 /**
  * URL da imagem da carta. A TCGdex entrega uma "base" sem extensão; as imagens que completamos
  * de outras fontes (Pokémon TCG API / Scrydex) já vêm como URL do tamanho pequeno.
@@ -74,3 +73,26 @@ export function parseBRL(text: string): number | null {
   const value = Number(digits);
   return Number.isFinite(value) && value >= 0 ? value : null;
 }
+
+const pct = (now: number | null | undefined, before: number | null | undefined) =>
+  typeof now === "number" && typeof before === "number" && now > 0 && before > 0 ? ((now - before) / before) * 100 : null;
+
+/** Preço do dia em US$ (TCGplayer), € (Cardmarket) e R$, com a oscilação recente. */
+export function priceSnapshot(card: Pick<CardDetail, "pricing">, rates: Rates): PriceSnapshot {
+  const variants = tcgplayerVariants(card.pricing);
+  const usd = variants.map(([, v]) => v.marketPrice ?? v.midPrice).find((p): p is number => typeof p === "number" && p > 0) ?? null;
+  const cm = card.pricing?.cardmarket;
+  const eur = cm?.trend || cm?.avg1 || cm?.avg30 || cm?.avg || null;
+  const estimate = estimateBRL(card, rates);
+  return {
+    usd,
+    eur,
+    brl: estimate ? Math.round(estimate.brl * 100) / 100 : null,
+    change7d: pct(cm?.avg1, cm?.avg7),
+    change30d: pct(cm?.avg1 ?? cm?.trend, cm?.avg30),
+  };
+}
+
+/** "+3,2%" / "−1,0%" */
+export const formatPct = (value: number | null | undefined) =>
+  typeof value === "number" ? `${value > 0 ? "+" : value < 0 ? "−" : ""}${Math.abs(value).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%` : "—";

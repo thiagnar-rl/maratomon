@@ -111,10 +111,19 @@ export async function getRates(): Promise<Rates> {
       next: { revalidate: REVALIDATE.rates },
     });
     if (!response.ok) throw new Error(String(response.status));
-    const data = (await response.json()) as Record<string, { bid: string; create_date: string }>;
+    const data = (await response.json()) as Record<string, { bid: string; create_date: string; pctChange?: string }>;
     const usd = Number(data.USDBRL?.bid);
     const eur = Number(data.EURBRL?.bid);
-    if (usd > 0 && eur > 0) return { USD: usd, EUR: eur, updated: data.USDBRL.create_date, fallback: false };
+    const pct = (v?: string) => (v != null && Number.isFinite(Number(v)) ? Number(v) : null);
+    if (usd > 0 && eur > 0)
+      return {
+        USD: usd,
+        EUR: eur,
+        updated: data.USDBRL.create_date,
+        fallback: false,
+        USDchange: pct(data.USDBRL.pctChange),
+        EURchange: pct(data.EURBRL.pctChange),
+      };
     throw new Error("cotação inválida");
   } catch {
     try {

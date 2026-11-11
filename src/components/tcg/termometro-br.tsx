@@ -31,7 +31,7 @@ export function TermometroBR() {
   }, []);
 
   return (
-    <section aria-labelledby="termometro" className="space-y-4 rounded-[2rem] border border-line bg-surface p-6">
+    <section aria-labelledby="termometro" className="scroll-mt-40 space-y-4 rounded-[2rem] border border-line bg-surface p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-accent">Radar BR</p>

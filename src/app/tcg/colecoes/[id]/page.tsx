@@ -3,7 +3,7 @@ import Link from "next/link";
 import { SetCoverArt } from "@/components/tcg/set-cover";
 import { notFound } from "next/navigation";
 import { getSet } from "@/lib/tcg/api";
-import { CardTile } from "@/components/tcg/card-tile";
+import { PricedCardGrid } from "@/components/tcg/priced-card-grid";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -44,13 +44,7 @@ export default async function SetPage({ params }: Props) {
         </div>
       </header>
       <p className="text-sm text-ink-soft">Toque numa carta para ver preços, gráfico e adicionar à sua coleção.</p>
-      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-        {set.cards.map((card) => (
-          <li key={card.id}>
-            <CardTile card={card} />
-          </li>
-        ))}
-      </ul>
+      <PricedCardGrid cards={set.cards} showTotal />
     </div>
   );
 }
