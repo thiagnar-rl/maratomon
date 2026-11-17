@@ -18,14 +18,17 @@ export async function recordPrice(cardId: string, snapshot: PriceSnapshot, usdBr
       method: "POST",
       headers,
       body: JSON.stringify({ p_card_id: cardId, p_usd: snapshot.usd, p_eur: snapshot.eur, p_brl: snapshot.brl, p_usd_brl: usdBrl }),
-      cache: "no-store",
     });
   } catch {
     // histórico é um extra: se falhar, a página segue normal
   }
 }
 
-/** Grava o preço de hoje de várias cartas de uma vez. */
+/**
+ * Grava o preço de hoje de várias cartas de uma vez.
+ * Sem `cache: "no-store"` de propósito: essa opção fazia a página do TCG virar dinâmica
+ * e ser recalculada a cada visita (~16 s), em vez de sair do cache.
+ */
 export async function recordPrices(items: ({ id: string } & PriceSnapshot)[], usdBrl: number) {
   const valid = items.filter((i) => i.usd != null || i.eur != null).slice(0, 300);
   if (!url || !key || valid.length === 0) return;
@@ -34,7 +37,6 @@ export async function recordPrices(items: ({ id: string } & PriceSnapshot)[], us
       method: "POST",
       headers,
       body: JSON.stringify({ items: valid.map(({ id, usd, eur, brl }) => ({ id, usd, eur, brl })), p_usd_brl: usdBrl }),
-      cache: "no-store",
     });
   } catch {
     // ignorado

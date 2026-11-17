@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getSeries } from "@/lib/tcg/api";
-import { getMarket } from "@/lib/tcg/market";
-import { MarketLive } from "@/components/tcg/market-live";
+import { Suspense } from "react";
+import { MarketSection, MarketSkeleton } from "@/components/tcg/market-section";
 import { SetCoverArt } from "@/components/tcg/set-cover";
 import { TermometroBR } from "@/components/tcg/termometro-br";
 
@@ -16,16 +16,14 @@ export const revalidate = 900;
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric", timeZone: "UTC" });
 
 export default async function TcgPage() {
-  const [series, market] = await Promise.all([getSeries(), getMarket()]);
+  const series = await getSeries();
 
   return (
     <div className="mx-auto max-w-6xl space-y-12 px-4 py-8 sm:px-6">
       <h1 className="sr-only">Pokémon TCG: mercado ao vivo, cards em alta e em queda e coleções</h1>
-      {market.rows.length > 0 ? (
-        <MarketLive initial={market} />
-      ) : (
-        <p className="rounded-3xl border border-line bg-surface p-6 text-ink-soft">Não foi possível carregar os preços agora. Tente de novo em alguns minutos.</p>
-      )}
+      <Suspense fallback={<MarketSkeleton />}>
+        <MarketSection />
+      </Suspense>
 
       <TermometroBR />
 

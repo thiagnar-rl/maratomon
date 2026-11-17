@@ -7,6 +7,15 @@ Site publicado: https://maratomon.vercel.app
 
 ## 17/11/2026
 
+### Correção: guia TCG não abria (demorava ~16 s)
+- **Problema:** a página do TCG (e a do Mercado) recalculava o mercado inteiro a cada visita — mais de 300 cartas, câmbio, histórico e as páginas do MYP Cards —, levando cerca de 16 segundos. No celular, parecia que o link não abria. A causa: a gravação do histórico de preços usava `cache: "no-store"`, o que fazia a página deixar de sair do cache.
+- **Correção:**
+  - o mercado agora é calculado **uma vez a cada 15 minutos** e guardado em cache (`unstable_cache`); as visitas recebem o resultado pronto;
+  - a gravação do histórico não usa mais `no-store`;
+  - a página abre na hora e o painel do mercado carrega logo em seguida, com um esqueleto animado no lugar (`<Suspense>`);
+  - novo `src/app/tcg/loading.tsx`: ao clicar em qualquer página do TCG aparece um carregamento imediato.
+- Arquivos: `src/lib/tcg/market.ts`, `src/lib/tcg/history.ts`, `src/components/tcg/market-section.tsx` (novo), `src/app/tcg/page.tsx`, `src/app/tcg/mercado/page.tsx`, `src/app/tcg/loading.tsx` (novo).
+
 ### Logo do site: monograma da Forja Arcana
 - **Correção da marca:** os logos base são o **monograma** (o "A" com a carta da runa no hexágono), o **escudo**, o **minimalista** e o **minimalista escuro**. O site usa **o monograma**.
 - **Trocado o selo do martelo pelo monograma** no cabeçalho, ícone da aba, ícone do celular, imagem de compartilhamento e em todo lugar onde o selo aparecia (home, notícias, entrar, conta, convite de conta, cartas sem imagem).

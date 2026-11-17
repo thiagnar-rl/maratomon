@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { getCard, getRates, getSeries, getSet } from "./api";
 import { featuredCardIds } from "./featured";
 import { recordPrices } from "./history";
@@ -113,7 +114,7 @@ function toRow(c: CardDetail, rates: Rates, day: number | undefined, br: BrPrice
   };
 }
 
-export async function getMarket(): Promise<{ rows: MarketRow[]; rates: Rates; updatedAt: string }> {
+async function computeMarket(): Promise<{ rows: MarketRow[]; rates: Rates; updatedAt: string }> {
   const [ids, rates] = await Promise.all([poolIds(), getRates()]);
   const cards: (CardDetail | null)[] = [];
   for (let i = 0; i < ids.length; i += 24) cards.push(...(await Promise.all(ids.slice(i, i + 24).map((id) => getCard(id)))));
@@ -125,3 +126,10 @@ export async function getMarket(): Promise<{ rows: MarketRow[]; rates: Rates; up
   const rows = valid.map((c) => toRow(c, rates, day[c.id], br[c.id])).filter((r) => r.brl != null);
   return { rows, rates, updatedAt: new Date().toISOString() };
 }
+
+/**
+ * Painel do mercado calculado uma vez a cada 15 minutos e guardado em cache.
+ * Montar o painel lê mais de 300 cartas e as páginas do MYP Cards (leva ~15 s); com o cache,
+ * as visitas recebem o resultado pronto em vez de esperar o cálculo.
+ */
+export const getMarket = unstable_cache(computeMarket, ["tcg-market-v2"], { revalidate: 900 });
