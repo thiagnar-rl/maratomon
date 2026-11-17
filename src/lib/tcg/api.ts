@@ -127,12 +127,27 @@ export async function getRates(): Promise<Rates> {
     throw new Error("cotação inválida");
   } catch {
     try {
-      const response = await fetch("https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL,EUR", {
+      // Últimos dias úteis do Banco Central Europeu: cotação de hoje e variação contra o dia anterior.
+      const start = new Date(Date.now() - 10 * 86400000).toISOString().slice(0, 10);
+      const response = await fetch(`https://api.frankfurter.dev/v1/${start}..?base=USD&symbols=BRL,EUR`, {
         next: { revalidate: REVALIDATE.rates },
       });
       if (!response.ok) throw new Error(String(response.status));
-      const data = (await response.json()) as { date: string; rates: { BRL: number; EUR: number } };
-      return { USD: data.rates.BRL, EUR: data.rates.BRL / data.rates.EUR, updated: data.date, fallback: false };
+      const data = (await response.json()) as { rates: Record<string, { BRL: number; EUR: number }> };
+      const days = Object.keys(data.rates).sort();
+      const last = data.rates[days.at(-1)!];
+      const prev = days.length > 1 ? data.rates[days.at(-2)!] : null;
+      const usd = last.BRL;
+      const eur = last.BRL / last.EUR;
+      const change = (now: number, before?: number) => (before ? ((now - before) / before) * 100 : null);
+      return {
+        USD: usd,
+        EUR: eur,
+        updated: days.at(-1)!,
+        fallback: false,
+        USDchange: change(usd, prev?.BRL),
+        EURchange: change(eur, prev ? prev.BRL / prev.EUR : undefined),
+      };
     } catch {
       return { USD: 5.6, EUR: 6.2, updated: "", fallback: true };
     }

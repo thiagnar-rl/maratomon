@@ -44,29 +44,36 @@ async function poolIds(): Promise<string[]> {
   return [...new Set([...chase, ...featuredCardIds])].slice(0, 240);
 }
 
-/** Variação do dia pelo histórico do próprio site (hoje × último dia anterior registrado). */
+const pct = (now?: number | null, before?: number | null) =>
+  typeof now === "number" && typeof before === "number" && now > 0 && before > 0 ? ((now - before) / before) * 100 : null;
+
+/** Variação do dia pelo histórico do próprio site (hoje × último dia anterior), no preço em dólar (ou euro), sem o efeito do câmbio. */
 async function dailyChanges(ids: string[]): Promise<Record<string, number>> {
   if (!url || !key || ids.length === 0) return {};
   const since = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
   try {
     const response = await fetch(
-      `${url}/rest/v1/card_price_history?select=card_id,day,brl&day=gte.${since}&card_id=in.(${ids.map(encodeURIComponent).join(",")})&order=day.desc`,
+      `${url}/rest/v1/card_price_history?select=card_id,day,usd,eur&day=gte.${since}&card_id=in.(${ids.map(encodeURIComponent).join(",")})&order=day.desc`,
       { headers: { apikey: key, Authorization: `Bearer ${key}` }, next: { revalidate: 900 } },
     );
     if (!response.ok) return {};
-    const rows = (await response.json()) as { card_id: string; day: string; brl: number | null }[];
-    const byCard = new Map<string, { day: string; brl: number }[]>();
-    for (const r of rows) if (r.brl != null) byCard.set(r.card_id, [...(byCard.get(r.card_id) ?? []), { day: r.day, brl: Number(r.brl) }]);
+    const rows = (await response.json()) as { card_id: string; day: string; usd: number | null; eur: number | null }[];
+    const byCard = new Map<string, { usd: number | null; eur: number | null }[]>();
+    for (const r of rows) byCard.set(r.card_id, [...(byCard.get(r.card_id) ?? []), { usd: r.usd == null ? null : Number(r.usd), eur: r.eur == null ? null : Number(r.eur) }]);
     const out: Record<string, number> = {};
-    for (const [id, list] of byCard) if (list.length >= 2 && list[1].brl > 0) out[id] = ((list[0].brl - list[1].brl) / list[1].brl) * 100;
+    for (const [id, list] of byCard) {
+      if (list.length < 2) continue;
+      const [a, b] = list;
+      const change = pct(a.usd, b.usd) ?? pct(a.eur, b.eur);
+      // Preço igual ao de ontem: deixa a tendência do Cardmarket mostrar o movimento do dia.
+      if (change != null && Math.abs(change) >= 0.05) out[id] = change;
+    }
     return out;
   } catch {
     return {};
   }
 }
 
-const pct = (now?: number | null, before?: number | null) =>
-  typeof now === "number" && typeof before === "number" && now > 0 && before > 0 ? ((now - before) / before) * 100 : null;
 
 function toRow(c: CardDetail, rates: Rates, day: number | undefined): MarketRow {
   const snap = priceSnapshot(c, rates);
