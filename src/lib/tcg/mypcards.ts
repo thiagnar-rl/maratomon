@@ -172,3 +172,12 @@ export async function mypProduct(card: CardRef): Promise<MypProduct | null> {
   }
   return null;
 }
+
+/** Diagnóstico temporário. */
+export async function mypDebug(card: CardRef) {
+  const set = await getSet(card.setId);
+  const eds = await editions();
+  const loc = await locate(card);
+  const items = loc ? await editionItems(loc.edition) : [];
+  return { abbr: set?.abbreviation, official: set?.cardCount.official, editions: eds.size, sample: [...eds.entries()].slice(0, 3), loc, items: items.length, first: items.slice(0, 3) };
+}
