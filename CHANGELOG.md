@@ -7,7 +7,13 @@ Site publicado: https://forja-arcana.vercel.app
 
 ## 17/11/2026
 
-### Anime no celular: opção de assistir dublado
+### Anime dublado dentro do site (sem ir para o YouTube)
+- O usuário não quer que ninguém saia do site: **removido o botão "Assistir dublado no app do YouTube"** (entrada logo abaixo).
+- **Novo player** (`src/components/youtube-dub-player.tsx`): usa a API do player do YouTube e, nos vídeos com várias dublagens, **procura a faixa de áudio em português e troca sozinho**, no celular e no computador; quando consegue, desliga a legenda automática e mostra o selo "🇧🇷 Dublado" no canto do vídeo. Tenta por ~6 s (as faixas aparecem depois que o vídeo começa) e confirma de novo quando o vídeo volta a tocar.
+- Importante: a troca de faixa usa funções internas do player do YouTube (não documentadas). Se o YouTube não permitir em algum aparelho, o vídeo toca normalmente e aparece o aviso "Ficou em inglês?" — no computador com o caminho ⚙ › Faixa de áudio › Português; no celular, a orientação de recarregar ou usar o computador. Nenhum link manda para o YouTube.
+- Arquivos: `src/components/youtube-dub-player.tsx` (novo), `src/components/watch-panel.tsx`.
+
+### Anime no celular: opção de assistir dublado (substituído pela entrada acima)
 - **Problema:** no celular, os episódios do canal oficial Pokémon TV tocavam em inglês (às vezes com legenda), sem opção de trocar para português. Esses vídeos têm várias dublagens, mas o YouTube não deixa sites escolherem a faixa de áudio, e o player embutido no celular não mostra o menu "Faixa de áudio" (só no computador).
 - **Correção:** em celular e tablet (tela de toque), nos episódios com várias dublagens, aparece o aviso "Está em inglês ou legendado?" com o botão **Assistir dublado no app do YouTube**. O app do YouTube toca o mesmo vídeo oficial em português (ou pelo menu ⚙ › Faixa de áudio › Português). No computador continua a dica de trocar pela engrenagem do próprio player.
 - Observação: este botão abre fora do site só nesse caso (vídeo com várias dublagens, no celular), porque é o único jeito de ouvir dublado ali.
