@@ -7,6 +7,12 @@ Site publicado: https://forja-arcana.vercel.app
 
 ## 17/11/2026
 
+### Anime no celular: opção de assistir dublado
+- **Problema:** no celular, os episódios do canal oficial Pokémon TV tocavam em inglês (às vezes com legenda), sem opção de trocar para português. Esses vídeos têm várias dublagens, mas o YouTube não deixa sites escolherem a faixa de áudio, e o player embutido no celular não mostra o menu "Faixa de áudio" (só no computador).
+- **Correção:** em celular e tablet (tela de toque), nos episódios com várias dublagens, aparece o aviso "Está em inglês ou legendado?" com o botão **Assistir dublado no app do YouTube**. O app do YouTube toca o mesmo vídeo oficial em português (ou pelo menu ⚙ › Faixa de áudio › Português). No computador continua a dica de trocar pela engrenagem do próprio player.
+- Observação: este botão abre fora do site só nesse caso (vídeo com várias dublagens, no celular), porque é o único jeito de ouvir dublado ali.
+- Arquivo: `src/components/watch-panel.tsx`.
+
 ### Painel do mercado: cada marketplace na própria moeda
 - **Problema:** o painel convertia os preços dos EUA (dólar) e da Europa (euro) para real pela cotação, sem frete nem impostos de importação — a comparação com o preço do Brasil ficava distorcida.
 - **Agora:** sem conversão. Botões **Brasil R$ · EUA US$ · Europa €** escolhem o marketplace do gráfico, e cada um aparece na sua moeda: Brasil (MYP Cards) em real, TCGplayer em dólar e Cardmarket em euro. A tabela mostra as três colunas lado a lado, cada uma na sua moeda; clicar no título da coluna troca o gráfico e ordena por ela. A coluna de variação passou a se chamar "Europa 30 dias" (é a do Cardmarket).

@@ -66,7 +66,7 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
         </div>
       )}
 
-      {episode.youtubeAudio === "multi" && <AudioTip />}
+      {episode.youtubeAudio === "multi" && episode.youtubeId && <AudioTip videoId={episode.youtubeId} />}
 
       <ul className="grid gap-2 sm:grid-cols-2">
         {providers
@@ -96,8 +96,49 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
   );
 }
 
-/** Os vídeos do canal Pokémon TV têm várias dublagens e o player embutido sempre abre no áudio original (inglês). */
-function AudioTip() {
+/** Celular ou tablet (tela de toque): o player embutido do YouTube nesses aparelhos não mostra a opção "Faixa de áudio". */
+function useIsTouchDevice() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => window.matchMedia("(pointer: coarse)").matches,
+    () => false,
+  );
+}
+
+/**
+ * Os vídeos do canal Pokémon TV têm várias dublagens e o player embutido abre no áudio original (inglês), às vezes com legenda.
+ * O YouTube não deixa sites escolherem a faixa de áudio. No computador, a pessoa troca pela engrenagem; no celular, o player
+ * embutido não tem essa opção, então oferecemos abrir o mesmo vídeo no app do YouTube, que escolhe o português sozinho
+ * (ou pelo menu "Faixa de áudio").
+ */
+function AudioTip({ videoId }: { videoId: string }) {
+  const touch = useIsTouchDevice();
+  const appUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+  if (touch) {
+    return (
+      <div className="space-y-3 rounded-2xl border border-accent-2/60 bg-accent-2/10 p-4">
+        <p className="font-bold">🇧🇷 Está em inglês ou legendado? Assista dublado no app do YouTube</p>
+        <p className="text-sm text-ink-soft">
+          No celular, o player do YouTube dentro de sites não tem a opção de trocar o áudio. No app do YouTube o mesmo vídeo oficial toca em
+          português (se não trocar sozinho: ⚙ › <strong>Faixa de áudio</strong> › <strong>Português (Brasil)</strong>).
+        </p>
+        <a
+          href={appUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 rounded-full bg-[#ff0033] px-5 py-3 text-center font-bold text-white shadow-lg transition active:scale-[0.98]"
+        >
+          <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+            <path d="M8 5v14l11-7z" fill="currentColor" />
+          </svg>
+          Assistir dublado no app do YouTube
+        </a>
+        <p className="text-xs text-ink-soft">Seu progresso continua sendo marcado aqui no site quando você marcar o episódio como visto.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-accent-2/60 bg-accent-2/10 p-4 sm:flex-row sm:items-center">
       <div className="flex-1 space-y-1">
