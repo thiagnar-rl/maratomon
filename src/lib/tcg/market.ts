@@ -75,6 +75,9 @@ async function dailyChanges(ids: string[]): Promise<Record<string, number>> {
 }
 
 
+/** Variações acima de 75% num único dia costumam ser venda isolada ou erro de anúncio: ficam de fora. */
+const sane = (v: number | null) => (v != null && Math.abs(v) <= 75 ? v : null);
+
 function toRow(c: CardDetail, rates: Rates, day: number | undefined): MarketRow {
   const snap = priceSnapshot(c, rates);
   const cm = c.pricing?.cardmarket;
@@ -95,7 +98,7 @@ function toRow(c: CardDetail, rates: Rates, day: number | undefined): MarketRow 
     eur30: cm?.avg30 ?? null,
     change: {
       // Dia: histórico do Maratomon; sem ele, tendência do Cardmarket contra a média de ontem.
-      dia: day ?? pct(cm?.trend, cm?.avg1),
+      dia: sane(day ?? pct(cm?.trend, cm?.avg1)),
       semana: snap.change7d,
       mes: snap.change30d,
     },
