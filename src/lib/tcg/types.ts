@@ -99,5 +99,13 @@ export type PriceSnapshot = {
 };
 
 /** Dados extras para filtros nas grades (raridade, versões, ilustrador). */
-export type CardMeta = { rarity: string | null; illustrator: string | null; variants: string[] };
+export type CardMeta = {
+  /** Raridade em português. */
+  rarity: string | null;
+  illustrator: string | null;
+  variants: string[];
+  /** Tipos de energia em português. */
+  types: string[];
+  category: string | null;
+};
 export type PricedCard = PriceSnapshot & { meta?: CardMeta };

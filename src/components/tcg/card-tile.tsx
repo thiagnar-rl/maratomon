@@ -5,7 +5,7 @@ import { CardPlaceholder } from "./card-placeholder";
 import { HoloCard } from "./holo-card";
 
 /** Miniatura de carta para grades (coleção, busca), com o preço do dia embaixo. */
-export function CardTile({ card, subtitle, price }: { card: CardBrief; subtitle?: string; price?: PriceSnapshot | null }) {
+export function CardTile({ card, subtitle, price, changeTitle = "Variação em 7 dias" }: { card: CardBrief; subtitle?: string; price?: PriceSnapshot | null; changeTitle?: string }) {
   const src = cardImage(card.image, "low");
   const change = price?.change7d;
   return (
@@ -33,7 +33,7 @@ export function CardTile({ card, subtitle, price }: { card: CardBrief; subtitle?
               <span className="flex items-baseline justify-between gap-1">
                 <strong className="text-sm text-ink">{formatMoney(price.brl, "BRL")}</strong>
                 {typeof change === "number" && Math.abs(change) >= 0.1 && (
-                  <span className={`font-bold ${change > 0 ? "text-good" : "text-[#ff5c8a]"}`} title="Variação em 7 dias">
+                  <span className={`font-bold ${change > 0 ? "text-good" : "text-[#ff5c8a]"}`} title={changeTitle}>
                     {change > 0 ? "▲" : "▼"} {formatPct(change).replace(/^[+−]/, "")}
                   </span>
                 )}

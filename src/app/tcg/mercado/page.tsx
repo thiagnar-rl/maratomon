@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { getMarket, type MarketRow } from "@/lib/tcg/market";
-import { cardImage, formatMoney, formatPct } from "@/lib/tcg/prices";
+import { getMarket } from "@/lib/tcg/market";
+import { formatPct } from "@/lib/tcg/prices";
 import { CardTile } from "@/components/tcg/card-tile";
+import { MoversBoard } from "@/components/tcg/movers-board";
 
-export const revalidate = 10800;
+export const revalidate = 900;
 
 export const metadata: Metadata = {
-  title: "Mercado de cartas Pokémon hoje: altas, baixas e mais valiosas",
-  description: "Painel do mercado Pokémon TCG em real e dólar: câmbio do dia, maiores altas e baixas da semana e as cartas mais valiosas.",
+  title: "Cards Pokémon em alta e em queda hoje: mercado ao vivo",
+  description: "Painel do mercado Pokémon TCG em real e dólar: câmbio do dia, cards em alta e em queda no dia, na semana e no mês, com filtros por raridade e energia, e as cartas mais valiosas.",
 };
 
 function Pct({ value }: { value: number | null }) {
@@ -17,49 +17,9 @@ function Pct({ value }: { value: number | null }) {
   return <span className={`font-bold tabular-nums ${up ? "text-good" : "text-[#ff5c8a]"}`}>{up ? "▲" : "▼"} {formatPct(value).replace(/^[+−]/, "")}</span>;
 }
 
-function MoverTable({ id, title, rows, subtitle }: { id: string; title: string; subtitle: string; rows: MarketRow[] }) {
-  return (
-    <section id={id} aria-labelledby={`${id}-t`} className="scroll-mt-40 space-y-3 rounded-[2rem] border border-line bg-surface p-6">
-      <div>
-        <h2 id={`${id}-t`} className="font-display text-2xl font-extrabold">{title}</h2>
-        <p className="text-sm text-ink-soft">{subtitle}</p>
-      </div>
-      <ol className="divide-y divide-line">
-        {rows.map((r, i) => (
-          <li key={r.id}>
-            <Link href={`/tcg/cartas/${r.id}`} className="flex items-center gap-3 rounded-xl py-2.5 transition hover:bg-surface-2">
-              <span className="w-6 text-center font-display text-lg font-extrabold text-ink-soft">{i + 1}</span>
-              {cardImage(r.image, "low") ? (
-                <img src={cardImage(r.image, "low")!} alt="" loading="lazy" className="h-14 w-10 shrink-0 rounded-md object-cover shadow" />
-              ) : (
-                <span className="h-14 w-10 shrink-0 rounded-md bg-surface-2" />
-              )}
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-bold">{r.name}</span>
-                <span className="block truncate text-xs text-ink-soft">
-                  {r.setName} · #{r.localId}
-                </span>
-              </span>
-              <span className="text-right text-sm tabular-nums">
-                <span className="block font-bold">{formatMoney(r.brl, "BRL")}</span>
-                <span className="block text-xs text-ink-soft">{formatMoney(r.usd ?? null, "USD")}</span>
-              </span>
-              <span className="w-20 text-right text-sm">
-                <Pct value={r.change7d} />
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
 export default async function MarketPage() {
-  const { rows, rates } = await getMarket();
+  const { rows, rates, updatedAt } = await getMarket();
   const withChange = rows.filter((r) => r.change7d != null);
-  const gainers = [...withChange].sort((a, b) => b.change7d! - a.change7d!).filter((r) => r.change7d! > 0).slice(0, 10);
-  const losers = [...withChange].sort((a, b) => a.change7d! - b.change7d!).filter((r) => r.change7d! < 0).slice(0, 10);
   const valuable = [...rows].sort((a, b) => (b.brl ?? 0) - (a.brl ?? 0)).slice(0, 12);
   const index = withChange.length ? withChange.reduce((s, r) => s + r.change7d!, 0) / withChange.length : null;
   const updated = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" }).format(new Date());
@@ -102,10 +62,7 @@ export default async function MarketPage() {
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <MoverTable id="altas" title="📈 Maiores altas" subtitle="Quem mais valorizou na semana (Cardmarket)." rows={gainers} />
-        <MoverTable id="baixas" title="📉 Maiores baixas" subtitle="Quem mais desvalorizou na semana (Cardmarket)." rows={losers} />
-      </div>
+      <MoversBoard initial={{ rows, updatedAt }} />
 
       <section id="valiosas" aria-labelledby="valiosas-t" className="scroll-mt-40 space-y-4">
         <h2 id="valiosas-t" className="font-display text-3xl font-extrabold">💎 Mais valiosas hoje</h2>

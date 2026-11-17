@@ -1,3 +1,4 @@
+import { energyPt, rarityPt } from "./labels";
 import type { CardDetail, CardMeta, PriceSnapshot, Pricing, Rates, TcgplayerVariant } from "./types";
 
 /**
@@ -106,9 +107,11 @@ const VARIANT_PT: Record<string, string> = {
 };
 
 /** Raridade, versões e ilustrador, para os filtros. */
-export function cardMeta(card: Pick<CardDetail, "rarity" | "illustrator" | "variants">): CardMeta {
+export function cardMeta(card: Pick<CardDetail, "rarity" | "illustrator" | "variants" | "types" | "category">): CardMeta {
   return {
-    rarity: card.rarity ?? null,
+    rarity: rarityPt(card.rarity),
+    types: (card.types ?? []).map(energyPt),
+    category: card.category ?? null,
     illustrator: card.illustrator ?? null,
     variants: Object.entries(card.variants ?? {})
       .filter(([, on]) => on)

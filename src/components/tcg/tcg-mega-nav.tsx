@@ -66,8 +66,8 @@ const TABS: Tab[] = [
     match: (p) => p.startsWith("/tcg/mercado"),
     items: [
       { href: "/tcg/mercado", title: "Painel do mercado", text: "Preços do dia em dólar e em real.", icon: "chart", color: "#8b5cf6" },
-      { href: "/tcg/mercado#altas", title: "Maiores altas", text: "Cartas que mais subiram na semana.", icon: "up", color: "#2fd6a4" },
-      { href: "/tcg/mercado#baixas", title: "Maiores baixas", text: "Cartas que mais caíram na semana.", icon: "down", color: "#ff5c8a" },
+      { href: "/tcg/mercado#altas", title: "Cards em alta", text: "Quem mais subiu no dia, semana ou mês.", icon: "up", color: "#2fd6a4" },
+      { href: "/tcg/mercado#baixas", title: "Cards em queda", text: "Quem mais caiu no dia, semana ou mês.", icon: "down", color: "#ff5c8a" },
       { href: "/tcg/mercado#cambio", title: "Câmbio do dia", text: "Dólar e euro com a variação de hoje.", icon: "coin", color: "#ffcb05" },
     ],
   },
