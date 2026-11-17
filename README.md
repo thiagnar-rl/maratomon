@@ -10,6 +10,8 @@ Plataforma de fãs de Pokémon:
 
 🌐 **No ar:** https://maratomon.vercel.app
 
+📝 **Histórico de alterações:** veja o [CHANGELOG.md](CHANGELOG.md).
+
 > Projeto de fãs, independente e não oficial. Sem ligação com Nintendo, Game Freak, Creatures ou The Pokémon Company. O site não hospeda vídeos.
 
 ## Tecnologias
