@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { cardImage, formatDelta, formatMoney, formatPct, priceDelta } from "@/lib/tcg/prices";
-import type { CardBrief, PriceSnapshot } from "@/lib/tcg/types";
+import type { BrPrice, CardBrief, PriceSnapshot } from "@/lib/tcg/types";
 import { CardPlaceholder } from "./card-placeholder";
 import { HoloCard } from "./holo-card";
 
 /** Miniatura de carta para grades (coleção, busca), com o preço do dia embaixo. */
-export function CardTile({ card, subtitle, price, changeTitle = "Variação em 7 dias", showDelta = false }: { card: CardBrief; subtitle?: string; price?: PriceSnapshot | null; changeTitle?: string; showDelta?: boolean }) {
+export function CardTile({ card, subtitle, price, changeTitle = "Variação em 7 dias", showDelta = false }: { card: CardBrief; subtitle?: string; price?: (PriceSnapshot & { br?: BrPrice | null }) | null; changeTitle?: string; showDelta?: boolean }) {
   const src = cardImage(card.image, "low");
   const change = price?.change7d;
   return (
@@ -31,7 +31,10 @@ export function CardTile({ card, subtitle, price, changeTitle = "Variação em 7
           ) : (
             <>
               <span className="flex items-baseline justify-between gap-1">
-                <strong className="text-sm text-ink">{formatMoney(price.brl, "BRL")}</strong>
+                <strong className="text-sm text-ink" title={price.br ? `Menor preço no Brasil (MYP Cards)${price.br.units ? ` · ${price.br.units} un. à venda` : ""}` : "Média dos marketplaces internacionais, em reais"}>
+                  {formatMoney(price.brl, "BRL")}
+                  <span className={`ml-1 align-middle text-[9px] font-black ${price.br ? "text-good" : "text-ink-soft"}`}>{price.br ? "BR" : "INT"}</span>
+                </strong>
                 {typeof change === "number" && Math.abs(change) >= 0.1 && (
                   <span className={`font-bold ${change > 0 ? "text-good" : "text-[#ff5c8a]"}`} title={changeTitle}>
                     {change > 0 ? "▲" : "▼"} {formatPct(change).replace(/^[+−]/, "")}

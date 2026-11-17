@@ -7,6 +7,19 @@ Site publicado: https://maratomon.vercel.app
 
 ## 17/11/2026
 
+### Preços do Brasil (MYP Cards) no site todo
+- **Varredura dos marketplaces brasileiros:**
+  - **MYP Cards** (maior marketplace de card games do Brasil): as páginas públicas de edições e de produto podem ser lidas (permitidas no robots.txt) → **integrado**.
+  - **Liga Pokémon:** bloqueia acesso automático com verificação anti-robô e não tem API pública → não dá para ler; continua só o link para a carta lá.
+  - **Mercado Livre, Shopee, Magalu:** vendem cartas misturadas com kits e lotes, sem identificação confiável da carta (coleção e número) → não usados.
+- **Preço principal do site** agora é o **menor anúncio no Brasil (MYP Cards)** quando a carta está à venda lá; sem oferta no Brasil, a média internacional (TCGplayer + Cardmarket). Cada preço nas grades mostra a etiqueta **BR** ou **INT**.
+- **Página da carta:** destaque "Menor preço no Brasil" com médio, último vendido e internacional; na tabela de marketplaces, nova linha **🇧🇷 Brasil · MYP Cards** (menor / médio / maior oferta), último vendido, mediana de 30 dias e botão "Ver ofertas no MYP Cards".
+- Cards em Alta/Queda e mais caros do dia usam o preço do Brasil quando houver.
+- **Como funciona:** a carta é achada pela sigla da coleção e o número (ex.: `pokemon_pfl_129/094`). As grades usam 1 leitura por coleção (página da edição, que lista as cartas mais procuradas); a página da carta lê a ficha do produto. Tudo com cache de 6 horas (lista de edições: 24 h). Se o MYP Cards ficar fora do ar ou bloquear, o site volta sozinho para o preço internacional.
+- O histórico de preço continua gravando o preço internacional, para o gráfico não misturar fontes.
+- Arquivos: `src/lib/tcg/mypcards.ts` (novo), `src/app/api/tcg/prices/route.ts`, `src/lib/tcg/market.ts`, `src/lib/tcg/types.ts` (`BrPrice`, `abbreviation`), `src/app/tcg/cartas/[id]/page.tsx`, `src/components/tcg/marketplace-prices.tsx`, `src/components/tcg/card-tile.tsx`, `src/components/tcg/movers-board.tsx`.
+- Houve um teste temporário (`/api/tcg/br-teste`) para confirmar que o servidor consegue ler o MYP Cards; já foi removido.
+
 ### Preço com base nos marketplaces (site todo)
 - **Antes:** o preço em reais era só o preço de mercado do TCGplayer (EUA) convertido; sem ele, a tendência do Cardmarket.
 - **Agora:** o preço do site é a **média dos marketplaces** — preço de mercado do TCGplayer e tendência do Cardmarket, em reais pela cotação do dia. Vale para a página da carta, grades, coleções, busca, Cards em Alta/Queda e mais caros do dia.

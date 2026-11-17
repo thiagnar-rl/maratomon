@@ -22,6 +22,8 @@ export type CardBrief = { id: string; localId: string; name: string; image?: str
 
 export type SetDetail = SetBrief & {
   releaseDate?: string;
+  /** Sigla oficial da coleção (ex.: PFL, BS, MEW), usada para achar a carta nas lojas brasileiras. */
+  abbreviation?: { official?: string };
   serie: { id: string; name: string };
   legal?: { standard: boolean; expanded: boolean };
   cards: CardBrief[];
@@ -110,4 +112,7 @@ export type CardMeta = {
   types: string[];
   category: string | null;
 };
-export type PricedCard = PriceSnapshot & { meta?: CardMeta };
+/** Preço no Brasil (MYP Cards): menor anúncio, unidades à venda e link. */
+export type BrPrice = { low: number; units: number | null; url: string };
+
+export type PricedCard = PriceSnapshot & { meta?: CardMeta; br?: BrPrice | null };

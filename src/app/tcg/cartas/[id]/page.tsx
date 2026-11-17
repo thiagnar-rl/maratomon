@@ -6,6 +6,7 @@ import { getHistory, recordPrice } from "@/lib/tcg/history";
 import { cardImage, cardmarketSeries, estimateBRL, formatMoney, formatPct, marketplaceQuote, priceSnapshot, setLogo, tcgplayerVariants, variantLabel } from "@/lib/tcg/prices";
 import { rarityPt } from "@/lib/tcg/labels";
 import { MarketplacePrices } from "@/components/tcg/marketplace-prices";
+import { mypProduct } from "@/lib/tcg/mypcards";
 import { typeColors } from "@/lib/pokemon";
 import { liga } from "@/lib/liga";
 import { CardPlaceholder } from "@/components/tcg/card-placeholder";
@@ -63,6 +64,7 @@ export default async function CardPage({ params }: Props) {
   const snap = priceSnapshot(card, rates);
   const estimate = estimateBRL(card, rates);
   const quote = marketplaceQuote(card, rates);
+  const br = await mypProduct({ setId: card.set.id, localId: card.localId });
   const variants = tcgplayerVariants(card.pricing);
   const cm = card.pricing?.cardmarket;
   const typeColor = card.types?.[0] ? typeColors[card.types[0]] : undefined;
@@ -85,6 +87,7 @@ export default async function CardPage({ params }: Props) {
   const markets = [
     ext?.tcgplayer && { label: "TCGplayer", href: `https://www.tcgplayer.com/product/${ext.tcgplayer}`, note: "EUA · US$" },
     { label: "Cardmarket", href: `https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=${encodeURIComponent(card.name)}`, note: "Europa · €" },
+    br && { label: "MYP Cards", href: br.url, note: "Brasil · R$" },
     { label: "Liga Pokémon", href: liga.card(ligaRef), note: "Brasil · R$" },
   ].filter(Boolean) as { label: string; href: string; note: string }[];
 
@@ -152,9 +155,23 @@ export default async function CardPage({ params }: Props) {
           <section aria-labelledby="preco" className="overflow-hidden rounded-[2rem] border border-line bg-gradient-to-br from-accent/20 via-surface to-surface">
             <div className="grid gap-px bg-line sm:grid-cols-2">
               <div className="space-y-1 bg-surface/90 p-6">
-                <p id="preco" className="text-sm font-bold text-ink-soft">Preço médio nos marketplaces</p>
-                <p className="font-display text-5xl font-extrabold tabular-nums">{snap.brl != null ? formatMoney(snap.brl, "BRL") : "Sem preço"}</p>
-                <p className="text-xs text-ink-soft">{estimate ? `Base: ${estimate.source}, em reais pela cotação de hoje` : "Ainda sem negociações registradas"}</p>
+                {br?.low != null ? (
+                  <>
+                    <p id="preco" className="text-sm font-bold text-ink-soft">Menor preço no Brasil</p>
+                    <p className="font-display text-5xl font-extrabold tabular-nums">{formatMoney(br.low, "BRL")}</p>
+                    <p className="text-xs text-ink-soft">
+                      MYP Cards{br.avg != null && ` · médio ${formatMoney(br.avg, "BRL")}`}
+                      {br.lastSold != null && ` · último vendido ${formatMoney(br.lastSold, "BRL")}`}
+                      {snap.brl != null && ` · internacional ${formatMoney(snap.brl, "BRL")}`}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p id="preco" className="text-sm font-bold text-ink-soft">Preço médio nos marketplaces</p>
+                    <p className="font-display text-5xl font-extrabold tabular-nums">{snap.brl != null ? formatMoney(snap.brl, "BRL") : "Sem preço"}</p>
+                    <p className="text-xs text-ink-soft">{estimate ? `Internacional: ${estimate.source}, em reais pela cotação de hoje (sem oferta no Brasil agora)` : "Ainda sem negociações registradas"}</p>
+                  </>
+                )}
               </div>
               <div className="space-y-1 bg-surface/90 p-6">
                 <p className="text-sm font-bold text-ink-soft">Preço hoje em dólar</p>
@@ -174,7 +191,7 @@ export default async function CardPage({ params }: Props) {
             </div>
           </section>
 
-          <MarketplacePrices quote={quote} rates={rates} cm={cm} />
+          <MarketplacePrices quote={quote} rates={rates} cm={cm} br={br} />
 
           <section aria-labelledby="historico" className="space-y-3 rounded-[2rem] border border-line bg-surface p-6">
             <h2 id="historico" className="font-display text-xl font-extrabold">Oscilação do preço</h2>

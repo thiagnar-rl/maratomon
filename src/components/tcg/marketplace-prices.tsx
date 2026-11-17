@@ -1,4 +1,5 @@
-import { formatMoney, type MarketplaceQuote } from "@/lib/tcg/prices";
+import { formatMoney, formatPct, type MarketplaceQuote } from "@/lib/tcg/prices";
+import type { MypProduct } from "@/lib/tcg/mypcards";
 import type { Pricing, Rates } from "@/lib/tcg/types";
 
 const COLS = [
@@ -31,8 +32,8 @@ function Row({ label, values, subs, strong = false }: { label: React.ReactNode; 
 }
 
 /** Tabela de preços dos marketplaces: menor, médio e maior, em reais (estilo das lojas de cartas). */
-export function MarketplacePrices({ quote, rates, cm }: { quote: MarketplaceQuote; rates: Rates; cm?: Pricing["cardmarket"] }) {
-  if (quote.rows.length === 0) return null;
+export function MarketplacePrices({ quote, rates, cm, br }: { quote: MarketplaceQuote; rates: Rates; cm?: Pricing["cardmarket"]; br?: MypProduct | null }) {
+  if (quote.rows.length === 0 && !br) return null;
   const toBRL = (v: number | null, cur: "USD" | "EUR") => (v != null ? v * rates[cur] : null);
   const recent = cm && [cm.avg1, cm.avg7, cm.avg30].some((v) => typeof v === "number" && v > 0);
 
@@ -51,7 +52,19 @@ export function MarketplacePrices({ quote, rates, cm }: { quote: MarketplaceQuot
       </div>
 
       <div className="space-y-2">
-        <Row label="Média geral" values={[quote.min, quote.avg, quote.max]} strong />
+        {br && (
+          <Row
+            label={
+              <>
+                🇧🇷 Brasil · MYP Cards
+                <span className="block text-[11px] font-normal text-ink-soft">{br.offers ? `${br.offers} ofertas` : "lojas brasileiras"}</span>
+              </>
+            }
+            values={[br.low, br.avg, br.max]}
+            strong
+          />
+        )}
+        {quote.rows.length > 0 && <Row label="🌎 Média internacional" values={[quote.min, quote.avg, quote.max]} strong={!br} />}
         {quote.rows.map((r) => (
           <Row
             key={r.label}
@@ -66,6 +79,24 @@ export function MarketplacePrices({ quote, rates, cm }: { quote: MarketplaceQuot
           />
         ))}
       </div>
+
+      {br && (
+        <div className="grid gap-2 text-sm sm:grid-cols-3">
+          <div className="rounded-2xl bg-surface-2 px-4 py-3">
+            <span className="block text-xs text-ink-soft">Último vendido no Brasil{br.lastSoldNote ? ` (${br.lastSoldNote})` : ""}</span>
+            <span className="block font-bold tabular-nums">{br.lastSold != null ? formatMoney(br.lastSold, "BRL") : "—"}</span>
+          </div>
+          <div className="rounded-2xl bg-surface-2 px-4 py-3">
+            <span className="block text-xs text-ink-soft">Mediana no Brasil · 30 dias</span>
+            <span className={`block font-bold tabular-nums ${br.trend30d == null ? "" : br.trend30d >= 0 ? "text-good" : "text-[#ff5c8a]"}`}>
+              {br.trend30d == null ? "—" : `${br.trend30d >= 0 ? "▲" : "▼"} ${formatPct(br.trend30d).replace(/^[+−]/, "")}`}
+            </span>
+          </div>
+          <a href={br.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-2xl bg-accent px-4 py-3 text-center font-bold text-white hover:opacity-90">
+            Ver ofertas no MYP Cards ↗
+          </a>
+        </div>
+      )}
 
       {recent && (
         <div className="space-y-2 pt-2">
@@ -88,8 +119,8 @@ export function MarketplacePrices({ quote, rates, cm }: { quote: MarketplaceQuot
       )}
 
       <p className="text-xs text-ink-soft">
-        Menor = anúncio mais barato · Médio = preço de mercado (TCGplayer) e tendência (Cardmarket) · Maior = maior preço médio. Valores convertidos para real pela cotação
-        de hoje. A média geral é o preço usado em todo o site.
+        Brasil: menor anúncio, preço médio dos anúncios e maior oferta no MYP Cards (atualizado a cada 6 h). Internacional: TCGplayer (EUA) e Cardmarket (Europa)
+        convertidos pela cotação de hoje. O preço do site é o menor anúncio no Brasil; sem oferta no Brasil, a média internacional.
       </p>
     </section>
   );

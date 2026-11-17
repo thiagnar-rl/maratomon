@@ -1,6 +1,8 @@
 import { getCard, getRates } from "@/lib/tcg/api";
 import { recordPrices } from "@/lib/tcg/history";
 import { cardMeta, priceSnapshot } from "@/lib/tcg/prices";
+import { brPrices } from "@/lib/tcg/mypcards";
+import type { CardDetail } from "@/lib/tcg/types";
 import type { PricedCard } from "@/lib/tcg/types";
 
 /**
@@ -17,16 +19,23 @@ export async function GET(request: Request) {
 
   const rates = await getRates();
   const result: Record<string, PricedCard> = {};
+  const loaded: CardDetail[] = [];
   // Busca em lotes para não sobrecarregar a API.
   for (let i = 0; i < ids.length; i += 16) {
     const cards = await Promise.all(ids.slice(i, i + 16).map((id) => getCard(id)));
     cards.forEach((card, j) => {
-      if (card) result[ids[i + j]] = { ...priceSnapshot(card, rates), meta: cardMeta(card) };
+      if (card) {
+        result[ids[i + j]] = { ...priceSnapshot(card, rates), meta: cardMeta(card) };
+        loaded.push(card);
+      }
     });
   }
   void recordPrices(
     Object.entries(result).map(([id, { usd, eur, brl, change7d, change30d }]) => ({ id, usd, eur, brl, change7d, change30d })),
     rates.USD,
   );
+  // Preço no Brasil (MYP Cards) passa a ser o preço principal quando a carta está à venda lá.
+  const br = await brPrices(loaded.map((c) => ({ id: c.id, setId: c.set.id, localId: c.localId })));
+  for (const [id, price] of Object.entries(br)) if (result[id]) result[id] = { ...result[id], brl: price.low, br: price };
   return Response.json(result, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } });
 }

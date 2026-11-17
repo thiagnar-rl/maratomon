@@ -3,7 +3,8 @@ import { getCard, getRates, getSeries, getSet } from "./api";
 import { featuredCardIds } from "./featured";
 import { recordPrices } from "./history";
 import { cardMeta, marketplaceQuote, priceSnapshot } from "./prices";
-import type { CardDetail, CardMeta, PriceSnapshot, Rates } from "./types";
+import { brPrices } from "./mypcards";
+import type { BrPrice, CardDetail, CardMeta, PriceSnapshot, Rates } from "./types";
 
 export type Period = "dia" | "semana" | "mes";
 
@@ -14,6 +15,8 @@ export type MarketRow = PriceSnapshot & {
   setName: string;
   localId: string;
   meta: CardMeta;
+  /** Menor preço no Brasil (MYP Cards), quando a carta está à venda lá. */
+  br: BrPrice | null;
   /** Menor anúncio e preço médio alto, em reais (para as somas da lista). */
   brlLow: number | null;
   brlHigh: number | null;
@@ -79,12 +82,13 @@ async function dailyChanges(ids: string[]): Promise<Record<string, number>> {
 /** Variações acima de 75% num único dia costumam ser venda isolada ou erro de anúncio: ficam de fora. */
 const sane = (v: number | null) => (v != null && Math.abs(v) <= 75 ? v : null);
 
-function toRow(c: CardDetail, rates: Rates, day: number | undefined): MarketRow {
+function toRow(c: CardDetail, rates: Rates, day: number | undefined, br: BrPrice | undefined): MarketRow {
   const snap = priceSnapshot(c, rates);
   const cm = c.pricing?.cardmarket;
   const q = marketplaceQuote(c, rates);
-  const brlLow = q.min;
-  const brlHigh = q.max;
+  const main = br?.low ?? snap.brl;
+  const brlLow = [q.min, main].filter((v): v is number => v != null).reduce((a, b) => Math.min(a, b), Infinity);
+  const brlHigh = [q.max, main].filter((v): v is number => v != null).reduce((a, b) => Math.max(a, b), -Infinity);
   return {
     id: c.id,
     name: c.name,
@@ -92,9 +96,12 @@ function toRow(c: CardDetail, rates: Rates, day: number | undefined): MarketRow 
     setName: c.set.name,
     localId: c.localId,
     ...snap,
+    // Preço principal: menor anúncio no Brasil; sem ele, média dos marketplaces internacionais.
+    brl: main,
+    br: br ?? null,
     meta: cardMeta(c),
-    brlLow: brlLow != null ? Math.round(brlLow * 100) / 100 : null,
-    brlHigh: brlHigh != null ? Math.round(brlHigh * 100) / 100 : null,
+    brlLow: Number.isFinite(brlLow) ? Math.round(brlLow * 100) / 100 : null,
+    brlHigh: Number.isFinite(brlHigh) ? Math.round(brlHigh * 100) / 100 : null,
     eurTrend: cm?.trend ?? null,
     eur30: cm?.avg30 ?? null,
     change: {
@@ -114,6 +121,7 @@ export async function getMarket(): Promise<{ rows: MarketRow[]; rates: Rates; up
   const snaps = valid.map((c) => ({ id: c.id, ...priceSnapshot(c, rates) })).filter((r) => r.brl != null);
   await recordPrices(snaps, rates.USD);
   const day = await dailyChanges(valid.map((c) => c.id));
-  const rows = valid.map((c) => toRow(c, rates, day[c.id])).filter((r) => r.brl != null);
+  const br = await brPrices(valid.map((c) => ({ id: c.id, setId: c.set.id, localId: c.localId })));
+  const rows = valid.map((c) => toRow(c, rates, day[c.id], br[c.id])).filter((r) => r.brl != null);
   return { rows, rates, updatedAt: new Date().toISOString() };
 }
