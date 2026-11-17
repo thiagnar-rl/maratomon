@@ -73,7 +73,7 @@ export function MoversBoard({ live, initialDir = "alta" }: { live: LiveMarket; i
 
   const sum = (key: "brlLow" | "brl" | "brlHigh") => list.reduce((s, r) => s + (r[key] ?? 0), 0);
   const f = filters.f;
-  const activeCount = f.rarity.length + f.energy.length + f.variant.length + f.illustrator.length + f.ranges.length + (f.q ? 1 : 0) + (filters.min != null ? 1 : 0) + (filters.max != null ? 1 : 0);
+  const activeCount = f.set.length + f.rarity.length + f.energy.length + f.variant.length + f.illustrator.length + f.ranges.length + (f.q ? 1 : 0) + (filters.min != null ? 1 : 0) + (filters.max != null ? 1 : 0);
   const other: Dir = dir === "alta" ? "queda" : "alta";
   const label = (d: Dir) => (d === "alta" ? "Cards em Alta" : "Cards em Queda");
   const periodLabel = PERIODS.find(([p]) => p === period)![1].toLowerCase();

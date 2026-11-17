@@ -70,7 +70,7 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
 
   const total = filtered.reduce((sum, c) => sum + (data[c.id]?.brl ?? 0), 0);
   const f = filters.f;
-  const activeCount = f.rarity.length + f.energy.length + f.variant.length + f.illustrator.length + f.ranges.length + (filters.min != null ? 1 : 0) + (filters.max != null ? 1 : 0) + (f.q ? 1 : 0);
+  const activeCount = f.set.length + f.rarity.length + f.energy.length + f.variant.length + f.illustrator.length + f.ranges.length + (filters.min != null ? 1 : 0) + (filters.max != null ? 1 : 0) + (f.q ? 1 : 0);
 
   return (
     <FilterLayout activeCount={activeCount} panel={<FilterPanel api={filters} metas={metas} loading={!done} />}>

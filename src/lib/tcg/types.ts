@@ -100,6 +100,8 @@ export type PriceSnapshot = {
 
 /** Dados extras para filtros nas grades (raridade, versões, ilustrador). */
 export type CardMeta = {
+  /** Nome da coleção. */
+  set?: string | null;
   /** Raridade em português. */
   rarity: string | null;
   illustrator: string | null;

@@ -17,6 +17,7 @@ export const PRICE_RANGES: { label: string; min: number | null; max: number | nu
 
 export type Filters = {
   q: string;
+  set: string[];
   rarity: string[];
   energy: string[];
   variant: string[];
@@ -26,7 +27,7 @@ export type Filters = {
   max: string;
 };
 
-const EMPTY: Filters = { q: "", rarity: [], energy: [], variant: [], illustrator: [], ranges: [], min: "", max: "" };
+const EMPTY: Filters = { q: "", set: [], rarity: [], energy: [], variant: [], illustrator: [], ranges: [], min: "", max: "" };
 
 type Item = { name: string; localId?: string; meta?: CardMeta; brl: number | null | undefined };
 
@@ -41,6 +42,7 @@ export function useCardFilters() {
       const m = item.meta;
       const q = f.q.trim().toLowerCase();
       if (q && !item.name.toLowerCase().includes(q) && !(item.localId ?? "").toLowerCase().includes(q)) return false;
+      if (f.set.length && !f.set.includes(m?.set ?? "")) return false;
       if (f.rarity.length && !f.rarity.includes(m?.rarity ?? "")) return false;
       if (f.energy.length && !f.energy.some((e) => m?.types.includes(e))) return false;
       if (f.variant.length && !f.variant.some((v) => m?.variants.includes(v))) return false;
@@ -57,11 +59,11 @@ export function useCardFilters() {
     [f, min, max],
   );
 
-  const toggle = (key: "rarity" | "energy" | "variant" | "illustrator" | "ranges", value: string) =>
+  const toggle = (key: "set" | "rarity" | "energy" | "variant" | "illustrator" | "ranges", value: string) =>
     setF((prev) => ({ ...prev, [key]: prev[key].includes(value) ? prev[key].filter((v) => v !== value) : [...prev[key], value] }));
 
   const active =
-    f.q !== "" || f.rarity.length + f.energy.length + f.variant.length + f.illustrator.length + f.ranges.length > 0 || min != null || max != null;
+    f.q !== "" || f.set.length + f.rarity.length + f.energy.length + f.variant.length + f.illustrator.length + f.ranges.length > 0 || min != null || max != null;
 
   return { f, setF, toggle, matches, active, min, max, clear: () => setF(EMPTY) };
 }
@@ -115,6 +117,9 @@ function Chip({ label, count, on, onClick, color }: { label: string; count: numb
 export function FilterPanel({ api, metas, loading = false }: { api: FilterApi; metas: (CardMeta | undefined)[]; loading?: boolean }) {
   const { f, setF, toggle } = api;
   const [illQuery, setIllQuery] = useState("");
+  const [setQuery, setSetQuery] = useState("");
+  const sets = useMemo(() => tally(metas.map((m) => m?.set)), [metas]);
+  const setList = setQuery ? sets.filter(([n]) => n.toLowerCase().includes(setQuery.toLowerCase())) : sets;
   const rarities = useMemo(() => tally(metas.map((m) => m?.rarity)), [metas]);
   const energies = useMemo(() => tally(metas.flatMap((m) => m?.types ?? [])), [metas]);
   const variants = useMemo(() => tally(metas.flatMap((m) => m?.variants ?? [])), [metas]);
@@ -141,6 +146,31 @@ export function FilterPanel({ api, metas, loading = false }: { api: FilterApi; m
         aria-label="Filtrar por nome ou número"
         className="w-full rounded-2xl border border-line bg-bg px-4 py-2.5 text-sm outline-none focus:border-accent"
       />
+
+      {sets.length > 1 && (
+        <Section title="Coleção" count={f.set.length}>
+          {sets.length > 8 && (
+            <input
+              value={setQuery}
+              onChange={(e) => setSetQuery(e.target.value)}
+              placeholder="Buscar coleção"
+              aria-label="Buscar coleção"
+              className="w-full rounded-xl border border-line bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
+            />
+          )}
+          <ul className="max-h-56 space-y-0.5 overflow-y-auto pr-1">
+            {setList.map(([v, n]) => (
+              <li key={v}>
+                <label className="flex cursor-pointer items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm hover:bg-surface-2">
+                  <input type="checkbox" checked={f.set.includes(v)} onChange={() => toggle("set", v)} className="size-4 accent-[var(--accent)]" />
+                  <span className="min-w-0 flex-1 truncate">{v}</span>
+                  <span className="text-xs text-ink-soft tabular-nums">{n}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       {rarities.length > 0 && (
         <Section title="Raridade" count={f.rarity.length}>
@@ -240,6 +270,7 @@ export function ActiveFilters({ api }: { api: FilterApi }) {
   const { f, setF, toggle, active, clear, min, max } = api;
   if (!active) return null;
   const chips = [
+    ...f.set.map((v) => ({ k: `s${v}`, t: `📦 ${v}`, rm: () => toggle("set", v) })),
     ...f.rarity.map((v) => ({ k: `r${v}`, t: v, rm: () => toggle("rarity", v) })),
     ...f.energy.map((v) => ({ k: `e${v}`, t: `⚡ ${v}`, rm: () => toggle("energy", v) })),
     ...f.variant.map((v) => ({ k: `v${v}`, t: v, rm: () => toggle("variant", v) })),

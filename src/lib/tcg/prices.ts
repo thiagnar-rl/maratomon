@@ -107,8 +107,9 @@ const VARIANT_PT: Record<string, string> = {
 };
 
 /** Raridade, versões e ilustrador, para os filtros. */
-export function cardMeta(card: Pick<CardDetail, "rarity" | "illustrator" | "variants" | "types" | "category">): CardMeta {
+export function cardMeta(card: Pick<CardDetail, "rarity" | "illustrator" | "variants" | "types" | "category"> & { set?: { name: string } }): CardMeta {
   return {
+    set: card.set?.name ?? null,
     rarity: rarityPt(card.rarity),
     types: (card.types ?? []).map(energyPt),
     category: card.category ?? null,
