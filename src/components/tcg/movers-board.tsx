@@ -62,6 +62,7 @@ export function MoversBoard({ live, initialDir = "alta" }: { live: LiveMarket; i
     [market.rows, dir, period],
   );
   const metas = useMemo(() => pool.map((r) => r.meta), [pool]);
+  const allSets = useMemo(() => [...new Set(market.rows.map((r) => r.setName))], [market.rows]);
   const list = useMemo(
     () =>
       pool
@@ -155,7 +156,7 @@ export function MoversBoard({ live, initialDir = "alta" }: { live: LiveMarket; i
         </div>
       </div>
 
-      <FilterLayout activeCount={activeCount} panel={<FilterPanel api={filters} metas={metas} />}>
+      <FilterLayout activeCount={activeCount} panel={<FilterPanel api={filters} metas={metas} allSets={allSets} />}>
         <div className="space-y-3">
           <ActiveFilters api={filters} />
           {list.length === 0 ? (

@@ -36,12 +36,13 @@ async function poolIds(): Promise<string[]> {
     .filter((s) => !s.digital)
     .flatMap((s) => s.sets)
     .filter((set) => set.cardCount.total > set.cardCount.official && !/p$|promo/i.test(set.id))
-    .slice(0, 6);
+    .slice(0, 8);
   const sets = await Promise.all(recentSets.map((s) => getSet(s.id)));
   const chase = sets.flatMap((set) =>
     (set?.cards ?? []).filter((c) => Number(c.localId) > (set?.cardCount.official ?? Infinity)).map((c) => c.id),
   );
-  return [...new Set([...chase, ...featuredCardIds])].slice(0, 240);
+  // Clássicos primeiro, para nunca ficarem de fora do limite.
+  return [...new Set([...featuredCardIds, ...chase])].slice(0, 320);
 }
 
 const pct = (now?: number | null, before?: number | null) =>

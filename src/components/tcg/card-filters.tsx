@@ -114,11 +114,16 @@ function Chip({ label, count, on, onClick, color }: { label: string; count: numb
 }
 
 /** Painel lateral de filtros (Raridade, Energia, Versão, Ilustrador, Preço). */
-export function FilterPanel({ api, metas, loading = false }: { api: FilterApi; metas: (CardMeta | undefined)[]; loading?: boolean }) {
+export function FilterPanel({ api, metas, loading = false, allSets }: { api: FilterApi; metas: (CardMeta | undefined)[]; loading?: boolean; allSets?: string[] }) {
   const { f, setF, toggle } = api;
   const [illQuery, setIllQuery] = useState("");
   const [setQuery, setSetQuery] = useState("");
-  const sets = useMemo(() => tally(metas.map((m) => m?.set)), [metas]);
+  // Todas as coleções acompanhadas aparecem; as sem carta na lista atual ficam com 0.
+  const sets = useMemo(() => {
+    const counts = new Map(tally(metas.map((m) => m?.set)));
+    for (const name of allSets ?? []) if (!counts.has(name)) counts.set(name, 0);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "pt-BR"));
+  }, [metas, allSets]);
   const setList = setQuery ? sets.filter(([n]) => n.toLowerCase().includes(setQuery.toLowerCase())) : sets;
   const rarities = useMemo(() => tally(metas.map((m) => m?.rarity)), [metas]);
   const energies = useMemo(() => tally(metas.flatMap((m) => m?.types ?? [])), [metas]);
@@ -161,7 +166,7 @@ export function FilterPanel({ api, metas, loading = false }: { api: FilterApi; m
           <ul className="max-h-56 space-y-0.5 overflow-y-auto pr-1">
             {setList.map(([v, n]) => (
               <li key={v}>
-                <label className="flex cursor-pointer items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm hover:bg-surface-2">
+                <label className={`flex cursor-pointer items-center gap-2.5 rounded-xl px-2 py-1.5 text-sm hover:bg-surface-2 ${n === 0 ? "opacity-45" : ""}`}>
                   <input type="checkbox" checked={f.set.includes(v)} onChange={() => toggle("set", v)} className="size-4 accent-[var(--accent)]" />
                   <span className="min-w-0 flex-1 truncate">{v}</span>
                   <span className="text-xs text-ink-soft tabular-nums">{n}</span>

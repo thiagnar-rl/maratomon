@@ -7,6 +7,13 @@ Site publicado: https://maratomon.vercel.app
 
 ## 17/11/2026
 
+### Correção: filtro de coleção mostrava poucas coleções
+- **Problema:** as cartas clássicas (Charizard da Coleção Básica etc.) ficavam fora do limite de cartas acompanhadas, e o filtro mostrava só 6 coleções.
+- **Correção:** os clássicos entram primeiro; o mercado passou a acompanhar as 8 coleções mais recentes (antes 6), com limite de 320 cartas (antes 240).
+- O filtro lista todas as coleções acompanhadas, ordenadas pela quantidade de cartas. As que não têm carta na lista atual (ex.: nenhuma subiu no período) aparecem apagadas com 0.
+- Observação: o mercado acompanha as cartas mais disputadas, não as 221 coleções inteiras. Para ver qualquer coleção, use **Coleções** no menu.
+- Arquivos: `src/lib/tcg/market.ts`, `src/components/tcg/card-filters.tsx`, `src/components/tcg/movers-board.tsx`.
+
 ### TCG: variação em reais nos Cards em Alta e em Queda
 - Cada card mostra, além da porcentagem, quanto subiu ou caiu em reais (ex.: ▲ 49,5% · +R$ 38).
 - Na grade, o valor em reais aparece embaixo do preço.
