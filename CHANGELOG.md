@@ -11,6 +11,7 @@ Site publicado: https://forja-arcana.vercel.app
 - O site passou a ser **https://forja-arcana.vercel.app** (domínio adicionado no projeto da Vercel, ligado à produção).
 - O endereço antigo **maratomon.vercel.app redireciona** para o novo (redirecionamento permanente 308), então links já compartilhados continuam funcionando.
 - No código, o endereço oficial (`PRODUCTION_URL` em `src/lib/site.ts`) é usado no ar para o mapa do site, o robots e as imagens de compartilhamento; identificação do site nas leituras de notícias e do MYP Cards atualizada.
+- **Supabase (login):** Site URL trocado para o endereço novo e `https://forja-arcana.vercel.app/**` adicionado às URLs de redirecionamento, para os links de senha e de conta voltarem ao endereço certo.
 - O nome do projeto na Vercel e o repositório no GitHub continuam "maratomon" (não aparecem para quem usa o site).
 
 ### Correção: guia TCG não abria (demorava ~16 s)
