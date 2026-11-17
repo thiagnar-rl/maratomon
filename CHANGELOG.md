@@ -7,6 +7,16 @@ Site publicado: https://maratomon.vercel.app
 
 ## 17/11/2026
 
+### Preço com base nos marketplaces (site todo)
+- **Antes:** o preço em reais era só o preço de mercado do TCGplayer (EUA) convertido; sem ele, a tendência do Cardmarket.
+- **Agora:** o preço do site é a **média dos marketplaces** — preço de mercado do TCGplayer e tendência do Cardmarket, em reais pela cotação do dia. Vale para a página da carta, grades, coleções, busca, Cards em Alta/Queda e mais caros do dia.
+- **Nova seção na página da carta:** "Preço de venda nos marketplaces", no formato menor / médio / maior (verde, laranja, vermelho), com a média geral, uma linha por marketplace e versão (Normal, Holo, Reverse) e "Vendas recentes" do Cardmarket (ontem, 7 e 30 dias).
+- O "maior anúncio" do TCGplayer só entra quando é até 3× o preço médio (evita valores irreais como US$ 999).
+- **Variação de 7 e 30 dias** agora compara a tendência do Cardmarket com as médias de venda (antes usava a média de um único dia, que oscilava demais — ex.: Dawn mostrava −38,7%).
+- Raridade da página da carta em português.
+- Observação: a Liga Pokémon bloqueia acesso automático e não tem API pública, então os preços dela não podem ser lidos pelo site. No gráfico de histórico, o valor em reais pode dar um salto hoje por causa da mudança de cálculo.
+- Arquivos: `src/lib/tcg/prices.ts` (`marketplaceQuote`), `src/components/tcg/marketplace-prices.tsx` (novo), `src/app/tcg/cartas/[id]/page.tsx`, `src/lib/tcg/market.ts`, `src/components/tcg/movers-board.tsx`, `src/components/tcg/priced-card-grid.tsx`.
+
 ### Correção: filtro de coleção mostrava poucas coleções
 - **Problema:** as cartas clássicas (Charizard da Coleção Básica etc.) ficavam fora do limite de cartas acompanhadas, e o filtro mostrava só 6 coleções.
 - **Correção:** os clássicos entram primeiro; o mercado passou a acompanhar as 8 coleções mais recentes (antes 6), com limite de 320 cartas (antes 240).

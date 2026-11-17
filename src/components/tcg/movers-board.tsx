@@ -131,13 +131,13 @@ export function MoversBoard({ live, initialDir = "alta" }: { live: LiveMarket; i
               </span>
             </p>
             <p className="flex flex-wrap items-baseline gap-x-2 font-display text-lg font-extrabold tabular-nums">
-              <span className="text-good" title="Soma dos menores anúncios">{formatMoney(sum("brlLow"), "BRL")}</span>
+              <span className="text-good" title="Soma dos menores preços">{formatMoney(sum("brlLow"), "BRL")}</span>
               <span className="text-ink-soft">·</span>
-              <span className="text-[#ff9f43]" title="Soma do valor de mercado">{formatMoney(sum("brl"), "BRL")}</span>
+              <span className="text-[#ff9f43]" title="Soma dos preços médios">{formatMoney(sum("brl"), "BRL")}</span>
               <span className="text-ink-soft">·</span>
-              <span className="text-[#ff5c8a]" title="Soma do preço médio alto">{formatMoney(sum("brlHigh"), "BRL")}</span>
+              <span className="text-[#ff5c8a]" title="Soma dos maiores preços">{formatMoney(sum("brlHigh"), "BRL")}</span>
             </p>
-            <p className="text-[11px] text-ink-soft">menor anúncio · mercado · preço médio alto</p>
+            <p className="text-[11px] text-ink-soft">menor · médio · maior preço nos marketplaces</p>
           </div>
           <span className="flex rounded-full bg-surface-2 p-1" role="group" aria-label="Modo de exibição">
             {(

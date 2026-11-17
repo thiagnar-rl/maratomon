@@ -34,15 +34,72 @@ export function tcgplayerVariants(pricing?: Pricing): [string, TcgplayerVariant]
   );
 }
 
-/** Melhor estimativa do valor da carta em reais e de onde veio. */
-export function estimateBRL(card: Pick<CardDetail, "pricing">, rates: Rates): { brl: number; source: string } | null {
+export type QuoteRow = { label: string; currency: "USD" | "EUR"; min: number | null; avg: number | null; max: number | null };
+
+export type MarketplaceQuote = {
+  /** Faixa consolidada em reais: menor anúncio, preço médio e maior preço médio entre os marketplaces. */
+  min: number | null;
+  avg: number | null;
+  max: number | null;
+  /** Linhas por marketplace/versão, na moeda original. */
+  rows: QuoteRow[];
+};
+
+const positive = (v: number | null | undefined): v is number => typeof v === "number" && v > 0;
+const round2 = (v: number) => Math.round(v * 100) / 100;
+
+/**
+ * Preço com base nos marketplaces (TCGplayer nos EUA e Cardmarket na Europa), no formato menor / médio / maior.
+ * O preço médio do site é a média entre o preço de mercado do TCGplayer e a tendência do Cardmarket, em reais.
+ */
+export function marketplaceQuote(card: Pick<CardDetail, "pricing">, rates: Rates): MarketplaceQuote {
+  const rows: QuoteRow[] = [];
+  const brl = { min: [] as number[], avg: [] as number[], max: [] as number[] };
+
   const variants = tcgplayerVariants(card.pricing);
-  const market = variants.map(([, v]) => v.marketPrice ?? v.midPrice).find((p): p is number => typeof p === "number" && p > 0);
-  if (market) return { brl: market * rates.USD, source: "TCGplayer (mercado)" };
+  variants.forEach(([key, v], i) => {
+    const avg = positive(v.marketPrice) ? v.marketPrice : positive(v.midPrice) ? v.midPrice : null;
+    // O "maior anúncio" do TCGplayer às vezes é um valor fora da realidade (ex.: US$ 999); só entra se for até 3× o médio.
+    const high = positive(v.highPrice) && avg && v.highPrice <= avg * 3 ? v.highPrice : null;
+    const max = high ?? (positive(v.midPrice) ? v.midPrice : null);
+    const min = positive(v.lowPrice) ? v.lowPrice : null;
+    rows.push({ label: `TCGplayer · ${variantLabel(key)}`, currency: "USD", min, avg, max });
+    // A primeira versão (a principal) entra na média do site.
+    if (i === 0) {
+      if (min) brl.min.push(min * rates.USD);
+      if (avg) brl.avg.push(avg * rates.USD);
+      if (max) brl.max.push(max * rates.USD);
+    }
+  });
+
   const cm = card.pricing?.cardmarket;
-  const eur = cm?.trend || cm?.avg30 || cm?.avg;
-  if (eur) return { brl: eur * rates.EUR, source: "Cardmarket (tendência)" };
-  return null;
+  if (cm) {
+    const avg = [cm.trend, cm.avg, cm.avg30].find(positive) ?? null;
+    const maxes = [cm.avg, cm.avg7, cm.avg30, cm.trend].filter(positive);
+    const max = maxes.length ? Math.max(...maxes) : null;
+    const min = positive(cm.low) ? cm.low : null;
+    if (min || avg || max) {
+      rows.push({ label: "Cardmarket", currency: "EUR", min, avg, max });
+      if (min) brl.min.push(min * rates.EUR);
+      if (avg) brl.avg.push(avg * rates.EUR);
+      if (max) brl.max.push(max * rates.EUR);
+    }
+  }
+
+  return {
+    min: brl.min.length ? round2(Math.min(...brl.min)) : null,
+    avg: brl.avg.length ? round2(brl.avg.reduce((a, b) => a + b, 0) / brl.avg.length) : null,
+    max: brl.max.length ? round2(Math.max(...brl.max)) : null,
+    rows,
+  };
+}
+
+/** Preço da carta em reais (média dos marketplaces) e de onde veio. */
+export function estimateBRL(card: Pick<CardDetail, "pricing">, rates: Rates): { brl: number; source: string } | null {
+  const q = marketplaceQuote(card, rates);
+  if (q.avg == null) return null;
+  const names = [...new Set(q.rows.filter((r) => r.avg).map((r) => r.label.split(" · ")[0]))];
+  return { brl: q.avg, source: names.length > 1 ? `média de ${names.join(" e ")}` : names[0] ?? "marketplace" };
 }
 
 export const formatMoney = (value: number | null | undefined, currency: "BRL" | "USD" | "EUR") =>
@@ -89,8 +146,9 @@ export function priceSnapshot(card: Pick<CardDetail, "pricing">, rates: Rates): 
     usd,
     eur,
     brl: estimate ? Math.round(estimate.brl * 100) / 100 : null,
-    change7d: pct(cm?.avg1, cm?.avg7),
-    change30d: pct(cm?.avg1 ?? cm?.trend, cm?.avg30),
+    // Tendência do Cardmarket contra as médias de venda (a média de um único dia oscila demais).
+    change7d: pct(cm?.trend ?? cm?.avg1, cm?.avg7),
+    change30d: pct(cm?.trend ?? cm?.avg1, cm?.avg30),
   };
 }
 

@@ -2,7 +2,7 @@ import "server-only";
 import { getCard, getRates, getSeries, getSet } from "./api";
 import { featuredCardIds } from "./featured";
 import { recordPrices } from "./history";
-import { cardMeta, priceSnapshot, tcgplayerVariants } from "./prices";
+import { cardMeta, marketplaceQuote, priceSnapshot } from "./prices";
 import type { CardDetail, CardMeta, PriceSnapshot, Rates } from "./types";
 
 export type Period = "dia" | "semana" | "mes";
@@ -82,9 +82,9 @@ const sane = (v: number | null) => (v != null && Math.abs(v) <= 75 ? v : null);
 function toRow(c: CardDetail, rates: Rates, day: number | undefined): MarketRow {
   const snap = priceSnapshot(c, rates);
   const cm = c.pricing?.cardmarket;
-  const v = tcgplayerVariants(c.pricing).map(([, x]) => x).find((x) => x.lowPrice || x.midPrice);
-  const brlLow = v?.lowPrice ? v.lowPrice * rates.USD : cm?.low ? cm.low * rates.EUR : null;
-  const brlHigh = v?.midPrice ? v.midPrice * rates.USD : cm?.avg ? cm.avg * rates.EUR : null;
+  const q = marketplaceQuote(c, rates);
+  const brlLow = q.min;
+  const brlHigh = q.max;
   return {
     id: c.id,
     name: c.name,

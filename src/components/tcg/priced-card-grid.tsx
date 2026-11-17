@@ -127,7 +127,7 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
           </ul>
         )}
         <p className="text-xs text-ink-soft">
-          Preço do dia: TCGplayer (EUA) convertido pela cotação de hoje; sem TCGplayer, Cardmarket (Europa). ▲▼ = variação em 7 dias.
+          Preço do dia: média dos marketplaces (TCGplayer e Cardmarket) em reais pela cotação de hoje. ▲▼ = variação em 7 dias.
         </p>
       </div>
     </FilterLayout>

@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCard, getRates } from "@/lib/tcg/api";
 import { getHistory, recordPrice } from "@/lib/tcg/history";
-import { cardImage, cardmarketSeries, estimateBRL, formatMoney, formatPct, priceSnapshot, setLogo, tcgplayerVariants, variantLabel } from "@/lib/tcg/prices";
+import { cardImage, cardmarketSeries, estimateBRL, formatMoney, formatPct, marketplaceQuote, priceSnapshot, setLogo, tcgplayerVariants, variantLabel } from "@/lib/tcg/prices";
+import { rarityPt } from "@/lib/tcg/labels";
+import { MarketplacePrices } from "@/components/tcg/marketplace-prices";
 import { typeColors } from "@/lib/pokemon";
 import { liga } from "@/lib/liga";
 import { CardPlaceholder } from "@/components/tcg/card-placeholder";
@@ -60,6 +62,7 @@ export default async function CardPage({ params }: Props) {
   const image = cardImage(card.image, "high");
   const snap = priceSnapshot(card, rates);
   const estimate = estimateBRL(card, rates);
+  const quote = marketplaceQuote(card, rates);
   const variants = tcgplayerVariants(card.pricing);
   const cm = card.pricing?.cardmarket;
   const typeColor = card.types?.[0] ? typeColors[card.types[0]] : undefined;
@@ -133,7 +136,7 @@ export default async function CardPage({ params }: Props) {
                   <Energy type={t} size="sm" /> {TYPE_PT[t] ?? t}
                 </span>
               ))}
-              {card.rarity && <span className="rounded-full bg-accent-2 px-3 py-1 text-black">{card.rarity}</span>}
+              {card.rarity && <span className="rounded-full bg-accent-2 px-3 py-1 text-black">{rarityPt(card.rarity)}</span>}
               <span className="rounded-full bg-surface-2 px-3 py-1">
                 #{card.localId}/{card.set.cardCount.official}
               </span>
@@ -149,9 +152,9 @@ export default async function CardPage({ params }: Props) {
           <section aria-labelledby="preco" className="overflow-hidden rounded-[2rem] border border-line bg-gradient-to-br from-accent/20 via-surface to-surface">
             <div className="grid gap-px bg-line sm:grid-cols-2">
               <div className="space-y-1 bg-surface/90 p-6">
-                <p id="preco" className="text-sm font-bold text-ink-soft">Preço hoje em reais</p>
+                <p id="preco" className="text-sm font-bold text-ink-soft">Preço médio nos marketplaces</p>
                 <p className="font-display text-5xl font-extrabold tabular-nums">{snap.brl != null ? formatMoney(snap.brl, "BRL") : "Sem preço"}</p>
-                <p className="text-xs text-ink-soft">{estimate ? `Base: ${estimate.source}, convertido pela cotação de hoje` : "Ainda sem negociações registradas"}</p>
+                <p className="text-xs text-ink-soft">{estimate ? `Base: ${estimate.source}, em reais pela cotação de hoje` : "Ainda sem negociações registradas"}</p>
               </div>
               <div className="space-y-1 bg-surface/90 p-6">
                 <p className="text-sm font-bold text-ink-soft">Preço hoje em dólar</p>
@@ -170,6 +173,8 @@ export default async function CardPage({ params }: Props) {
               </span>
             </div>
           </section>
+
+          <MarketplacePrices quote={quote} rates={rates} cm={cm} />
 
           <section aria-labelledby="historico" className="space-y-3 rounded-[2rem] border border-line bg-surface p-6">
             <h2 id="historico" className="font-display text-xl font-extrabold">Oscilação do preço</h2>
@@ -221,7 +226,7 @@ export default async function CardPage({ params }: Props) {
               )}
               {card.trainerType && <Spec label="Tipo de treinador">{card.trainerType}</Spec>}
               {card.energyType && <Spec label="Tipo de energia">{card.energyType}</Spec>}
-              {card.rarity && <Spec label="Raridade">{card.rarity}</Spec>}
+              {card.rarity && <Spec label="Raridade">{rarityPt(card.rarity)}</Spec>}
               <Spec label="Número">
                 {card.localId}/{card.set.cardCount.official}
               </Spec>
