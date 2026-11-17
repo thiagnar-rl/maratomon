@@ -58,10 +58,12 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
       ) : (
         <div className="grid aspect-video place-items-center rounded-3xl border border-dashed border-line bg-surface-2 p-6 text-center">
           <p className="max-w-sm text-sm text-ink-soft">
-            Ainda não há um vídeo oficial gratuito deste episódio. Veja abaixo onde ele está disponível dublado.
+            Ainda não há um vídeo oficial gratuito e dublado deste episódio.
           </p>
         </div>
       )}
+
+      {episode.youtubeId && <OpenInApp videoId={episode.youtubeId} />}
 
       {episode.youtubeAudio === "multi" && playing && dubbed === false && <AudioTip />}
 
@@ -93,6 +95,25 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
   );
 }
 
+/**
+ * Só no celular/tablet: abre o episódio no app do YouTube. O app tem o menu "Faixa de áudio" e já escolhe a dublagem
+ * pelo idioma do aparelho, coisa que o player embutido em sites não faz nesses aparelhos.
+ */
+function OpenInApp({ videoId }: { videoId: string }) {
+  const touch = useIsTouchDevice();
+  if (!touch) return null;
+  return (
+    <a
+      href={`https://www.youtube.com/watch?v=${videoId}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-bold text-accent-ink shadow-lg transition active:scale-[0.98]"
+    >
+      🇧🇷 Assistir dublado no app do YouTube
+    </a>
+  );
+}
+
 /** Celular ou tablet (tela de toque): o player do YouTube nesses aparelhos não mostra o menu "Faixa de áudio". */
 function useIsTouchDevice() {
   return useSyncExternalStore(
@@ -110,8 +131,9 @@ function AudioTip() {
       <p className="font-bold">🇧🇷 Ficou em inglês?</p>
       {touch ? (
         <p className="text-sm text-ink-soft">
-          O YouTube não liberou a troca automática de áudio neste aparelho. Tente recarregar a página; se continuar, assista pelo computador, onde dá para
-          escolher ⚙ › <strong>Faixa de áudio</strong> › <strong>Português (Brasil)</strong> no próprio player.
+          No celular, o player embutido nem sempre deixa trocar o áudio. Toque em <strong>Assistir dublado no app do YouTube</strong> logo abaixo do
+          vídeo: no app, o episódio abre em português se o seu YouTube estiver em português; se não, toque em ⚙ › <strong>Faixa de áudio</strong> ›{" "}
+          <strong>Português (Brasil)</strong>.
         </p>
       ) : (
         <ol className="flex flex-wrap items-center gap-1.5 text-sm text-ink-soft">
