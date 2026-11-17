@@ -20,11 +20,20 @@ async function page(path: string, revalidate: number): Promise<string | null> {
     const html = await response.text();
     // Se um dia aparecer uma tela de verificação, simplesmente não usamos os dados.
     if (/Just a moment|cf-chl/i.test(html)) return null;
-    return html;
+    return decode(html);
   } catch {
     return null;
   }
 }
+
+const ENTITIES: Record<string, string> = { nbsp: " ", middot: "·", ccedil: "ç", eacute: "é", aacute: "á", atilde: "ã", ecirc: "ê", oacute: "ó", iacute: "í", uacute: "ú", amp: "&", quot: '"' };
+
+/** Troca entidades HTML (&eacute;, &#233;, &nbsp;…) pelos caracteres, para as buscas no texto funcionarem. */
+const decode = (html: string) =>
+  html
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/&([a-z]+);/gi, (m, name) => ENTITIES[name.toLowerCase()] ?? m);
 
 /** "1.234,56" → 1234.56 */
 const money = (text?: string | null) => (text ? Number(text.replace(/\./g, "").replace(",", ".")) || null : null);
@@ -91,20 +100,20 @@ async function product(id: number): Promise<MypProduct | null> {
   const ultimo = box("ultimo");
   const trend = html.match(/produto-tendencia--(alta|baixa)[^"]*"[^>]*title="Mediana (?:subiu|caiu) ([\d,]+)% em 30 dias/);
   // Ofertas listadas na página: o maior valor entre elas.
-  const start = html.indexOf("Ofertas (");
-  const end = html.indexOf("histórico de preços", start);
+  const start = html.indexOf('id="produto-abas-painel-ofertas"');
+  const end = html.indexOf('id="produto-abas-painel-historico"', start);
   const offersText = start > 0 ? html.slice(start, end > start ? end : start + 60000).replace(/<[^>]+>/g, " ") : "";
   const offerPrices = [...offersText.matchAll(/R\$ ([\d.]+,\d{2})/g)].map((m) => money(m[1])).filter((v): v is number => v != null && v > 0);
   return {
     url,
     sku,
     low: money(menor?.[2]),
-    avg: money(menor?.[1].match(/Preço médio R\$ ([\d.]+,\d{2})/)?.[1]),
+    avg: money(menor?.[1].match(/m[ée]dio\s*R\$\s*([\d.]+,\d{2})/i)?.[1]),
     max: offerPrices.length ? Math.max(...offerPrices) : null,
     lastSold: money(ultimo?.[2]),
     lastSoldNote: ultimo?.[1].match(/\(([^)]+)\)/)?.[1] ?? null,
     trend30d: trend ? Number(trend[2].replace(",", ".")) * (trend[1] === "baixa" ? -1 : 1) : null,
-    offers: Number(html.match(/Ofertas \((\d+)\)/)?.[1]) || null,
+    offers: Number(html.match(/Ofertas\s*(?:<[^>]+>\s*)*\((\d+)\)/)?.[1]) || null,
   };
 }
 
