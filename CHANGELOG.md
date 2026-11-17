@@ -7,6 +7,11 @@ Site publicado: https://forja-arcana.vercel.app
 
 ## 17/11/2026
 
+### Correção: "Mais valiosas" abria em Cards em Alta/Queda
+- **Problema:** o link "Mais valiosas" (e "Câmbio do dia") do menu Mercado levava ao topo da página, onde ficam os Cards em Alta/Queda. Como o painel do mercado carrega em segundo plano, a seção pedida ainda não existia quando a página abria, e o navegador não rolava até ela.
+- **Correção:** quando o painel termina de carregar, a página rola sozinha até a seção do link (`#valiosas`, `#painel`, `#cambio`, `#altas`, `#baixas`). Também funciona clicando de novo no menu com a página já aberta.
+- Arquivo: `src/components/tcg/market-live.tsx` (`useScrollToHash`).
+
 ### Cards mais caros do Brasil (todas as coleções) e Brasil no painel do mercado
 - **Problema:** "Cards mais caros do dia" só considerava as cartas acompanhadas pelo site (coleções recentes + clássicos), então faltavam cartas caras de verdade, como o **Mew R/RGB** (30th Celebration, R$ 13.000 no Brasil).
 - **Varredura dos marketplaces brasileiros:** o MYP Cards tem uma lista pública de Pokémon que pode ser ordenada do mais caro para o mais barato (`/pokemon?sort=-preco`, permitida no robots.txt). A Liga Pokémon continua bloqueando acesso automático (verificação anti-robô) e sem API, por isso não é lida.

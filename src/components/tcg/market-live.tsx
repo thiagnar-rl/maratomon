@@ -56,7 +56,27 @@ function useLiveMarket(initial: Market) {
 }
 
 /** Mercado ao vivo: cards em alta/queda, painel (câmbio, índice, TCGplayer × Cardmarket) e mais caros do dia. */
+/**
+ * O painel chega depois da página (carrega em segundo plano), então o navegador não acha a âncora do link
+ * (#valiosas, #painel, #cambio…) na hora. Quando o painel aparece, rola até a seção pedida.
+ */
+function useScrollToHash() {
+  useEffect(() => {
+    const go = () => {
+      const id = decodeURIComponent(location.hash.slice(1));
+      if (id) document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    const timer = setTimeout(go, 60);
+    window.addEventListener("hashchange", go);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("hashchange", go);
+    };
+  }, []);
+}
+
 export function MarketLive({ initial }: { initial: Market }) {
+  useScrollToHash();
   const live = useLiveMarket(initial);
   const { market, now } = live;
   const { rows, rates } = market;
