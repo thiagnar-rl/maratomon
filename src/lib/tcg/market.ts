@@ -119,9 +119,9 @@ export type TopCard = TopBrCard & { image?: string; intlBrl: number | null };
 
 export type Market = { rows: MarketRow[]; rates: Rates; updatedAt: string; top: TopCard[] };
 
-async function computeMarket(): Promise<Market> {
+async function computeMarket(withBrazil: boolean): Promise<Market> {
   // Ranking do Brasil: os cards mais caros à venda no MYP Cards, ligados ao catálogo quando possível.
-  const topRaw = await linkToCatalog(await mypTopExpensive(3), async (id) => (await getCard(id)) !== null);
+  const topRaw = withBrazil ? await linkToCatalog(await mypTopExpensive(3), async (id) => (await getCard(id)) !== null) : [];
   const [pool, rates] = await Promise.all([poolIds(), getRates()]);
   const ids = [...new Set([...pool, ...topRaw.flatMap((t) => (t.tcgId ? [t.tcgId] : []))])];
   const cards: (CardDetail | null)[] = [];
@@ -130,7 +130,9 @@ async function computeMarket(): Promise<Market> {
   const snaps = valid.map((c) => ({ id: c.id, ...priceSnapshot(c, rates) })).filter((r) => r.brl != null);
   await recordPrices(snaps, rates.USD);
   const day = await dailyChanges(valid.map((c) => c.id));
-  const br = await brPrices(valid.map((c) => ({ id: c.id, setId: c.set.id, localId: c.localId })));
+  const br = withBrazil ? await brPrices(valid.map((c) => ({ id: c.id, setId: c.set.id, localId: c.localId }))) : {};
+  // Se o MYP Cards não respondeu, não guarda este resultado (o cache seria de um mercado sem preços do Brasil).
+  if (withBrazil && topRaw.length === 0 && Object.keys(br).length === 0) throw new Error("MYP Cards indisponível");
   const rows = valid.map((c) => toRow(c, rates, day[c.id], br[c.id])).filter((r) => r.brl != null);
   const byId = new Map(valid.map((c) => [c.id, c]));
   const top: TopCard[] = topRaw.map((t) => {
@@ -145,4 +147,14 @@ async function computeMarket(): Promise<Market> {
  * Montar o painel lê mais de 300 cartas e as páginas do MYP Cards (leva ~15 s); com o cache,
  * as visitas recebem o resultado pronto em vez de esperar o cálculo.
  */
-export const getMarket = unstable_cache(computeMarket, ["tcg-market-v3"], { revalidate: 900 });
+const marketWithBrazil = unstable_cache(() => computeMarket(true), ["tcg-market-v4"], { revalidate: 900 });
+const marketInternational = unstable_cache(() => computeMarket(false), ["tcg-market-intl-v1"], { revalidate: 300 });
+
+/** Mercado completo (com Brasil); se o MYP Cards estiver fora do ar, o mercado internacional, sem travar a página. */
+export async function getMarket(): Promise<Market> {
+  try {
+    return await marketWithBrazil();
+  } catch {
+    return marketInternational();
+  }
+}

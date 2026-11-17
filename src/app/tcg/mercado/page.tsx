@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { MarketSection, MarketSkeleton } from "@/components/tcg/market-section";
 
-export const revalidate = 900;
+// O mercado vem de um cache próprio (15 min); a página é montada na hora para nunca congelar um resultado da publicação.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Cards Pokémon em alta e em queda hoje: mercado ao vivo",

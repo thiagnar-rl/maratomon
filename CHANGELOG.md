@@ -16,6 +16,10 @@ Site publicado: https://forja-arcana.vercel.app
   - botão "Ver mais"; a carta abre a página dela no site (ou a oferta no MYP Cards quando não está no catálogo).
 - As cartas desse ranking que existem no catálogo entram também no mercado (Cards em Alta/Queda e filtros).
 - **Painel do mercado:** nova barra e coluna **Brasil (MYP Cards)** ao lado de TCGplayer e Cardmarket; a ordenação por valor usa o preço do Brasil.
+- **Correção junto:** ao publicar, a leitura do MYP Cards falhou durante a montagem do site e o mercado ficou guardado **sem preços do Brasil** por 15 minutos. Agora:
+  - leituras do MYP Cards só são guardadas quando dão certo (falhou → a próxima visita tenta de novo);
+  - se o MYP não responder, o mercado não é guardado assim; o site mostra o mercado internacional (cache de 5 min) até o Brasil voltar;
+  - as páginas do TCG e do Mercado são montadas na hora (o cálculo pesado continua em cache de 15 min, entregando o último resultado enquanto atualiza).
 - Arquivos: `src/lib/tcg/mypcards.ts` (`mypTopExpensive`, `linkToCatalog`), `src/lib/tcg/market.ts` (`top`), `src/components/tcg/br-top-cards.tsx` (novo), `src/components/tcg/market-live.tsx`, `src/components/tcg/market-dashboard.tsx`, `src/app/api/tcg/mercado/route.ts`.
 
 ### Novo endereço: forja-arcana.vercel.app

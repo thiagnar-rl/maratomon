@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { getSet } from "./api";
 import type { BrPrice } from "./types";
 
@@ -13,14 +14,22 @@ const HEADERS = { "User-Agent": "ForjaArcana/1.0 (+https://forja-arcana.vercel.a
 const SIX_HOURS = 60 * 60 * 6;
 const ONE_DAY = 60 * 60 * 24;
 
+/**
+ * Lê uma página pública do MYP Cards. O resultado fica em cache pelo tempo pedido, mas só quando a leitura dá certo:
+ * se o MYP responder com erro ou tela de verificação, nada é guardado e a próxima visita tenta de novo.
+ */
 async function page(path: string, revalidate: number): Promise<string | null> {
   try {
-    const response = await fetch(`${BASE}${path}`, { headers: HEADERS, next: { revalidate } });
-    if (!response.ok) return null;
-    const html = await response.text();
-    // Se um dia aparecer uma tela de verificação, simplesmente não usamos os dados.
-    if (/Just a moment|cf-chl/i.test(html)) return null;
-    return decode(html);
+    return await unstable_cache(
+      async () => {
+        const response = await fetch(`${BASE}${path}`, { headers: HEADERS, cache: "no-store" });
+        const html = await response.text();
+        if (!response.ok || /Just a moment|cf-chl/i.test(html)) throw new Error(`MYP ${response.status}`);
+        return decode(html);
+      },
+      ["myp-page", path],
+      { revalidate },
+    )();
   } catch {
     return null;
   }

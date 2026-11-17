@@ -11,7 +11,8 @@ export const metadata: Metadata = {
   description: "Todas as coleções do Pokémon TCG desde 1999, com preços do TCGplayer e do Cardmarket em reais.",
 };
 
-export const revalidate = 900;
+// O mercado vem de um cache próprio (15 min); a página é montada na hora para nunca congelar um resultado da publicação.
+export const dynamic = "force-dynamic";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric", timeZone: "UTC" });
 
