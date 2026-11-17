@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { MarketRow, Period } from "@/lib/tcg/market";
-import { cardImage, formatMoney, formatPct } from "@/lib/tcg/prices";
+import { cardImage, formatDelta, formatMoney, formatPct, priceDelta } from "@/lib/tcg/prices";
 import { typeColors } from "@/lib/pokemon";
 import { ENERGY_PT } from "@/lib/tcg/labels";
 import { CardTile } from "./card-tile";
@@ -76,7 +76,7 @@ export function MoversBoard({ live, initialDir = "alta" }: { live: LiveMarket; i
   const activeCount = f.set.length + f.rarity.length + f.energy.length + f.variant.length + f.illustrator.length + f.ranges.length + (f.q ? 1 : 0) + (filters.min != null ? 1 : 0) + (filters.max != null ? 1 : 0);
   const other: Dir = dir === "alta" ? "queda" : "alta";
   const label = (d: Dir) => (d === "alta" ? "Cards em Alta" : "Cards em Queda");
-  const periodLabel = PERIODS.find(([p]) => p === period)![1].toLowerCase();
+  const inPeriod = { dia: "no dia", semana: "na semana", mes: "no mês" }[period];
 
   return (
     <section id="cards" aria-labelledby="movers-title" className="relative scroll-mt-40 space-y-5">
@@ -123,7 +123,12 @@ export function MoversBoard({ live, initialDir = "alta" }: { live: LiveMarket; i
 
         <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold">{list.length} cards</p>
+            <p className="text-sm font-semibold">
+              {list.length} cards ·{" "}
+              <span className={dir === "alta" ? "text-good" : "text-[#ff5c8a]"} title={`Quanto esses cards ${dir === "alta" ? "subiram" : "caíram"} somados, em reais`}>
+                {formatDelta(list.reduce((s, r) => s + (priceDelta(r.brl, r.change[period]) ?? 0), 0))} {inPeriod}
+              </span>
+            </p>
             <p className="flex flex-wrap items-baseline gap-x-2 font-display text-lg font-extrabold tabular-nums">
               <span className="text-good" title="Soma dos menores anúncios">{formatMoney(sum("brlLow"), "BRL")}</span>
               <span className="text-ink-soft">·</span>
@@ -187,8 +192,11 @@ export function MoversBoard({ live, initialDir = "alta" }: { live: LiveMarket; i
                     <span className="w-24 text-right tabular-nums">
                       <span className="block font-bold">{formatMoney(r.brl, "BRL")}</span>
                     </span>
-                    <span className="w-20 text-right">
+                    <span className="flex w-24 flex-col items-end gap-0.5 text-right">
                       <Pct value={r.change[period]} />
+                      <span className={`text-xs font-bold tabular-nums ${(r.change[period] ?? 0) >= 0 ? "text-good" : "text-[#ff5c8a]"}`} title={`Variação em reais ${inPeriod}`}>
+                        {formatDelta(priceDelta(r.brl, r.change[period]))}
+                      </span>
                     </span>
                   </Link>
                 </li>
@@ -202,7 +210,8 @@ export function MoversBoard({ live, initialDir = "alta" }: { live: LiveMarket; i
                     card={{ id: r.id, name: r.name, localId: r.localId, image: r.image }}
                     subtitle={r.setName}
                     price={{ ...r, change7d: r.change[period] }}
-                    changeTitle={`Variação no ${periodLabel}`}
+                    changeTitle={`Variação ${inPeriod}`}
+                    showDelta
                   />
                 </li>
               ))}

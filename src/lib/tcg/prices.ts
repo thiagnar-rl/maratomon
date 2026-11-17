@@ -119,3 +119,15 @@ export function cardMeta(card: Pick<CardDetail, "rarity" | "illustrator" | "vari
       .map(([k]) => VARIANT_PT[k] ?? k),
   };
 }
+
+/** Quanto o preço mudou em reais, a partir do preço atual e da variação percentual no período. */
+export function priceDelta(brl: number | null | undefined, pct: number | null | undefined): number | null {
+  if (brl == null || pct == null || pct <= -100) return null;
+  return brl - brl / (1 + pct / 100);
+}
+
+/** "+R$ 12,30" / "−R$ 4,10" */
+export function formatDelta(delta: number | null): string {
+  if (delta == null) return "—";
+  return `${delta >= 0 ? "+" : "−"}${formatMoney(Math.abs(delta), "BRL")}`;
+}

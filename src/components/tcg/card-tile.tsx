@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { cardImage, formatMoney, formatPct } from "@/lib/tcg/prices";
+import { cardImage, formatDelta, formatMoney, formatPct, priceDelta } from "@/lib/tcg/prices";
 import type { CardBrief, PriceSnapshot } from "@/lib/tcg/types";
 import { CardPlaceholder } from "./card-placeholder";
 import { HoloCard } from "./holo-card";
 
 /** Miniatura de carta para grades (coleção, busca), com o preço do dia embaixo. */
-export function CardTile({ card, subtitle, price, changeTitle = "Variação em 7 dias" }: { card: CardBrief; subtitle?: string; price?: PriceSnapshot | null; changeTitle?: string }) {
+export function CardTile({ card, subtitle, price, changeTitle = "Variação em 7 dias", showDelta = false }: { card: CardBrief; subtitle?: string; price?: PriceSnapshot | null; changeTitle?: string; showDelta?: boolean }) {
   const src = cardImage(card.image, "low");
   const change = price?.change7d;
   return (
@@ -38,6 +38,11 @@ export function CardTile({ card, subtitle, price, changeTitle = "Variação em 7
                   </span>
                 )}
               </span>
+              {showDelta && typeof change === "number" && (
+                <span className={`block font-bold ${change >= 0 ? "text-good" : "text-[#ff5c8a]"}`} title={`${changeTitle} em reais`}>
+                  {formatDelta(priceDelta(price.brl, change))}
+                </span>
+              )}
               <span className="text-ink-soft">{price.usd != null ? formatMoney(price.usd, "USD") : formatMoney(price.eur, "EUR")}</span>
             </>
           )}
