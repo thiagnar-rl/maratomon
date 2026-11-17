@@ -7,6 +7,13 @@ Site publicado: https://forja-arcana.vercel.app
 
 ## 17/11/2026
 
+### Painel do mercado: cada marketplace na própria moeda
+- **Problema:** o painel convertia os preços dos EUA (dólar) e da Europa (euro) para real pela cotação, sem frete nem impostos de importação — a comparação com o preço do Brasil ficava distorcida.
+- **Agora:** sem conversão. Botões **Brasil R$ · EUA US$ · Europa €** escolhem o marketplace do gráfico, e cada um aparece na sua moeda: Brasil (MYP Cards) em real, TCGplayer em dólar e Cardmarket em euro. A tabela mostra as três colunas lado a lado, cada uma na sua moeda; clicar no título da coluna troca o gráfico e ordena por ela. A coluna de variação passou a se chamar "Europa 30 dias" (é a do Cardmarket).
+- Removido o seletor antigo R$/US$/€ que convertia tudo.
+- O painel aparece na guia TCG e na página Mercado (mesmo componente), então as duas mudaram juntas. Nenhuma outra guia foi alterada.
+- Arquivos: `src/components/tcg/market-dashboard.tsx`, `src/components/tcg/market-live.tsx`.
+
 ### Correção: "Mais valiosas" abria em Cards em Alta/Queda
 - **Problema:** o link "Mais valiosas" (e "Câmbio do dia") do menu Mercado levava ao topo da página, onde ficam os Cards em Alta/Queda. Como o painel do mercado carrega em segundo plano, a seção pedida ainda não existia quando a página abria, e o navegador não rolava até ela.
 - **Correção:** quando o painel termina de carregar, a página rola sozinha até a seção do link (`#valiosas`, `#painel`, `#cambio`, `#altas`, `#baixas`). Também funciona clicando de novo no menu com a página já aberta.

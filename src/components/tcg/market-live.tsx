@@ -148,7 +148,7 @@ export function MarketLive({ initial }: { initial: Market }) {
             <p className="text-sm text-ink-soft">cartas subindo / caindo no dia</p>
           </div>
         </div>
-        {classics.length > 0 && <MarketDashboard rows={classics} rates={rates} />}
+        {classics.length > 0 && <MarketDashboard rows={classics} />}
       </section>
 
       <section id="valiosas" aria-labelledby="valiosas-t" className="scroll-mt-40 space-y-4">
