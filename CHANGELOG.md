@@ -18,7 +18,8 @@ Site publicado: https://maratomon.vercel.app
 - **Como funciona:** a carta é achada pela sigla da coleção e o número (ex.: `pokemon_pfl_129/094`). As grades usam 1 leitura por coleção (página da edição, que lista as cartas mais procuradas); a página da carta lê a ficha do produto. Tudo com cache de 6 horas (lista de edições: 24 h). Se o MYP Cards ficar fora do ar ou bloquear, o site volta sozinho para o preço internacional.
 - O histórico de preço continua gravando o preço internacional, para o gráfico não misturar fontes.
 - Arquivos: `src/lib/tcg/mypcards.ts` (novo), `src/app/api/tcg/prices/route.ts`, `src/lib/tcg/market.ts`, `src/lib/tcg/types.ts` (`BrPrice`, `abbreviation`), `src/app/tcg/cartas/[id]/page.tsx`, `src/components/tcg/marketplace-prices.tsx`, `src/components/tcg/card-tile.tsx`, `src/components/tcg/movers-board.tsx`.
-- Houve um teste temporário (`/api/tcg/br-teste`) para confirmar que o servidor consegue ler o MYP Cards; já foi removido.
+- Houve uma rota temporária de diagnóstico (`/api/tcg/br-teste`) para confirmar que o servidor lê o MYP Cards e conferir a leitura; já foi removida.
+- Ajustes: leitura do preço médio e do número de ofertas mais robusta (entidades HTML); o "maior" do Brasil só aparece quando as ofertas visíveis passam da média (a página do MYP mostra só as primeiras ofertas).
 
 ### Preço com base nos marketplaces (site todo)
 - **Antes:** o preço em reais era só o preço de mercado do TCGplayer (EUA) convertido; sem ele, a tendência do Cardmarket.

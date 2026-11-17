@@ -104,12 +104,15 @@ async function product(id: number): Promise<MypProduct | null> {
   const end = html.indexOf('id="produto-abas-painel-historico"', start);
   const offersText = start > 0 ? html.slice(start, end > start ? end : start + 60000).replace(/<[^>]+>/g, " ") : "";
   const offerPrices = [...offersText.matchAll(/R\$ ([\d.]+,\d{2})/g)].map((m) => money(m[1])).filter((v): v is number => v != null && v > 0);
+  const avg = money(menor?.[1].match(/m[ée]dio\s*R\$\s*([\d.]+,\d{2})/i)?.[1]);
+  const max = offerPrices.length ? Math.max(...offerPrices) : null;
   return {
     url,
     sku,
     low: money(menor?.[2]),
-    avg: money(menor?.[1].match(/m[ée]dio\s*R\$\s*([\d.]+,\d{2})/i)?.[1]),
-    max: offerPrices.length ? Math.max(...offerPrices) : null,
+    avg,
+    // A página mostra só as primeiras ofertas; se o maior valor visto ficar abaixo da média de todas, ele não representa o "maior".
+    max: max != null && (avg == null || max >= avg) ? max : null,
     lastSold: money(ultimo?.[2]),
     lastSoldNote: ultimo?.[1].match(/\(([^)]+)\)/)?.[1] ?? null,
     trend30d: trend ? Number(trend[2].replace(",", ".")) * (trend[1] === "baixa" ? -1 : 1) : null,
@@ -173,11 +176,3 @@ export async function mypProduct(card: CardRef): Promise<MypProduct | null> {
   return null;
 }
 
-/** Diagnóstico temporário. */
-export async function mypDebug(card: CardRef) {
-  const set = await getSet(card.setId);
-  const eds = await editions();
-  const loc = await locate(card);
-  const items = loc ? await editionItems(loc.edition) : [];
-  return { abbr: set?.abbreviation, official: set?.cardCount.official, editions: eds.size, sample: [...eds.entries()].slice(0, 3), loc, items: items.length, first: items.slice(0, 3) };
-}
