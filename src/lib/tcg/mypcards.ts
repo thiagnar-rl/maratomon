@@ -9,7 +9,7 @@ import type { BrPrice } from "./types";
  */
 
 const BASE = "https://mypcards.com";
-const HEADERS = { "User-Agent": "ForjaArcana/1.0 (+https://maratomon.vercel.app)", Accept: "text/html" };
+const HEADERS = { "User-Agent": "ForjaArcana/1.0 (+https://forja-arcana.vercel.app)", Accept: "text/html" };
 const SIX_HOURS = 60 * 60 * 6;
 const ONE_DAY = 60 * 60 * 24;
 

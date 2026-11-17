@@ -9,7 +9,7 @@ TCG e cultura nerd (antigo Maratomon TCG):
 - **TCG:** todas as coleções desde 1999 (TCGdex), mercado ao vivo (cards em alta e em queda), preços no Brasil (MYP Cards) e internacionais (TCGplayer e Cardmarket), comparador e gráficos.
 - **Minha coleção:** decks e pastas com cartas, fotos e vídeos, e o valor atualizado.
 
-🌐 **No ar:** https://maratomon.vercel.app (o endereço ainda usa o nome antigo)
+🌐 **No ar:** https://forja-arcana.vercel.app (o endereço antigo, maratomon.vercel.app, redireciona para cá)
 
 🎨 **Marca:** logos base em `public/brand/` (monograma — o logo usado no site —, escudo, minimalista e minimalista escuro) e o símbolo do monograma com fundo transparente.
 

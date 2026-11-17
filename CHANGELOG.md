@@ -1,11 +1,17 @@
 # Histórico de alterações — Forja Arcana (antigo Maratomon TCG)
 
 Todas as mudanças do site, da mais nova para a mais antiga. Cada item corresponde a um ou mais commits no GitHub.
-Site publicado: https://maratomon.vercel.app
+Site publicado: https://forja-arcana.vercel.app
 
 ---
 
 ## 17/11/2026
+
+### Novo endereço: forja-arcana.vercel.app
+- O site passou a ser **https://forja-arcana.vercel.app** (domínio adicionado no projeto da Vercel, ligado à produção).
+- O endereço antigo **maratomon.vercel.app redireciona** para o novo (redirecionamento permanente 308), então links já compartilhados continuam funcionando.
+- No código, o endereço oficial (`PRODUCTION_URL` em `src/lib/site.ts`) é usado no ar para o mapa do site, o robots e as imagens de compartilhamento; identificação do site nas leituras de notícias e do MYP Cards atualizada.
+- O nome do projeto na Vercel e o repositório no GitHub continuam "maratomon" (não aparecem para quem usa o site).
 
 ### Correção: guia TCG não abria (demorava ~16 s)
 - **Problema:** a página do TCG (e a do Mercado) recalculava o mercado inteiro a cada visita — mais de 300 cartas, câmbio, histórico e as páginas do MYP Cards —, levando cerca de 16 segundos. No celular, parecia que o link não abria. A causa: a gravação do histórico de preços usava `cache: "no-store"`, o que fazia a página deixar de sair do cache.
