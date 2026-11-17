@@ -4,7 +4,7 @@ import { eraMons, type Mon } from "@/lib/pokemon";
 import { getNews } from "@/lib/news";
 import { ContinueCard } from "@/components/continue-card";
 import { MonArt } from "@/components/mon-art";
-import { Mascot } from "@/components/mascot";
+import { BrandMark } from "@/components/brand-mark";
 import { Ticker } from "@/components/news/ticker";
 import { FeaturedNews, NewsCard, NewsRow } from "@/components/news/news-card";
 import { NewsGrid } from "@/components/news/news-grid";
@@ -60,7 +60,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl space-y-6 px-4 pb-12 pt-8 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Mascot className="size-16 animate-float" />
+              <BrandMark className="size-16 animate-float" />
               <div>
                 <p className="text-sm font-bold text-ink-soft">{capitalize(hoje.format(new Date()))}</p>
                 <h1 className="font-display text-4xl font-extrabold leading-none tracking-tight sm:text-5xl">

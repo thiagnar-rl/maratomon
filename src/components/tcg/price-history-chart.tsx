@@ -90,8 +90,8 @@ export function PriceHistoryChart({ history, fallback }: { history: ChartPoint[]
       )}
       <p className="text-xs text-ink-soft">
         {usingHistory
-          ? "Histórico diário registrado pelo Maratomon TCG (1 ponto por dia)."
-          : "Médias do Cardmarket (30 dias, 7 dias, ontem e tendência). O histórico diário do Maratomon começa a aparecer conforme os dias passam."}
+          ? "Histórico diário registrado pela Forja Arcana (1 ponto por dia)."
+          : "Médias do Cardmarket (30 dias, 7 dias, ontem e tendência). O histórico diário da Forja Arcana começa a aparecer conforme os dias passam."}
       </p>
     </div>
   );

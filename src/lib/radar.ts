@@ -3,7 +3,7 @@
 import { getSupabase } from "@/lib/supabase";
 
 /**
- * Radar BR: preços do mercado brasileiro registrados pela comunidade do Maratomon TCG.
+ * Radar BR: preços do mercado brasileiro registrados pela comunidade da Forja Arcana.
  * Cada pessoa só vê os próprios registros; o público vê apenas a mediana anônima de cada carta.
  */
 export type RadarSummary = {

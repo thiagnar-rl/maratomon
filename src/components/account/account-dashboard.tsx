@@ -21,7 +21,7 @@ import {
   type Profile,
 } from "@/lib/account";
 import { artwork } from "@/lib/pokemon";
-import { Mascot } from "@/components/mascot";
+import { BrandMark } from "@/components/brand-mark";
 
 const input = "w-full rounded-xl border border-line bg-bg px-4 py-2.5 outline-none transition focus:border-accent";
 const card = "space-y-4 rounded-[2rem] border border-line bg-surface p-6";
@@ -73,7 +73,7 @@ function Dashboard({ user }: { user: User }) {
     <div className="space-y-6">
       <header className="flex flex-wrap items-center gap-5 rounded-[2rem] border border-line bg-gradient-to-br from-accent/25 via-surface to-surface p-6">
         <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-full bg-surface-2 ring-4 ring-accent/40">
-          {avatar ? <img src={avatar} alt="" className="size-full object-cover" referrerPolicy="no-referrer" /> : <Mascot className="size-16" />}
+          {avatar ? <img src={avatar} alt="" className="size-full object-cover" referrerPolicy="no-referrer" /> : <BrandMark className="size-16" />}
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-black uppercase tracking-widest text-accent">Sua conta</p>

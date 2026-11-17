@@ -105,7 +105,7 @@ function toRow(c: CardDetail, rates: Rates, day: number | undefined, br: BrPrice
     eurTrend: cm?.trend ?? null,
     eur30: cm?.avg30 ?? null,
     change: {
-      // Dia: histórico do Maratomon; sem ele, tendência do Cardmarket contra a média de ontem.
+      // Dia: histórico da Forja Arcana; sem ele, tendência do Cardmarket contra a média de ontem.
       dia: sane(day ?? pct(cm?.trend, cm?.avg1)),
       semana: snap.change7d,
       mes: snap.change30d,

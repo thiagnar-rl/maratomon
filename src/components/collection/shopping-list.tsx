@@ -7,7 +7,7 @@ import { formatMoney } from "@/lib/tcg/prices";
 export type ShoppingItem = { quantity: number; name: string; localId: string; official?: number; unitBRL: number | null };
 
 /**
- * Lista de compras do Maratomon: texto pronto para mandar no WhatsApp da loja,
+ * Lista de compras da Forja Arcana: texto pronto para mandar no WhatsApp da loja,
  * copiar ou colar na "Compra por Lista" da Liga Pokémon.
  */
 export function ShoppingList({ title, items }: { title: string; items: ShoppingItem[] }) {
@@ -19,7 +19,7 @@ export function ShoppingList({ title, items }: { title: string; items: ShoppingI
   const total = items.reduce((n, i) => n + (i.unitBRL ?? 0) * i.quantity, 0);
   const missingPrice = items.some((i) => i.unitBRL == null);
   const list = buyListText(items);
-  const message = `${title} (Maratomon TCG)\n\n${list}\n\nTotal estimado: ${formatMoney(total, "BRL")}${missingPrice ? " (algumas cartas sem preço)" : ""}`;
+  const message = `${title} (Forja Arcana)\n\n${list}\n\nTotal estimado: ${formatMoney(total, "BRL")}${missingPrice ? " (algumas cartas sem preço)" : ""}`;
 
   async function copy() {
     try {

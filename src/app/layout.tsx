@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/bricolage-grotesque";
 import "@fontsource-variable/plus-jakarta-sans";
+import "@fontsource-variable/noto-serif";
 import "./globals.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: { default: `${siteConfig.name} — anime, cartas e coleção`, template: `%s · ${siteConfig.name}` },
   description: siteConfig.description,
+  applicationName: siteConfig.name,
   openGraph: { siteName: siteConfig.name, locale: "pt_BR", type: "website" },
 };
 

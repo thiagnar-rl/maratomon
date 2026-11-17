@@ -1,4 +1,4 @@
-# Histórico de alterações — Maratomon TCG
+# Histórico de alterações — Forja Arcana (antigo Maratomon TCG)
 
 Todas as mudanças do site, da mais nova para a mais antiga. Cada item corresponde a um ou mais commits no GitHub.
 Site publicado: https://maratomon.vercel.app
@@ -6,6 +6,14 @@ Site publicado: https://maratomon.vercel.app
 ---
 
 ## 17/11/2026
+
+### Nova marca: Forja Arcana
+- **Nome do site:** "Maratomon TCG" passa a ser **Forja Arcana** em todo o site (títulos das páginas, cabeçalho, conta, termos, sobre, mercado — "Índice Forja" —, lista de compras, histórico de preços e README).
+- **Logo:** o selo da carta com a runa sendo forjada pelo martelo, com a faixa "TCG · NERD". No cabeçalho: selo + "FORJA ARCANA" em serifa (fonte Noto Serif), nas cores do logo (roxo e dourado; no tema escuro, creme e dourado). Faixa do topo em roxo → laranja → dourado.
+- **Ícones:** ícone da aba (`src/app/icon.png`, o círculo do selo), ícone do iPhone/atalho (`src/app/apple-icon.png`) e imagem de compartilhamento (`src/app/opengraph-image.png`, o logo horizontal). O `icon.svg` antigo foi removido.
+- **Mascote:** o fantasminha foi substituído pelo selo em todos os lugares (home, notícias, entrar, conta, convite de conta e cartas sem imagem). Removido `src/components/mascot.tsx`; novo `src/components/brand-mark.tsx`.
+- **Arquivos da marca** em `public/brand/`: `forja-arcana-logo.png`, `-logo-transparente.png`, `-horizontal.png`, `-icone.png`, `-selo.png` (selo recortado, fundo transparente) e `-simbolo.png` (círculo). Os SVGs do Maratomon foram removidos.
+- **Mantido de propósito:** o endereço `maratomon.vercel.app`, o repositório `thiagnar-rl/maratomon` e as chaves internas de progresso salvas no navegador (para ninguém perder o que já assistiu).
 
 ### Preços do Brasil (MYP Cards) no site todo
 - **Varredura dos marketplaces brasileiros:**

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getNews } from "@/lib/news";
 import { NewsGrid } from "@/components/news/news-grid";
-import { Mascot } from "@/components/mascot";
+import { BrandMark } from "@/components/brand-mark";
 
 export const revalidate = 3600;
 
@@ -17,7 +17,7 @@ export default async function NoticiasPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-10 sm:px-6">
       <header className="flex flex-wrap items-center gap-4">
-        <Mascot className="size-20" />
+        <BrandMark className="size-20" />
         <div className="space-y-1">
           <h1 className="font-display text-4xl font-extrabold tracking-tight sm:text-5xl">Notícias Pokémon</h1>
           <p className="text-ink-soft">

@@ -142,7 +142,7 @@ export function AuthPanel({ initialMode = "entrar" }: { initialMode?: "entrar" |
           </label>
           <label className="flex items-start gap-2 text-sm text-ink-soft">
             <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="mt-1 accent-[var(--accent)]" />
-            <span>Quero receber novidades e ofertas da loja Maratomon TCG (opcional).</span>
+            <span>Quero receber novidades e ofertas da loja Forja Arcana (opcional).</span>
           </label>
           <button disabled={busy || !terms} className="w-full rounded-full bg-accent px-5 py-3 font-bold text-white transition hover:brightness-110 disabled:opacity-50">
             {busy ? "Criando…" : "Criar minha conta"}

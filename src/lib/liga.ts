@@ -2,7 +2,7 @@
  * Integração com a Liga Pokémon (ligapokemon.com.br), referência de preço do mercado brasileiro.
  *
  * A Liga não tem API pública e os termos dela proíbem reproduzir o conteúdo e os bancos de dados.
- * Por isso o Maratomon TCG só cria LINKS DIRETOS para as ferramentas da Liga (carta, histórico de preço,
+ * Por isso a Forja Arcana só cria LINKS DIRETOS para as ferramentas da Liga (carta, histórico de preço,
  * decks, compra por lista…) e gera listas em texto para o usuário colar lá. Nenhum preço da Liga é copiado.
  */
 const BASE = "https://www.ligapokemon.com.br/";

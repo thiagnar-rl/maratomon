@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { closeAccountPrompt, useProgress } from "@/lib/progress/hooks";
 import { catalog } from "@/lib/catalog";
-import { Mascot } from "./mascot";
+import { BrandMark } from "./brand-mark";
 
 const perks = [
   ["✅", "Marque episódios e veja sua porcentagem subir"],
@@ -47,7 +47,7 @@ export function AccountPrompt() {
         <button type="button" onClick={closeAccountPrompt} aria-label="Fechar" className="absolute right-4 top-4 rounded-full px-2 text-xl text-ink-soft hover:text-ink">
           ×
         </button>
-        <Mascot className="mx-auto size-20 animate-float" />
+        <BrandMark className="mx-auto size-20 animate-float" />
         <h2 id="convite-titulo" className="mt-2 font-display text-3xl font-extrabold leading-tight">
           {marking ? "Salve sua maratona!" : "Crie sua conta grátis"}
         </h2>

@@ -42,7 +42,7 @@ export function RadarBR({ card, internationalBRL }: { card: CardRef; internation
         <div>
           <p className="text-xs font-black uppercase tracking-widest text-accent">Radar BR 🇧🇷</p>
           <h2 className="font-display text-2xl font-bold">Quanto está saindo no Brasil</h2>
-          <p className="text-sm text-ink-soft">Preços em estado NM que a comunidade Maratomon viu em lojas, eventos e trocas (últimos 90 dias).</p>
+          <p className="text-sm text-ink-soft">Preços em estado NM que a comunidade Forja Arcana viu em lojas, eventos e trocas (últimos 90 dias).</p>
         </div>
         {summary && (
           <div className="text-right">

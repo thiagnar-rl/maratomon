@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /*
- * Identidade visual do Maratomon TCG: roxo fantasma (cor do mascote),
- * amarelo elétrico das cartas, fundo noturno e artes dos Pokémon como protagonistas.
+ * Identidade visual da Forja Arcana: roxo profundo e dourado do selo (carta com a runa sendo forjada),
+ * fundo noturno e artes dos Pokémon como protagonistas.
  */
 :root {
   --bg: #f6f5fb;
@@ -17,6 +17,9 @@
   --accent-2: #ffcb05;
   --accent-3: #3d7dca;
   --good: #14a85a;
+  /* Cores do logo */
+  --brand-ink: #3d0d6b;
+  --brand-gold: #b86e00;
 
   /* Uma cor por série do anime */
   --era-0: #e3350d; /* Série Original */
@@ -45,6 +48,8 @@
     --accent-2: #ffd43b;
     --accent-3: #5b9bff;
     --good: #35d07f;
+    --brand-ink: #fff6e5;
+    --brand-gold: #ffc83d;
     --era-3: #b9b4d6;
     color-scheme: dark;
   }
@@ -63,6 +68,9 @@
   --color-accent-2: var(--accent-2);
   --color-accent-3: var(--accent-3);
   --color-good: var(--good);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-gold: var(--brand-gold);
+  --font-brand: "Noto Serif Variable", Georgia, "DejaVu Serif", serif;
   --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
 }

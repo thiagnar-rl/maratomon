@@ -6,11 +6,11 @@ import { HeaderProgress } from "./header-progress";
 export function Header() {
   return (
     <header className="sticky top-0 z-40">
-      {/* Faixa da marca: roxo do mascote, rosa e amarelo das cartas */}
-      <div className="h-1.5 bg-gradient-to-r from-accent via-[#ff5c8a] to-accent-2" aria-hidden="true" />
+      {/* Faixa da marca: roxo, laranja da forja e dourado do selo */}
+      <div className="h-1.5 bg-gradient-to-r from-[#3d0d6b] via-[#ff7a2f] to-[#ffc83d]" aria-hidden="true" />
       <div className="border-b border-line/70 bg-bg/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
-          <Link href="/" aria-label="Maratomon TCG, página inicial">
+          <Link href="/" aria-label="Forja Arcana, página inicial">
             <Logo />
           </Link>
           <nav aria-label="Principal" className="ml-auto hidden items-center gap-1 lg:flex">

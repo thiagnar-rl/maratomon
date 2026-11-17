@@ -130,7 +130,7 @@ async function fetchSource(source: Source): Promise<{ items: NewsItem[]; status:
   try {
     const response = await fetch(source.url, {
       next: { revalidate: 3600 },
-      headers: { "user-agent": "MaratomonBot/1.0 (+https://maratomon.vercel.app)", accept: "application/rss+xml, application/atom+xml, text/xml" },
+      headers: { "user-agent": "ForjaArcanaBot/1.0 (+https://maratomon.vercel.app)", accept: "application/rss+xml, application/atom+xml, text/xml" },
       signal: AbortSignal.timeout(8000),
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);

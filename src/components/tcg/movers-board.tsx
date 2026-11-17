@@ -219,7 +219,7 @@ export function MoversBoard({ live, initialDir = "alta" }: { live: LiveMarket; i
             </ul>
           )}
           <p className="text-xs text-ink-soft">
-            Dia: histórico diário do Maratomon (ou tendência do Cardmarket); semana e mês: médias do Cardmarket. Valores em reais pela cotação do dia.
+            Dia: histórico diário da Forja Arcana (ou tendência do Cardmarket); semana e mês: médias do Cardmarket. Valores em reais pela cotação do dia.
           </p>
         </div>
       </FilterLayout>

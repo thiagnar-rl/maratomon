@@ -1,14 +1,17 @@
-# Maratomon TCG
+# Forja Arcana
 
-Plataforma de fãs de Pokémon:
+<img src="public/brand/forja-arcana-horizontal.png" alt="Forja Arcana — TCG · Nerd" width="480">
 
-- **Anime:** checklist dos 1.361 episódios dublados, temporada por temporada, com os Pokémon marcantes de cada uma.
-- **Filmes:** todos os longas em ordem, com onde assistir no Brasil.
-- **Jogos clássicos:** Game Boy, Color e Advance, onde jogar oficialmente e emuladores legais.
-- **TCG:** todas as coleções desde 1999 (TCGdex), preços do TCGplayer e do Cardmarket em reais, painel do mercado, comparador e gráficos.
+TCG e cultura nerd (antigo Maratomon TCG):
+
+- **Notícias:** novidades de Pokémon TCG, games e anime, de fontes oficiais.
+- **Anime:** checklist dos 1.361 episódios dublados, temporada por temporada, assistidos dentro do site.
+- **TCG:** todas as coleções desde 1999 (TCGdex), mercado ao vivo (cards em alta e em queda), preços no Brasil (MYP Cards) e internacionais (TCGplayer e Cardmarket), comparador e gráficos.
 - **Minha coleção:** decks e pastas com cartas, fotos e vídeos, e o valor atualizado.
 
-🌐 **No ar:** https://maratomon.vercel.app
+🌐 **No ar:** https://maratomon.vercel.app (o endereço ainda usa o nome antigo)
+
+🎨 **Marca:** arquivos do logo em `public/brand/` (logo, logo transparente, horizontal, ícone, selo e símbolo).
 
 📝 **Histórico de alterações:** veja o [CHANGELOG.md](CHANGELOG.md).
 

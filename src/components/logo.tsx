@@ -1,15 +1,13 @@
-import { Mascot } from "./mascot";
+import { BrandMark } from "./brand-mark";
 
-/** Marca do Maratomon TCG: o mascote fantasminha + nome. */
+/** Marca da Forja Arcana: o selo + o nome "FORJA ARCANA" em serifa, como no logo. */
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 font-display text-xl font-extrabold tracking-tight ${className}`}>
-      <Mascot className="size-10 -my-1 drop-shadow-[0_4px_10px_rgba(139,92,246,0.45)]" />
-      <span className="flex items-baseline gap-1.5">
-        <span>
-          Marato<span className="text-accent">mon</span>
-        </span>
-        <span className="rounded-md bg-accent-2 px-1.5 py-0.5 text-[0.65em] font-black leading-none text-black">TCG</span>
+    <span className={`inline-flex items-center gap-2.5 ${className}`}>
+      <BrandMark className="size-11 -my-1.5 drop-shadow-[0_4px_10px_rgba(124,58,237,0.35)]" />
+      <span className="flex flex-col leading-none" style={{ fontFamily: "var(--font-brand)" }}>
+        <span className="text-[1.35rem] font-extrabold tracking-[0.06em] text-brand-ink">FORJA</span>
+        <span className="mt-0.5 pl-[0.2em] text-[0.72rem] font-medium tracking-[0.42em] text-brand-gold">ARCANA</span>
       </span>
     </span>
   );

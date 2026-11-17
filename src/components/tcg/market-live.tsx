@@ -101,7 +101,7 @@ export function MarketLive({ initial }: { initial: Market }) {
             </div>
           ))}
           <div className="rounded-[2rem] border border-line bg-gradient-to-br from-accent/25 to-surface p-5">
-            <p className="text-sm font-bold text-ink-soft">Índice Maratomon (7 dias)</p>
+            <p className="text-sm font-bold text-ink-soft">Índice Forja (7 dias)</p>
             <p className="font-display text-4xl font-extrabold">
               <Pct value={index} />
             </p>

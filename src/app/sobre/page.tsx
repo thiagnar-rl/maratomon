@@ -7,9 +7,9 @@ export const metadata: Metadata = { title: "Sobre o projeto" };
 
 export default function AboutPage() {
   return (
-    <ProsePage title="Sobre o Maratomon TCG">
+    <ProsePage title="Sobre a Forja Arcana">
       <p>
-        O Maratomon TCG é um guia feito por fã para quem quer assistir (ou reassistir) o anime inteiro, dublado, na ordem
+        A Forja Arcana é um guia feito por fã para quem quer assistir (ou reassistir) o anime inteiro, dublado, na ordem
         certa. Você marca o que já viu, acompanha seu progresso e encontra onde assistir em fontes oficiais.
       </p>
 
