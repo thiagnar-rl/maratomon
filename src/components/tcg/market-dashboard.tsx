@@ -13,6 +13,7 @@ export type MarketRow = {
   usd: number | null; // TCGplayer mercado
   eur: number | null; // Cardmarket tendência
   eur30: number | null; // Cardmarket média 30 dias
+  brl?: number | null; // Brasil (MYP Cards), menor oferta em reais
 };
 
 type Currency = "BRL" | "USD" | "EUR";
@@ -38,6 +39,7 @@ export function MarketDashboard({ rows, rates }: { rows: MarketRow[]; rates: { U
         ...r,
         tcgplayer: convert(r.usd, "USD", currency, rates),
         cardmarket: convert(r.eur, "EUR", currency, rates),
+        brasil: r.brl == null ? null : currency === "BRL" ? r.brl : r.brl / rates[currency],
         change,
         short: r.name.length > 14 ? r.name.slice(0, 13) + "…" : r.name,
       };
@@ -47,7 +49,7 @@ export function MarketDashboard({ rows, rates }: { rows: MarketRow[]; rates: { U
         ? a.name.localeCompare(b.name)
         : sort === "change"
           ? (b.change ?? -999) - (a.change ?? -999)
-          : (b.tcgplayer ?? b.cardmarket ?? 0) - (a.tcgplayer ?? a.cardmarket ?? 0),
+          : (b.brasil ?? b.tcgplayer ?? b.cardmarket ?? 0) - (a.brasil ?? a.tcgplayer ?? a.cardmarket ?? 0),
     );
   }, [rows, currency, sort, rates]);
 
@@ -58,7 +60,7 @@ export function MarketDashboard({ rows, rates }: { rows: MarketRow[]; rates: { U
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-display text-2xl font-bold">Painel do mercado</h2>
-          <p className="text-sm text-ink-soft">Cartas icônicas: TCGplayer (EUA) contra Cardmarket (Europa).</p>
+          <p className="text-sm text-ink-soft">Cartas icônicas: Brasil (MYP Cards) contra TCGplayer (EUA) e Cardmarket (Europa).</p>
         </div>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Moeda">
           {(["BRL", "USD", "EUR"] as Currency[]).map((c) => (
@@ -82,16 +84,18 @@ export function MarketDashboard({ rows, rates }: { rows: MarketRow[]; rates: { U
             <XAxis dataKey="short" tick={{ fill: "var(--ink-soft)", fontSize: 11 }} interval={0} angle={-25} textAnchor="end" height={60} />
             <YAxis tick={{ fill: "var(--ink-soft)", fontSize: 11 }} tickFormatter={(v: number) => fmt(v)} width={80} />
             <Tooltip
-              formatter={(value, name) => [fmt(Number(value)), name === "tcgplayer" ? "TCGplayer" : "Cardmarket"]}
+              formatter={(value, name) => [fmt(Number(value)), name === "brasil" ? "Brasil (MYP)" : name === "tcgplayer" ? "TCGplayer" : "Cardmarket"]}
               contentStyle={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, color: "var(--ink)" }}
               cursor={{ fill: "var(--surface-2)" }}
             />
+            <Bar dataKey="brasil" name="brasil" fill="var(--good)" radius={[6, 6, 0, 0]} />
             <Bar dataKey="tcgplayer" name="tcgplayer" fill="var(--accent)" radius={[6, 6, 0, 0]} />
             <Bar dataKey="cardmarket" name="cardmarket" fill="var(--accent-3)" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
       <div className="flex flex-wrap gap-4 text-xs font-semibold text-ink-soft">
+        <span className="flex items-center gap-1.5"><span className="size-3 rounded-sm bg-good" /> Brasil · menor oferta no MYP Cards</span>
         <span className="flex items-center gap-1.5"><span className="size-3 rounded-sm bg-accent" /> TCGplayer · preço de mercado</span>
         <span className="flex items-center gap-1.5"><span className="size-3 rounded-sm bg-accent-3" /> Cardmarket · tendência</span>
       </div>
@@ -104,8 +108,9 @@ export function MarketDashboard({ rows, rates }: { rows: MarketRow[]; rates: { U
                 <button type="button" onClick={() => setSort("name")} className="font-bold uppercase">Carta {sort === "name" && "↓"}</button>
               </th>
               <th className="py-2 pr-2 text-right">
-                <button type="button" onClick={() => setSort("value")} className="font-bold uppercase">TCGplayer {sort === "value" && "↓"}</button>
+                <button type="button" onClick={() => setSort("value")} className="font-bold uppercase">Brasil {sort === "value" && "↓"}</button>
               </th>
+              <th className="py-2 pr-2 text-right">TCGplayer</th>
               <th className="py-2 pr-2 text-right">Cardmarket</th>
               <th className="py-2 text-right">
                 <button type="button" onClick={() => setSort("change")} className="font-bold uppercase">vs. 30 dias {sort === "change" && "↓"}</button>
@@ -124,6 +129,7 @@ export function MarketDashboard({ rows, rates }: { rows: MarketRow[]; rates: { U
                     </span>
                   </Link>
                 </td>
+                <td className="py-2 pr-2 text-right font-bold tabular-nums text-good">{fmt(row.brasil)}</td>
                 <td className="py-2 pr-2 text-right font-semibold tabular-nums">{fmt(row.tcgplayer)}</td>
                 <td className="py-2 pr-2 text-right tabular-nums">{fmt(row.cardmarket)}</td>
                 <td className={`py-2 text-right font-semibold tabular-nums ${row.change == null ? "text-ink-soft" : row.change >= 0 ? "text-good" : "text-accent"}`}>

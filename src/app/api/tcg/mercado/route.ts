@@ -4,9 +4,9 @@ import { getMarket } from "@/lib/tcg/market";
 export const revalidate = 900;
 
 export async function GET() {
-  const { rows, rates, updatedAt } = await getMarket();
+  const { rows, rates, updatedAt, top } = await getMarket();
   return Response.json(
-    { rows, rates, updatedAt },
+    { rows, rates, updatedAt, top },
     { headers: { "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600" } },
   );
 }

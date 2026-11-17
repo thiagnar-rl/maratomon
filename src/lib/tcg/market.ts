@@ -4,7 +4,7 @@ import { getCard, getRates, getSeries, getSet } from "./api";
 import { featuredCardIds } from "./featured";
 import { recordPrices } from "./history";
 import { cardMeta, marketplaceQuote, priceSnapshot } from "./prices";
-import { brPrices } from "./mypcards";
+import { brPrices, linkToCatalog, mypTopExpensive, type TopBrCard } from "./mypcards";
 import type { BrPrice, CardDetail, CardMeta, PriceSnapshot, Rates } from "./types";
 
 export type Period = "dia" | "semana" | "mes";
@@ -114,8 +114,16 @@ function toRow(c: CardDetail, rates: Rates, day: number | undefined, br: BrPrice
   };
 }
 
-async function computeMarket(): Promise<{ rows: MarketRow[]; rates: Rates; updatedAt: string }> {
-  const [ids, rates] = await Promise.all([poolIds(), getRates()]);
+/** Card mais caro à venda no Brasil, com a imagem e o preço internacional quando a carta está no catálogo. */
+export type TopCard = TopBrCard & { image?: string; intlBrl: number | null };
+
+export type Market = { rows: MarketRow[]; rates: Rates; updatedAt: string; top: TopCard[] };
+
+async function computeMarket(): Promise<Market> {
+  // Ranking do Brasil: os cards mais caros à venda no MYP Cards, ligados ao catálogo quando possível.
+  const topRaw = await linkToCatalog(await mypTopExpensive(3), async (id) => (await getCard(id)) !== null);
+  const [pool, rates] = await Promise.all([poolIds(), getRates()]);
+  const ids = [...new Set([...pool, ...topRaw.flatMap((t) => (t.tcgId ? [t.tcgId] : []))])];
   const cards: (CardDetail | null)[] = [];
   for (let i = 0; i < ids.length; i += 24) cards.push(...(await Promise.all(ids.slice(i, i + 24).map((id) => getCard(id)))));
   const valid = cards.filter((c): c is CardDetail => Boolean(c));
@@ -124,7 +132,12 @@ async function computeMarket(): Promise<{ rows: MarketRow[]; rates: Rates; updat
   const day = await dailyChanges(valid.map((c) => c.id));
   const br = await brPrices(valid.map((c) => ({ id: c.id, setId: c.set.id, localId: c.localId })));
   const rows = valid.map((c) => toRow(c, rates, day[c.id], br[c.id])).filter((r) => r.brl != null);
-  return { rows, rates, updatedAt: new Date().toISOString() };
+  const byId = new Map(valid.map((c) => [c.id, c]));
+  const top: TopCard[] = topRaw.map((t) => {
+    const card = t.tcgId ? byId.get(t.tcgId) : undefined;
+    return { ...t, image: card?.image, intlBrl: card ? priceSnapshot(card, rates).brl : null };
+  });
+  return { rows, rates, updatedAt: new Date().toISOString(), top };
 }
 
 /**
@@ -132,4 +145,4 @@ async function computeMarket(): Promise<{ rows: MarketRow[]; rates: Rates; updat
  * Montar o painel lê mais de 300 cartas e as páginas do MYP Cards (leva ~15 s); com o cache,
  * as visitas recebem o resultado pronto em vez de esperar o cálculo.
  */
-export const getMarket = unstable_cache(computeMarket, ["tcg-market-v2"], { revalidate: 900 });
+export const getMarket = unstable_cache(computeMarket, ["tcg-market-v3"], { revalidate: 900 });

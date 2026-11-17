@@ -7,6 +7,17 @@ Site publicado: https://forja-arcana.vercel.app
 
 ## 17/11/2026
 
+### Cards mais caros do Brasil (todas as coleções) e Brasil no painel do mercado
+- **Problema:** "Cards mais caros do dia" só considerava as cartas acompanhadas pelo site (coleções recentes + clássicos), então faltavam cartas caras de verdade, como o **Mew R/RGB** (30th Celebration, R$ 13.000 no Brasil).
+- **Varredura dos marketplaces brasileiros:** o MYP Cards tem uma lista pública de Pokémon que pode ser ordenada do mais caro para o mais barato (`/pokemon?sort=-preco`, permitida no robots.txt). A Liga Pokémon continua bloqueando acesso automático (verificação anti-robô) e sem API, por isso não é lida.
+- **Novo ranking "Cards mais caros do dia":** os cards mais caros **à venda no Brasil agora**, de qualquer coleção (as 3 primeiras páginas do MYP, ~120 cartas), com:
+  - filtros **Sem graduadas** (ligado por padrão) e **Só português e inglês**;
+  - etiquetas **Graduada** e **Outro idioma**, unidades à venda e o preço internacional quando a carta está no catálogo;
+  - botão "Ver mais"; a carta abre a página dela no site (ou a oferta no MYP Cards quando não está no catálogo).
+- As cartas desse ranking que existem no catálogo entram também no mercado (Cards em Alta/Queda e filtros).
+- **Painel do mercado:** nova barra e coluna **Brasil (MYP Cards)** ao lado de TCGplayer e Cardmarket; a ordenação por valor usa o preço do Brasil.
+- Arquivos: `src/lib/tcg/mypcards.ts` (`mypTopExpensive`, `linkToCatalog`), `src/lib/tcg/market.ts` (`top`), `src/components/tcg/br-top-cards.tsx` (novo), `src/components/tcg/market-live.tsx`, `src/components/tcg/market-dashboard.tsx`, `src/app/api/tcg/mercado/route.ts`.
+
 ### Novo endereço: forja-arcana.vercel.app
 - O site passou a ser **https://forja-arcana.vercel.app** (domínio adicionado no projeto da Vercel, ligado à produção).
 - O endereço antigo **maratomon.vercel.app redireciona** para o novo (redirecionamento permanente 308), então links já compartilhados continuam funcionando.

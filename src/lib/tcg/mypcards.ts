@@ -176,3 +176,103 @@ export async function mypProduct(card: CardRef): Promise<MypProduct | null> {
   return null;
 }
 
+
+// ---------------------------------------------------------------------------
+// Cards mais caros à venda no Brasil (lista pública do MYP Cards ordenada por preço)
+// ---------------------------------------------------------------------------
+
+export type TopBrCard = {
+  /** Código do produto no MYP Cards. */
+  mypId: number;
+  sku: string;
+  name: string;
+  /** Sigla e nome da coleção como aparecem no MYP Cards. */
+  code: string;
+  edition: string;
+  url: string;
+  /** Miniatura da carta no MYP Cards (usada quando a carta não está no catálogo da TCGdex). */
+  thumb: string | null;
+  /** Menor oferta no Brasil, em reais. */
+  low: number;
+  units: number | null;
+  /** O menor preço é de uma carta graduada (PSA, BGS...). */
+  graded: boolean;
+  /** À venda só em outros idiomas (ex.: japonês). */
+  otherLanguage: boolean;
+  /** Carta correspondente no catálogo do site (TCGdex), quando encontrada. */
+  tcgId?: string;
+};
+
+/** Lê as primeiras páginas da lista de Pokémon do MYP Cards ordenada do mais caro para o mais barato. */
+export async function mypTopExpensive(pages = 3): Promise<TopBrCard[]> {
+  const out: TopBrCard[] = [];
+  for (let p = 1; p <= pages; p++) {
+    const html = await page(`/pokemon?ProdutoSearch%5BprecoMinimo%5D=300&sort=-preco&page=${p}`, SIX_HOURS);
+    if (!html) break;
+    const chunks = html.split('<li class="stream-item"').slice(1);
+    if (chunks.length === 0) break;
+    for (const chunk of chunks) {
+      const sku = chunk.match(/data-ga-item-id="(pokemon_[^"]+)"/)?.[1];
+      const mypId = Number(chunk.match(/data-key="(\d+)"/)?.[1]);
+      const name = chunk.match(/<h3 title="([^"]+)"/)?.[1]?.trim();
+      const price = money(chunk.match(/card-preco moeda">[\s\S]*?R\$\s*([\d.]+,\d{2})/)?.[1]);
+      if (!sku || !mypId || !name || !price) continue;
+      out.push({
+        mypId,
+        sku,
+        name,
+        code: chunk.match(/class="card-edicao"[^>]*>([^<]+)</)?.[1]?.trim() ?? "",
+        edition: chunk.match(/class="card-edicao" title="([^"]+)"/)?.[1] ?? "",
+        url: `${BASE}${chunk.match(/class="card-img-link" href="([^"#]+)/)?.[1] ?? `/pokemon/produto/${mypId}`}`,
+        thumb: chunk.match(/class="card-thumb" src="([^"]+)"/)?.[1] ?? null,
+        low: price,
+        units: Number(chunk.match(/quantidade-num">(\d+)</)?.[1]) || null,
+        graded: chunk.includes("card-estatistica--graduada"),
+        otherLanguage: chunk.includes("Disponível apenas em outros idiomas"),
+      });
+    }
+  }
+  return out;
+}
+
+/** Sigla oficial (minúscula) → coleção da TCGdex, para ligar as cartas do MYP ao catálogo do site. */
+async function tcgdexSetsByCode(): Promise<Map<string, { id: string; official: number }>> {
+  const map = new Map<string, { id: string; official: number }>();
+  try {
+    const sets = (await fetch("https://api.tcgdex.net/v2/en/sets", { next: { revalidate: ONE_DAY } }).then((r) => r.json())) as { id: string }[];
+    for (let i = 0; i < sets.length; i += 25) {
+      const details = await Promise.all(
+        sets.slice(i, i + 25).map((s) =>
+          fetch(`https://api.tcgdex.net/v2/en/sets/${encodeURIComponent(s.id)}`, { next: { revalidate: ONE_DAY } })
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null) as Promise<{ id: string; abbreviation?: { official?: string }; cardCount?: { official: number } } | null>,
+        ),
+      );
+      for (const d of details) {
+        const code = d?.abbreviation?.official?.toLowerCase();
+        if (d && code && !map.has(code)) map.set(code, { id: d.id, official: d.cardCount?.official ?? 0 });
+      }
+    }
+  } catch {
+    // sem o mapa, as cartas aparecem com o link do MYP Cards
+  }
+  return map;
+}
+
+/** Liga cada carta da lista do MYP a uma carta do catálogo (quando a coleção e o número batem). */
+export async function linkToCatalog(items: TopBrCard[], exists: (id: string) => Promise<boolean>): Promise<TopBrCard[]> {
+  const sets = await tcgdexSetsByCode();
+  return Promise.all(
+    items.map(async (item) => {
+      const m = item.sku.match(/^pokemon_([^_]+)_(\d+)\/\d+$/);
+      const set = m ? sets.get(m[1]) : undefined;
+      if (!m || !set) return item;
+      const n = String(Number(m[2]));
+      for (const local of [n, n.padStart(3, "0")]) {
+        const id = `${set.id}-${local}`;
+        if (await exists(id)) return { ...item, tcgId: id };
+      }
+      return item;
+    }),
+  );
+}

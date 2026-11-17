@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { MarketRow } from "@/lib/tcg/market";
+import type { MarketRow, TopCard } from "@/lib/tcg/market";
 import type { Rates } from "@/lib/tcg/types";
 import { featuredCardIds } from "@/lib/tcg/featured";
-import { cardImage, formatMoney, formatPct } from "@/lib/tcg/prices";
-import { CardTile } from "./card-tile";
+import { cardImage, formatPct } from "@/lib/tcg/prices";
 import { MarketDashboard } from "./market-dashboard";
 import { MoversBoard, ago, type LiveMarket } from "./movers-board";
+import { BrTopCards } from "./br-top-cards";
 
-type Market = { rows: MarketRow[]; rates: Rates; updatedAt: string };
+type Market = { rows: MarketRow[]; rates: Rates; updatedAt: string; top: TopCard[] };
 
 const REFRESH_MS = 5 * 60 * 1000;
 
@@ -65,12 +65,11 @@ export function MarketLive({ initial }: { initial: Market }) {
   const index = withWeek.length ? withWeek.reduce((s, r) => s + r.change.semana!, 0) / withWeek.length : null;
   const up = rows.filter((r) => (r.change.dia ?? 0) > 0).length;
   const down = rows.filter((r) => (r.change.dia ?? 0) < 0).length;
-  const priciest = useMemo(() => [...rows].sort((a, b) => (b.brl ?? 0) - (a.brl ?? 0)).slice(0, 12), [rows]);
   const classics = useMemo(
     () =>
       rows
         .filter((r) => featuredCardIds.includes(r.id))
-        .map((r) => ({ id: r.id, name: r.name, set: r.setName, image: cardImage(r.image, "low"), usd: r.usd, eur: r.eurTrend, eur30: r.eur30 })),
+        .map((r) => ({ id: r.id, name: r.name, set: r.setName, image: cardImage(r.image, "low"), usd: r.usd, eur: r.eurTrend, eur30: r.eur30, brl: r.br?.low ?? null })),
     [rows],
   );
 
@@ -121,24 +120,15 @@ export function MarketLive({ initial }: { initial: Market }) {
       </section>
 
       <section id="valiosas" aria-labelledby="valiosas-t" className="scroll-mt-40 space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
           <h2 id="valiosas-t" className="font-display text-3xl font-extrabold">💎 Cards mais caros do dia</h2>
-          <p className="text-sm text-ink-soft">
-            Top 12 somam <strong className="text-ink tabular-nums">{formatMoney(priciest.reduce((s, r) => s + (r.brl ?? 0), 0), "BRL")}</strong>
-          </p>
+          <p className="text-sm text-ink-soft">Os cards mais caros à venda no Brasil agora, de todas as coleções.</p>
         </div>
-        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-          {priciest.map((r, i) => (
-            <li key={r.id} className="relative">
-              <span className="absolute left-2 top-2 z-10 grid size-7 place-items-center rounded-full bg-accent-2 font-display text-sm font-extrabold text-black shadow-lg">{i + 1}</span>
-              <CardTile card={{ id: r.id, name: r.name, localId: r.localId, image: r.image }} subtitle={r.setName} price={{ ...r, change7d: r.change.dia ?? r.change7d }} changeTitle="Variação no dia" />
-            </li>
-          ))}
-        </ol>
+        <BrTopCards top={market.top ?? []} />
       </section>
 
       <p className="text-xs text-ink-soft">
-        Fontes: TCGplayer (EUA) e Cardmarket (Europa) via TCGdex; câmbio AwesomeAPI. Tudo se atualiza sozinho a cada 5 minutos. Valores em real são conversões pela cotação do dia.
+        Fontes: MYP Cards (Brasil), TCGplayer (EUA) e Cardmarket (Europa) via TCGdex; câmbio AwesomeAPI. Tudo se atualiza sozinho a cada 5 minutos. Valores em real são conversões pela cotação do dia.
       </p>
     </div>
   );
