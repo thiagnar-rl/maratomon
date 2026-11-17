@@ -11,6 +11,7 @@ Site publicado: https://forja-arcana.vercel.app
 - O usuário não quer que ninguém saia do site: **removido o botão "Assistir dublado no app do YouTube"** (entrada logo abaixo).
 - **Novo player** (`src/components/youtube-dub-player.tsx`): usa a API do player do YouTube e, nos vídeos com várias dublagens, **procura a faixa de áudio em português e troca sozinho**, no celular e no computador; quando consegue, desliga a legenda automática e mostra o selo "🇧🇷 Dublado" no canto do vídeo. Tenta por ~6 s (as faixas aparecem depois que o vídeo começa) e confirma de novo quando o vídeo volta a tocar.
 - Importante: a troca de faixa usa funções internas do player do YouTube (não documentadas). Se o YouTube não permitir em algum aparelho, o vídeo toca normalmente e aparece o aviso "Ficou em inglês?" — no computador com o caminho ⚙ › Faixa de áudio › Português; no celular, a orientação de recarregar ou usar o computador. Nenhum link manda para o YouTube.
+- Diagnóstico: abrindo um episódio com `?audio=diag` no endereço, aparece no rodapé do vídeo o que o player do YouTube oferece naquele aparelho (funções de áudio e faixas disponíveis) — para confirmar no celular se a troca de dublagem é permitida.
 - Arquivos: `src/components/youtube-dub-player.tsx` (novo), `src/components/watch-panel.tsx`.
 
 ### Anime no celular: opção de assistir dublado (substituído pela entrada acima)

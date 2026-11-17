@@ -71,6 +71,8 @@ function trySetPortuguese(player: YTPlayer): boolean {
 export function YouTubeDubPlayer({ videoId, title, onAudio }: { videoId: string; title: string; onAudio?: (portuguese: boolean) => void }) {
   const host = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "pt" | "original">("loading");
+  // Diagnóstico: abra o episódio com ?audio=diag para ver o que o player do YouTube oferece neste aparelho.
+  const [diag, setDiag] = useState<string | null>(null);
   const isPt = useRef(false);
 
   useEffect(() => {
@@ -79,8 +81,21 @@ export function YouTubeDubPlayer({ videoId, title, onAudio }: { videoId: string;
     let tries = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
+    const report = () => {
+      if (!player || !window.location.search.includes("audio=diag")) return;
+      const fns = Object.keys(player).filter((k) => typeof (player as Record<string, unknown>)[k] === "function" && /audio|track|lang|option|module/i.test(k));
+      let tracks = "—";
+      try {
+        tracks = JSON.stringify(player.getAvailableAudioTracks?.() ?? "função indisponível").slice(0, 400);
+      } catch (e) {
+        tracks = `erro: ${String(e)}`;
+      }
+      setDiag(`tentativa ${tries} · funções: ${fns.join(", ") || "nenhuma"} · faixas: ${tracks}`);
+    };
+
     const attempt = () => {
       if (cancelled || !player) return;
+      report();
       if (trySetPortuguese(player)) {
         isPt.current = true;
         setStatus("pt");
@@ -131,6 +146,7 @@ export function YouTubeDubPlayer({ videoId, title, onAudio }: { videoId: string;
   return (
     <div className="absolute inset-0">
       <div ref={host} className="size-full [&>iframe]:size-full" title={title} />
+      {diag && <p className="absolute inset-x-0 bottom-0 max-h-1/2 overflow-auto bg-black/85 p-2 font-mono text-[10px] text-white">{diag}</p>}
       {status === "pt" && (
         <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-xs font-bold text-white">🇧🇷 Dublado</span>
       )}
