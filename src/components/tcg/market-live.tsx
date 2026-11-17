@@ -62,15 +62,27 @@ function useLiveMarket(initial: Market) {
  */
 function useScrollToHash() {
   useEffect(() => {
+    let userMoved = false;
+    const stop = () => (userMoved = true);
     const go = () => {
       const id = decodeURIComponent(location.hash.slice(1));
-      if (id) document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      // "instant": a rolagem suave do site pode ser interrompida enquanto as imagens acima ainda estão carregando.
+      if (id && !userMoved) document.getElementById(id)?.scrollIntoView({ behavior: "instant", block: "start" });
     };
-    const timer = setTimeout(go, 60);
-    window.addEventListener("hashchange", go);
+    const onHash = () => {
+      userMoved = false;
+      go();
+    };
+    // Rola quando o painel aparece e de novo depois que as imagens acima assentam (elas empurram a seção para baixo).
+    const timers = [60, 700, 1600].map((ms) => setTimeout(go, ms));
+    window.addEventListener("hashchange", onHash);
+    window.addEventListener("wheel", stop, { passive: true });
+    window.addEventListener("touchmove", stop, { passive: true });
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener("hashchange", go);
+      timers.forEach(clearTimeout);
+      window.removeEventListener("hashchange", onHash);
+      window.removeEventListener("wheel", stop);
+      window.removeEventListener("touchmove", stop);
     };
   }, []);
 }
