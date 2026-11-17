@@ -63,9 +63,13 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
         </div>
       )}
 
-      {episode.youtubeId && <OpenInApp videoId={episode.youtubeId} />}
-
-      {episode.youtubeAudio === "multi" && playing && dubbed === false && <AudioTip />}
+      {/* Plano B: só se a troca para a dublagem falhou. O normal é o episódio tocar aqui mesmo, dentro do site. */}
+      {episode.youtubeId && episode.youtubeAudio === "multi" && playing && dubbed === false && (
+        <>
+          <AudioTip />
+          <OpenInApp videoId={episode.youtubeId} />
+        </>
+      )}
 
       <ul className="grid gap-2 sm:grid-cols-2">
         {providers
@@ -96,7 +100,7 @@ export function WatchPanel({ episode, providers }: { episode: Episode; providers
 }
 
 /**
- * Só no celular/tablet: abre o episódio no app do YouTube. O app tem o menu "Faixa de áudio" e já escolhe a dublagem
+ * Plano B, só no celular/tablet e só quando a dublagem não entrou no site: abre o episódio no app do YouTube. O app tem o menu "Faixa de áudio" e já escolhe a dublagem
  * pelo idioma do aparelho, coisa que o player embutido em sites não faz nesses aparelhos.
  */
 function OpenInApp({ videoId }: { videoId: string }) {
@@ -131,8 +135,8 @@ function AudioTip() {
       <p className="font-bold">🇧🇷 Ficou em inglês?</p>
       {touch ? (
         <p className="text-sm text-ink-soft">
-          No celular, o player embutido nem sempre deixa trocar o áudio. Toque em <strong>Assistir dublado no app do YouTube</strong> logo abaixo do
-          vídeo: no app, o episódio abre em português se o seu YouTube estiver em português; se não, toque em ⚙ › <strong>Faixa de áudio</strong> ›{" "}
+          No celular, o player embutido nem sempre deixa trocar o áudio. Se preferir, toque em <strong>Assistir dublado no app do YouTube</strong> logo
+          abaixo: no app, o episódio abre em português se o seu YouTube estiver em português; se não, toque em ⚙ › <strong>Faixa de áudio</strong> ›{" "}
           <strong>Português (Brasil)</strong>.
         </p>
       ) : (
