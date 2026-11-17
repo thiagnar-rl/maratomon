@@ -17,6 +17,9 @@ export type MarketRow = PriceSnapshot & {
   /** Menor anúncio e preço médio alto, em reais (para as somas da lista). */
   brlLow: number | null;
   brlHigh: number | null;
+  /** Cardmarket: tendência e média de 30 dias, em euro (painel TCGplayer × Cardmarket). */
+  eurTrend: number | null;
+  eur30: number | null;
   change: Record<Period, number | null>;
 };
 
@@ -81,6 +84,8 @@ function toRow(c: CardDetail, rates: Rates, day: number | undefined): MarketRow 
     meta: cardMeta(c),
     brlLow: brlLow != null ? Math.round(brlLow * 100) / 100 : null,
     brlHigh: brlHigh != null ? Math.round(brlHigh * 100) / 100 : null,
+    eurTrend: cm?.trend ?? null,
+    eur30: cm?.avg30 ?? null,
     change: {
       // Dia: histórico do Maratomon; sem ele, tendência do Cardmarket contra a média de ontem.
       dia: day ?? pct(cm?.trend, cm?.avg1),

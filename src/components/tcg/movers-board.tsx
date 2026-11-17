@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MarketRow, Period } from "@/lib/tcg/market";
 import { cardImage, formatMoney, formatPct } from "@/lib/tcg/prices";
 import { typeColors } from "@/lib/pokemon";
@@ -10,14 +10,13 @@ import { CardTile } from "./card-tile";
 import { ActiveFilters, FilterLayout, FilterPanel, useCardFilters } from "./card-filters";
 
 type Dir = "alta" | "queda";
-type Market = { rows: MarketRow[]; updatedAt: string };
+export type LiveMarket = { market: { rows: MarketRow[]; updatedAt: string }; loading: boolean; now: number; refresh: () => void };
 
 const PERIODS: [Period, string][] = [
   ["dia", "Dia"],
   ["semana", "Semana"],
   ["mes", "Mês"],
 ];
-const REFRESH_MS = 5 * 60 * 1000;
 const ENERGY_COLOR = Object.fromEntries(Object.entries(ENERGY_PT).map(([en, pt]) => [pt, typeColors[en]]));
 
 function Pct({ value, big = false }: { value: number | null; big?: boolean }) {
@@ -34,31 +33,18 @@ function Pct({ value, big = false }: { value: number | null; big?: boolean }) {
   );
 }
 
-function ago(iso: string, now: number) {
+export function ago(iso: string, now: number) {
   const min = Math.max(0, Math.round((now - new Date(iso).getTime()) / 60000));
   return min < 1 ? "agora" : min === 1 ? "há 1 min" : min < 60 ? `há ${min} min` : `há ${Math.round(min / 60)} h`;
 }
 
 /** Cards em alta e em queda, com período, filtros, lista/grade e atualização automática. */
-export function MoversBoard({ initial, initialDir = "alta" }: { initial: Market; initialDir?: Dir }) {
-  const [market, setMarket] = useState<Market>(initial);
+export function MoversBoard({ live, initialDir = "alta" }: { live: LiveMarket; initialDir?: Dir }) {
+  const { market, loading, now, refresh } = live;
   const [dir, setDir] = useState<Dir>(initialDir);
   const [period, setPeriod] = useState<Period>("semana");
   const [view, setView] = useState<"lista" | "grade">("lista");
-  const [loading, setLoading] = useState(false);
-  const [now, setNow] = useState(() => new Date(initial.updatedAt).getTime());
   const filters = useCardFilters();
-
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/tcg/mercado", { cache: "no-store" });
-      if (response.ok) setMarket((await response.json()) as Market);
-    } finally {
-      setLoading(false);
-      setNow(Date.now());
-    }
-  }, []);
 
   // #altas / #baixas no endereço escolhem a aba (links do menu).
   useEffect(() => {
@@ -70,15 +56,6 @@ export function MoversBoard({ initial, initialDir = "alta" }: { initial: Market;
     window.addEventListener("hashchange", sync);
     return () => window.removeEventListener("hashchange", sync);
   }, []);
-
-  useEffect(() => {
-    const poll = setInterval(refresh, REFRESH_MS);
-    const tick = setInterval(() => setNow(Date.now()), 30_000);
-    return () => {
-      clearInterval(poll);
-      clearInterval(tick);
-    };
-  }, [refresh]);
 
   const pool = useMemo(
     () => market.rows.filter((r) => (dir === "alta" ? (r.change[period] ?? 0) > 0 : (r.change[period] ?? 0) < 0)),

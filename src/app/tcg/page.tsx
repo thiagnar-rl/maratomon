@@ -1,69 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCard, getRates, getSeries } from "@/lib/tcg/api";
-import { featuredCardIds } from "@/lib/tcg/featured";
-import { cardImage, tcgplayerVariants } from "@/lib/tcg/prices";
-import { MarketDashboard, type MarketRow } from "@/components/tcg/market-dashboard";
-import { CardSearchForm } from "@/components/tcg/card-search-form";
-import { MonArt } from "@/components/mon-art";
+import { getSeries } from "@/lib/tcg/api";
+import { getMarket } from "@/lib/tcg/market";
+import { MarketLive } from "@/components/tcg/market-live";
 import { SetCoverArt } from "@/components/tcg/set-cover";
 import { TermometroBR } from "@/components/tcg/termometro-br";
 
 export const metadata: Metadata = {
-  title: "TCG: coleções, preços e comparador",
+  title: "Pokémon TCG ao vivo: cards em alta, em queda e mais caros do dia",
   description: "Todas as coleções do Pokémon TCG desde 1999, com preços do TCGplayer e do Cardmarket em reais.",
 };
 
-export const revalidate = 3600;
+export const revalidate = 900;
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { month: "short", year: "numeric", timeZone: "UTC" });
 
 export default async function TcgPage() {
-  const [series, rates, featured] = await Promise.all([
-    getSeries(),
-    getRates(),
-    Promise.all(featuredCardIds.map((id) => getCard(id))),
-  ]);
-
-  const rows: MarketRow[] = featured
-    .filter((c) => c !== null)
-    .map((card) => {
-      const usd = tcgplayerVariants(card.pricing).map(([, v]) => v.marketPrice).find((p): p is number => typeof p === "number") ?? null;
-      return {
-        id: card.id,
-        name: card.name,
-        set: card.set.name,
-        image: cardImage(card.image, "low"),
-        usd,
-        eur: card.pricing?.cardmarket?.trend ?? null,
-        eur30: card.pricing?.cardmarket?.avg30 ?? null,
-      };
-    });
-
-  const totalSets = series.reduce((n, s) => n + s.sets.length, 0);
+  const [series, market] = await Promise.all([getSeries(), getMarket()]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-12 px-4 py-12 sm:px-6">
-      <header className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#1d3f8f] via-[#16275c] to-[#0b1230] p-8 text-white sm:p-10">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-4 -top-6 hidden items-end sm:flex">
-          <MonArt mon={{ id: 133, name: "Eevee" }} size={130} eager className="-mr-10 mb-2" />
-          <MonArt mon={{ id: 197, name: "Umbreon" }} size={200} eager className="animate-float" />
-        </div>
-        <div className="relative max-w-xl space-y-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-accent-2">Estampas Ilustradas</p>
-          <h1 className="font-display text-5xl font-extrabold tracking-tight">Pokémon TCG</h1>
-          <p className="opacity-85">
-            {totalSets} coleções em {series.length} séries, desde a Coleção Básica de 1999. Preços do TCGplayer e do
-            Cardmarket convertidos para real
-            {rates.fallback ? " (cotação aproximada)" : ` pela cotação de hoje: US$ 1 = R$ ${rates.USD.toFixed(2)}, € 1 = R$ ${rates.EUR.toFixed(2)}`}.
-          </p>
-          <CardSearchForm />
-        </div>
-      </header>
-
-
-      {rows.length > 0 ? (
-        <MarketDashboard rows={rows} rates={rates} />
+    <div className="mx-auto max-w-6xl space-y-12 px-4 py-8 sm:px-6">
+      <h1 className="sr-only">Pokémon TCG: mercado ao vivo, cards em alta e em queda e coleções</h1>
+      {market.rows.length > 0 ? (
+        <MarketLive initial={market} />
       ) : (
         <p className="rounded-3xl border border-line bg-surface p-6 text-ink-soft">Não foi possível carregar os preços agora. Tente de novo em alguns minutos.</p>
       )}
