@@ -1,6 +1,6 @@
 # Forja Arcana
 
-<img src="public/brand/forja-arcana-horizontal.png" alt="Forja Arcana — TCG · Nerd" width="480">
+<img src="public/brand/forja-arcana-monograma.png" alt="Forja Arcana — TCG · Nerd" width="240">
 
 TCG e cultura nerd (antigo Maratomon TCG):
 
@@ -11,7 +11,7 @@ TCG e cultura nerd (antigo Maratomon TCG):
 
 🌐 **No ar:** https://maratomon.vercel.app (o endereço ainda usa o nome antigo)
 
-🎨 **Marca:** arquivos do logo em `public/brand/` (logo, logo transparente, horizontal, ícone, selo e símbolo).
+🎨 **Marca:** logos base em `public/brand/` (monograma — o logo usado no site —, escudo, minimalista e minimalista escuro) e o símbolo do monograma com fundo transparente.
 
 📝 **Histórico de alterações:** veja o [CHANGELOG.md](CHANGELOG.md).
 

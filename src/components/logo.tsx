@@ -1,6 +1,6 @@
 import { BrandMark } from "./brand-mark";
 
-/** Marca da Forja Arcana: o selo + o nome "FORJA ARCANA" em serifa, como no logo. */
+/** Marca da Forja Arcana: o monograma no hexágono + o nome "FORJA ARCANA" em serifa, como no logo. */
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>

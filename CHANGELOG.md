@@ -7,6 +7,11 @@ Site publicado: https://maratomon.vercel.app
 
 ## 17/11/2026
 
+### Logo do site: monograma da Forja Arcana
+- **Correção da marca:** os logos base são o **monograma** (o "A" com a carta da runa no hexágono), o **escudo**, o **minimalista** e o **minimalista escuro**. O site usa **o monograma**.
+- **Trocado o selo do martelo pelo monograma** no cabeçalho, ícone da aba, ícone do celular, imagem de compartilhamento e em todo lugar onde o selo aparecia (home, notícias, entrar, conta, convite de conta, cartas sem imagem).
+- **Arquivos em `public/brand/`:** `forja-arcana-monograma.png`, `-escudo.png`, `-minimalista.png`, `-minimalista-escuro.png` e `forja-arcana-simbolo.png` (hexágono recortado, fundo transparente). Saíram os arquivos do selo do martelo (`-logo`, `-logo-transparente`, `-horizontal`, `-icone`, `-selo`).
+
 ### Nova marca: Forja Arcana
 - **Nome do site:** "Maratomon TCG" passa a ser **Forja Arcana** em todo o site (títulos das páginas, cabeçalho, conta, termos, sobre, mercado — "Índice Forja" —, lista de compras, histórico de preços e README).
 - **Logo:** o selo da carta com a runa sendo forjada pelo martelo, com a faixa "TCG · NERD". No cabeçalho: selo + "FORJA ARCANA" em serifa (fonte Noto Serif), nas cores do logo (roxo e dourado; no tema escuro, creme e dourado). Faixa do topo em roxo → laranja → dourado.
