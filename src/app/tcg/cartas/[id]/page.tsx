@@ -119,7 +119,7 @@ export default async function CardPage({ params }: Props) {
               )}
             </div>
           </HoloCard>
-          <CardActions card={{ id: card.id, name: card.name, set: card.set.name, image: cardImage(card.image, "low") }} />
+          <CardActions card={{ id: card.id, name: card.name, set: card.set.name, image: cardImage(card.image, "low") }} price={br?.low ?? quote?.avg ?? estimate?.brl ?? null} />
           <div className="grid grid-cols-3 gap-2">
             {markets.map((m) => (
               <a key={m.label} href={m.href} target="_blank" rel="noopener noreferrer" className="rounded-2xl border border-line bg-surface p-2.5 text-center transition hover:border-accent">
@@ -256,7 +256,16 @@ export default async function CardPage({ params }: Props) {
                 </Spec>
               )}
               {variantNames.length > 0 && <Spec label="Versões">{variantNames.join(", ")}</Spec>}
-              {card.dexId?.length ? <Spec label="Pokédex nacional">{card.dexId.map((d) => `#${String(d).padStart(4, "0")}`).join(", ")}</Spec> : null}
+              {card.dexId?.length ? (
+                <Spec label="Pokédex nacional">
+                  {card.dexId.map((d, i) => (
+                    <span key={d}>
+                      {i > 0 && ", "}
+                      <Link href={`/pokemon/${d}`} className="font-bold text-accent underline">#{String(d).padStart(4, "0")}</Link>
+                    </span>
+                  ))}
+                </Spec>
+              ) : null}
             </dl>
             {card.description && <p className="rounded-2xl bg-surface-2 p-4 text-sm italic text-ink-soft">“{card.description}”</p>}
           </section>

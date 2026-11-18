@@ -77,11 +77,20 @@ function Dashboard() {
       .filter((col) => col.kind !== "desejos")
       .map((col) => ({ id: col.id, name: col.name, value: Math.round(owned.filter((c) => c.collection_id === col.id).reduce((n, c) => n + valueOf(c), 0) * 100) / 100 }));
     const top = [...owned].map((c) => ({ ...c, value: valueOf(c) })).sort((a, b) => b.value - a.value).slice(0, 8);
-    const targetsHit = wanted
-      .map((c) => ({ ...c, now: unitValue(c, info, radar) }))
-      .filter((c) => c.target_brl != null && c.now != null && c.now <= c.target_brl);
     const wishlistCost = wanted.reduce((n, c) => n + valueOf(c), 0);
-    return { total, paid, count, byCollection, top, targetsHit, wishlistCost, wantedCount: wanted.length };
+    // Variação da coleção em 7 dias, em reais: quanto cada carta subiu ou caiu (só as com preço de mercado).
+    const week = owned.reduce((n, c) => {
+      const pct = info[c.card_id]?.change7d;
+      if (c.market_brl != null || pct == null) return n;
+      const v = valueOf(c);
+      return n + (v - v / (1 + pct / 100));
+    }, 0);
+    const brCount = owned.filter((c) => c.market_brl == null && info[c.card_id]?.br).length;
+    const alerts = wanted
+      .filter((c) => c.target_brl != null)
+      .map((c) => ({ ...c, now: unitValue(c, info, radar) }))
+      .sort((a, b) => (a.now != null && a.now <= (a.target_brl as number) ? -1 : 1) - (b.now != null && b.now <= (b.target_brl as number) ? -1 : 1));
+    return { total, paid, count, byCollection, top, wishlistCost, wantedCount: wanted.length, week, brCount, ownedCount: owned.length, alerts };
   }, [cards, collections, info, radar]);
 
   if (loading) return <p className="text-ink-soft">Carregando sua coleção…</p>;
@@ -92,34 +101,61 @@ function Dashboard() {
   return (
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="relative overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-accent-2/25 via-surface to-surface p-5 sm:col-span-2">
+          <p className="text-sm font-semibold text-ink-soft">Valor da coleção</p>
+          <p className="font-display text-5xl font-extrabold tabular-nums">{pricesReady ? formatMoney(stats.total, "BRL") : "Calculando…"}</p>
+          {pricesReady && Math.abs(stats.week) >= 0.01 && (
+            <p className={`mt-1 inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold tabular-nums ${stats.week >= 0 ? "bg-good/15 text-good" : "bg-accent/15 text-accent"}`}>
+              {stats.week >= 0 ? "▲" : "▼"} {formatMoney(Math.abs(stats.week), "BRL")}
+              {stats.total - stats.week > 0 && ` (${((stats.week / (stats.total - stats.week)) * 100).toFixed(1)}%)`} em 7 dias
+            </p>
+          )}
+          {pricesReady && stats.ownedCount > 0 && (
+            <p className="mt-2 text-xs text-ink-soft">
+              🇧🇷 {stats.brCount} de {stats.ownedCount} cartas com preço do Brasil (MYP Cards)
+            </p>
+          )}
+        </div>
         {[
-          { label: "Valor da coleção (R$)", value: pricesReady ? formatMoney(stats.total, "BRL") : "Calculando…" },
-          { label: "Quanto você pagou", value: formatMoney(stats.paid, "BRL") },
-          { label: "Valorização", value: gain != null && pricesReady ? `${gain >= 0 ? "▲" : "▼"} ${Math.abs(gain).toFixed(1)}%` : "—" },
-          { label: "Lista de desejos", value: stats.wantedCount ? formatMoney(stats.wishlistCost, "BRL") : "Vazia" },
+          { label: "Quanto você pagou", value: formatMoney(stats.paid, "BRL"), sub: gain != null && pricesReady ? `${gain >= 0 ? "▲" : "▼"} ${Math.abs(gain).toFixed(1)}% de valorização` : null },
+          { label: "Lista de desejos", value: stats.wantedCount ? formatMoney(stats.wishlistCost, "BRL") : "Vazia", sub: stats.alerts.length ? `🔔 ${stats.alerts.length} ${stats.alerts.length === 1 ? "alerta" : "alertas"} de preço` : null },
         ].map((tile) => (
           <div key={tile.label} className="rounded-3xl border border-line bg-surface p-5">
             <p className="text-sm font-semibold text-ink-soft">{tile.label}</p>
             <p className="font-display text-3xl font-extrabold tabular-nums">{tile.value}</p>
+            {tile.sub && <p className="mt-1 text-sm font-bold text-ink-soft">{tile.sub}</p>}
           </div>
         ))}
       </div>
       <p className="-mt-4 text-xs text-ink-soft">
-        Valores em reais: primeiro o preço que você anotou, depois a mediana do Radar BR e, por último, o mercado internacional convertido.
+        Valores em reais: primeiro o preço que você anotou, depois o menor preço no Brasil (MYP Cards), a mediana do Radar BR e, por último, o mercado internacional convertido.
       </p>
 
-      {stats.targetsHit.length > 0 && (
-        <section className="rounded-3xl border-2 border-good bg-good/10 p-5">
-          <h2 className="font-display text-xl font-bold">🎯 Preço-alvo atingido</h2>
-          <ul className="mt-2 space-y-1 text-sm">
-            {stats.targetsHit.map((c) => (
-              <li key={c.id}>
-                <Link href={`/tcg/cartas/${c.card_id}`} className="font-bold underline">{c.card_name}</Link> está em {formatMoney(c.now, "BRL")} (seu alvo: {formatMoney(c.target_brl, "BRL")})
-              </li>
-            ))}
+      <section id="alertas" className="scroll-mt-40 space-y-3 rounded-3xl border border-line bg-surface p-5">
+        <h2 className="font-display text-xl font-bold">🔔 Alertas de preço</h2>
+        {stats.alerts.length === 0 ? (
+          <p className="text-sm text-ink-soft">
+            Abra qualquer carta e toque em <strong>“🔔 Avisar quando baixar”</strong>. Quando o preço no Brasil chegar no valor que você escolheu, o sino no topo do site avisa.{" "}
+            <Link href="/tcg" className="font-bold text-accent underline">Procurar cartas</Link>
+          </p>
+        ) : (
+          <ul className="divide-y divide-line text-sm">
+            {stats.alerts.map((c) => {
+              const hit = c.now != null && c.now <= (c.target_brl as number);
+              return (
+                <li key={c.id} className="flex items-center gap-3 py-2">
+                  {c.image && <img src={c.image} alt="" loading="lazy" className="aspect-[5/7] w-10 rounded object-cover" />}
+                  <Link href={`/tcg/cartas/${c.card_id}`} className="min-w-0 flex-1 truncate font-bold hover:underline">{c.card_name}</Link>
+                  <span className="tabular-nums text-ink-soft">alvo {formatMoney(c.target_brl as number, "BRL")}</span>
+                  <span className={`w-28 text-right font-bold tabular-nums ${hit ? "text-good" : ""}`}>
+                    {!pricesReady ? "…" : c.now == null ? "sem preço" : `${hit ? "🎯 " : ""}${formatMoney(c.now, "BRL")}`}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
-        </section>
-      )}
+        )}
+      </section>
 
       {stats.count > 0 && (
         <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">

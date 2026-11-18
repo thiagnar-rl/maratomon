@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { formatMoney } from "@/lib/tcg/prices";
+import { cardImage, formatMoney } from "@/lib/tcg/prices";
 import type { CardBrief, PricedCard } from "@/lib/tcg/types";
 import { CardTile } from "./card-tile";
 import { ActiveFilters, FilterLayout, FilterPanel, useCardFilters } from "./card-filters";
@@ -19,7 +19,18 @@ const SORTS: [Sort, string][] = [
 const EMPTY: PricedCard = { usd: null, eur: null, brl: null, change7d: null, change30d: null };
 
 /** Grade de cartas com preço do dia, filtros na lateral e ordenação. */
-export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards: CardBrief[]; subtitles?: Record<string, string>; showTotal?: boolean }) {
+export function PricedCardGrid({
+  cards,
+  subtitles,
+  showTotal = false,
+  highlights = false,
+}: {
+  cards: CardBrief[];
+  subtitles?: Record<string, string>;
+  showTotal?: boolean;
+  /** Mostra no topo a carta mais cara e a mais barata (páginas de Pokémon). */
+  highlights?: boolean;
+}) {
   const [data, setData] = useState<Record<string, PricedCard>>({});
   const [done, setDone] = useState(false);
   const [sort, setSort] = useState<Sort>("numero");
@@ -68,6 +79,12 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
     });
   }, [filtered, data, sort]);
 
+  const extremes = useMemo(() => {
+    if (!highlights) return null;
+    const priced = cards.filter((c) => data[c.id]?.brl != null).sort((a, b) => (data[b.id].brl as number) - (data[a.id].brl as number));
+    return priced.length >= 2 ? { top: priced[0], low: priced[priced.length - 1] } : null;
+  }, [highlights, cards, data]);
+
   const total = filtered.reduce((sum, c) => sum + (data[c.id]?.brl ?? 0), 0);
   const f = filters.f;
   const activeCount = f.set.length + f.rarity.length + f.energy.length + f.variant.length + f.illustrator.length + f.ranges.length + (filters.min != null ? 1 : 0) + (filters.max != null ? 1 : 0) + (f.q ? 1 : 0);
@@ -75,6 +92,27 @@ export function PricedCardGrid({ cards, subtitles, showTotal = false }: { cards:
   return (
     <FilterLayout activeCount={activeCount} panel={<FilterPanel api={filters} metas={metas} loading={!done} />}>
       <div className="space-y-4">
+        {extremes && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                ["💎 Mais cara", extremes.top],
+                ["🪙 Mais barata", extremes.low],
+              ] as const
+            ).map(([label, c]) => (
+              <a key={label} href={`/tcg/cartas/${encodeURIComponent(c.id)}`} className="flex items-center gap-4 rounded-[1.5rem] border border-line bg-surface p-3 transition hover:border-accent">
+                {c.image && <img src={cardImage(c.image) ?? ""} alt="" loading="lazy" className="h-28 w-20 rounded-lg object-cover shadow" />}
+                <span className="min-w-0">
+                  <span className="block text-xs font-black uppercase tracking-wider text-ink-soft">{label}{done ? "" : " (até agora)"}</span>
+                  <span className="block truncate font-bold">{c.name}</span>
+                  <span className="block truncate text-xs text-ink-soft">{data[c.id]?.meta?.set ?? ""}</span>
+                  <span className="font-display text-2xl font-extrabold tabular-nums">{formatMoney(data[c.id].brl as number, "BRL")}</span>
+                  <span className="ml-1 text-[10px] font-bold text-ink-soft">{data[c.id].br ? "🇧🇷 Brasil" : "internacional"}</span>
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border border-line bg-surface px-4 py-3">
           <p className="text-sm text-ink-soft">
             <strong className="text-ink">{filtered.length}</strong> de {cards.length} cartas

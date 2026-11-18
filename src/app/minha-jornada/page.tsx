@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { JourneyStats } from "@/components/journey-stats";
+import { JourneyAchievements } from "@/components/journey-achievements";
 
 export const metadata: Metadata = {
   title: "Minha jornada",
-  description: "Seu progresso na maratona: episódios assistidos, temporadas completas e tempo de tela.",
+  description: "Seu progresso na maratona: episódios assistidos, temporadas completas, conquistas e sequência de dias.",
 };
 
 export default function JourneyPage() {
@@ -14,6 +15,7 @@ export default function JourneyPage() {
         <p className="text-ink-soft">Seu progresso fica salvo na sua conta e acompanha você em qualquer aparelho.</p>
       </header>
       <JourneyStats />
+      <JourneyAchievements />
     </div>
   );
 }

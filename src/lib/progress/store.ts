@@ -14,6 +14,11 @@ import { getSupabase } from "@/lib/supabase";
 const LEGACY_KEY = "maratomon:watched:v1";
 const PENDING_KEY = "maratomon:pending:v1";
 const cacheKey = (uid: string) => `maratomon:watched:${uid}`;
+const daysKey = (uid: string) => `maratomon:days:${uid}`;
+
+/** Data local (AAAA-MM-DD) de um instante; usada para a sequência de dias assistindo. */
+export const localDay = (d: Date = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 export type SyncStatus = "anonimo" | "syncing" | "synced" | "error";
 
@@ -22,6 +27,8 @@ export type PromptReason = { kind: "marcar"; count: number } | { kind: "geral" }
 
 type State = {
   watched: ReadonlySet<string>;
+  /** Dias (AAAA-MM-DD) em que a pessoa marcou pelo menos um episódio. */
+  days: ReadonlySet<string>;
   ready: boolean;
   status: SyncStatus;
   email: string | null;
@@ -30,7 +37,7 @@ type State = {
 };
 
 const EMPTY: ReadonlySet<string> = new Set();
-let state: State = { watched: EMPTY, ready: false, status: "anonimo", email: null, loggedIn: false, prompt: null };
+let state: State = { watched: EMPTY, days: EMPTY, ready: false, status: "anonimo", email: null, loggedIn: false, prompt: null };
 const listeners = new Set<() => void>();
 let userId: string | null = null;
 
@@ -48,10 +55,11 @@ function readJSON<T>(storage: Storage, key: string, fallback: T): T {
   }
 }
 
-function writeCache(watched: ReadonlySet<string>) {
+function writeCache(watched: ReadonlySet<string>, days: ReadonlySet<string> = state.days) {
   if (!userId) return;
   try {
     localStorage.setItem(cacheKey(userId), JSON.stringify([...watched]));
+    localStorage.setItem(daysKey(userId), JSON.stringify([...days]));
   } catch {
     // modo privado / cota cheia: segue só em memória
   }
@@ -78,12 +86,12 @@ async function onSession(session: Session | null) {
     // Saiu da conta: some com o progresso deste aparelho (computador compartilhado, por exemplo).
     try {
       Object.keys(localStorage)
-        .filter((key) => key.startsWith("maratomon:watched:") && key !== LEGACY_KEY)
+        .filter((key) => (key.startsWith("maratomon:watched:") || key.startsWith("maratomon:days:")) && key !== LEGACY_KEY)
         .forEach((key) => localStorage.removeItem(key));
     } catch {
       // ignorado
     }
-    setState({ watched: EMPTY, email: null, loggedIn: false, status: "anonimo", ready: true });
+    setState({ watched: EMPTY, days: EMPTY, email: null, loggedIn: false, status: "anonimo", ready: true });
     return;
   }
 
@@ -93,16 +101,18 @@ async function onSession(session: Session | null) {
     loggedIn: true,
     prompt: null,
     watched: new Set(readJSON<string[]>(localStorage, cacheKey(userId), [])),
+    days: new Set(readJSON<string[]>(localStorage, daysKey(userId), [])),
     status: "syncing",
     ready: true,
   });
 
-  const { data, error } = await supabase.from("watched_episodes").select("episode_key").eq("user_id", userId);
+  const { data, error } = await supabase.from("watched_episodes").select("episode_key, watched_at").eq("user_id", userId);
   if (error) {
     setState({ status: "error" });
     return;
   }
   const cloud = new Set(data.map((row) => row.episode_key as string));
+  const cloudDays = new Set(data.map((row) => localDay(new Date(row.watched_at as string))));
 
   // Junta o que ficou no aparelho (versão antiga) e o que a pessoa tentou marcar antes de entrar.
   const legacy = readJSON<string[]>(localStorage, LEGACY_KEY, []);
@@ -116,8 +126,9 @@ async function onSession(session: Session | null) {
   }
 
   const merged = new Set([...cloud, ...toAdd]);
-  writeCache(merged);
-  setState({ watched: merged });
+  const days = new Set(toAdd.length ? [...cloudDays, localDay()] : cloudDays);
+  writeCache(merged, days);
+  setState({ watched: merged, days });
   if (toAdd.length > 0) await pushToCloud(toAdd, true);
   else setState({ status: "synced" });
 }
@@ -156,8 +167,9 @@ export function setWatched(keys: string[], watched: boolean) {
   const changed = keys.filter((key) => next.has(key) !== watched);
   if (changed.length === 0) return;
   changed.forEach((key) => (watched ? next.add(key) : next.delete(key)));
-  writeCache(next);
-  setState({ watched: next });
+  const days = watched ? new Set([...state.days, localDay()]) : state.days;
+  writeCache(next, days);
+  setState({ watched: next, days });
   void pushToCloud(changed, watched);
 }
 
@@ -172,5 +184,5 @@ export const subscribe = (listener: () => void) => {
 };
 export const getSnapshot = () => state;
 
-const serverState: State = { watched: EMPTY, ready: false, status: "anonimo", email: null, loggedIn: false, prompt: null };
+const serverState: State = { watched: EMPTY, days: EMPTY, ready: false, status: "anonimo", email: null, loggedIn: false, prompt: null };
 export const getServerSnapshot = () => serverState;

@@ -7,6 +7,16 @@ Site publicado: https://forja-arcana.vercel.app
 
 ## 18/11/2026
 
+### Conquistas, sequência de dias, Pokédex, alertas de preço e valor da coleção (tudo numa publicação só)
+- **Conquistas no anime** (`/minha-jornada#conquistas`): 51 medalhas em 4 grupos — episódios (1, 10, 50, 100, 250, 500, 1000 e todos), sequência de dias (3, 7 e 30 seguidos), cada uma das 28 temporadas completas (com a arte do Pokémon da temporada) e cada série completa. Medalhas bloqueadas mostram barra de progresso.
+- **Sequência de dias 🔥:** o site guarda em que dias a pessoa marcou episódios (usa a data `watched_at` que já existia no banco, sem mudar tabelas). Mostra a sequência atual, o recorde e um chip 🔥 no topo do site.
+- **Aviso "Conquista desbloqueada!"** aparece no canto da tela quando a pessoa ganha uma medalha nova (na primeira visita só registra as que já tinha, sem chuva de avisos).
+- **Pokédex** (`/pokemon`, novo item no menu): os 1025 Pokémon com busca por nome/número e filtro por região.
+- **Página de cada Pokémon** (`/pokemon/pikachu` etc.): tipo, geração, altura, peso, descrição; **todas as cartas dele** com preço em reais, filtros e ordenação; destaque da **mais cara e da mais barata**; **episódios do anime** com o nome dele no título e as temporadas em que é destaque. Tem título, descrição, imagem de compartilhamento e dados estruturados para o Google, e entrou no `sitemap.xml`. As páginas são geradas na primeira visita (não na publicação), para não gastar espaço na Vercel. O número da Pokédex na página da carta agora leva para a página do Pokémon.
+- **Alerta de preço:** botão **"🔔 Avisar quando baixar"** na página de cada carta. A pessoa escolhe o preço (sugestão: 10% abaixo do preço de hoje) e a carta vai para a lista de desejos com esse preço-alvo (a lista é criada sozinha se não existir). Quem não tem conta é convidado a criar uma. Um **sino 🔔 com contador** aparece no topo do site quando alguma carta chega no preço (confere no máximo a cada 30 minutos). Aviso por e-mail fica para quando o site tiver domínio próprio.
+- **Valor da coleção em reais com preço do Brasil:** a coleção agora usa o menor preço do MYP Cards quando a carta está à venda no Brasil (antes usava o internacional convertido). Mostra **quanto a coleção subiu ou caiu em 7 dias** (▲/▼ em R$ e %), quantas cartas têm preço do Brasil e a variação de cada carta. Nova seção **"🔔 Alertas de preço"** em `/colecao#alertas`.
+- **Mais rápido:** os preços da coleção eram buscados uma carta por vez; agora vêm em lotes de 60 numa chamada só.
+
 ### Economia de espaço na Vercel (plano grátis)
 - **Aviso recebido:** "75% of Deployment Storage used" (limite grátis de 10 GB). No plano Hobby não há cobrança: se passar do limite, a Vercel apaga publicações antigas e pode travar novas publicações até liberar espaço.
 - **Causa:** cada publicação gerava as 1.361 páginas de episódios na hora da montagem (~145 MB de ~177 MB por publicação), e ontem foram muitas publicações seguidas.

@@ -111,6 +111,9 @@ export type CardMeta = {
   /** Tipos de energia em português. */
   types: string[];
   category: string | null;
+  /** Número da carta e total oficial da coleção (ex.: 4 e 102 → "004/102"). */
+  localId?: string;
+  official?: number;
 };
 /** Preço no Brasil (MYP Cards): menor anúncio, unidades à venda e link. */
 export type BrPrice = { low: number; units: number | null; url: string };

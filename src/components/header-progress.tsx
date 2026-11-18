@@ -4,10 +4,14 @@ import Link from "next/link";
 import { catalog } from "@/lib/catalog";
 import { useEpisodesWatched, useProgress } from "@/lib/progress/hooks";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { streaks } from "@/lib/achievements";
+import { usePriceAlerts } from "@/lib/price-alerts";
 
 /** Pílula com o progresso geral e acesso à conta. */
 export function HeaderProgress() {
-  const { ready, email, loggedIn } = useProgress();
+  const { ready, email, loggedIn, days } = useProgress();
+  const streak = streaks(days).current;
+  const alerts = usePriceAlerts(ready && loggedIn);
   const episodesSeen = useEpisodesWatched();
   const pct = Math.round((episodesSeen / catalog.totalEpisodes) * 100);
 
@@ -19,6 +23,26 @@ export function HeaderProgress() {
           className="hidden rounded-full border border-accent/50 bg-accent/10 px-3 py-1.5 text-sm font-bold text-accent sm:inline-block"
         >
           Criar conta grátis
+        </Link>
+      )}
+      {loggedIn && alerts.length > 0 && (
+        <Link
+          href="/colecao#alertas"
+          className="relative grid size-9 place-items-center rounded-full border border-line bg-surface shadow-sm"
+          aria-label={`${alerts.length} ${alerts.length === 1 ? "carta chegou" : "cartas chegaram"} no seu preço-alvo`}
+          title="Cartas no seu preço-alvo"
+        >
+          🔔
+          <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-[#ff5c8a] px-1 text-[10px] font-black text-white">{alerts.length}</span>
+        </Link>
+      )}
+      {loggedIn && streak > 0 && (
+        <Link
+          href="/minha-jornada#conquistas"
+          className="hidden items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-1.5 text-sm font-bold tabular-nums shadow-sm sm:flex"
+          title={`Sequência: ${streak} ${streak === 1 ? "dia" : "dias"} seguidos assistindo`}
+        >
+          🔥 {streak}
         </Link>
       )}
       {loggedIn && (

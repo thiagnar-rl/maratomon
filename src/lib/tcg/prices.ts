@@ -165,8 +165,12 @@ const VARIANT_PT: Record<string, string> = {
 };
 
 /** Raridade, versões e ilustrador, para os filtros. */
-export function cardMeta(card: Pick<CardDetail, "rarity" | "illustrator" | "variants" | "types" | "category"> & { set?: { name: string } }): CardMeta {
+export function cardMeta(
+  card: Pick<CardDetail, "rarity" | "illustrator" | "variants" | "types" | "category"> & { localId?: string; set?: { name: string; cardCount?: { official?: number } } },
+): CardMeta {
   return {
+    localId: card.localId,
+    official: card.set?.cardCount?.official,
     set: card.set?.name ?? null,
     rarity: rarityPt(card.rarity),
     types: (card.types ?? []).map(energyPt),

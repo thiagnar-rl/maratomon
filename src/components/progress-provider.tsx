@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { startProgress } from "@/lib/progress/store";
 import { AccountPrompt } from "./account-prompt";
+import { AchievementToaster } from "./achievements";
 
 /** Liga o store de progresso (ligado à conta) e o convite para criar conta. */
 export function ProgressProvider({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     <>
       {children}
       <AccountPrompt />
+      <AchievementToaster />
     </>
   );
 }

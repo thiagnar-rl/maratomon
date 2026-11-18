@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { addCard, CONDITIONS, listCollections, type Collection } from "@/lib/collection";
+import { addCard, CONDITIONS, createCollection, listCards, listCollections, updateCard, type Collection } from "@/lib/collection";
 import { addToCompare, MAX_COMPARE, useCompareIds } from "@/lib/tcg/compare-store";
 import { useProgress } from "@/lib/progress/hooks";
-import { parseBRL } from "@/lib/tcg/prices";
+import { formatMoney, parseBRL } from "@/lib/tcg/prices";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 type CardInfo = { id: string; name: string; set: string; image: string | null };
 
-export function CardActions({ card }: { card: CardInfo }) {
+export function CardActions({ card, price }: { card: CardInfo; price?: number | null }) {
   const compare = useCompareIds();
   const inCompare = compare.includes(card.id);
 
@@ -29,8 +29,89 @@ export function CardActions({ card }: { card: CardInfo }) {
           Ver ({compare.length}/{MAX_COMPARE})
         </Link>
       </div>
+      <PriceAlert card={card} price={price ?? null} />
       <AddToCollection card={card} />
     </div>
+  );
+}
+
+/** Alerta de preço: guarda a carta na lista de desejos com um preço-alvo; o sino do topo avisa quando chegar. */
+function PriceAlert({ card, price }: { card: CardInfo; price: number | null }) {
+  const { email } = useProgress();
+  const [open, setOpen] = useState(false);
+  const [target, setTarget] = useState(price ? (Math.floor(price * 0.9 * 100) / 100).toFixed(2).replace(".", ",") : "");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [message, setMessage] = useState("");
+
+  if (!isSupabaseConfigured) return null;
+  if (!email) {
+    return (
+      <Link href="/entrar?modo=criar" className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff7a2f] to-accent px-4 py-2.5 text-sm font-bold text-white shadow-sm">
+        🔔 Avisar quando baixar <span className="font-semibold opacity-80">· crie sua conta grátis</span>
+      </Link>
+    );
+  }
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault();
+    const value = parseBRL(target);
+    if (value == null || value <= 0) {
+      setStatus("error");
+      setMessage("Digite um preço válido.");
+      return;
+    }
+    setStatus("saving");
+    try {
+      const collections = await listCollections();
+      const wishlist = collections.find((c) => c.kind === "desejos") ?? (await createCollection({ kind: "desejos", name: "Lista de desejos" }));
+      const existing = (await listCards(wishlist.id)).find((c) => c.card_id === card.id);
+      if (existing) await updateCard(existing.id, { target_brl: value });
+      else await addCard({ collection_id: wishlist.id, card_id: card.id, card_name: card.name, set_name: card.set, image: card.image, target_brl: value });
+      try {
+        sessionStorage.removeItem("forja:alertas:v1");
+      } catch {
+        // ignorado
+      }
+      setStatus("saved");
+      setMessage(`Pronto! Quando o preço no Brasil chegar a ${formatMoney(value, "BRL")}, o sino 🔔 no topo do site avisa você.`);
+    } catch (error) {
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "Não foi possível salvar.");
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff7a2f] to-accent px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
+      >
+        🔔 Avisar quando baixar
+      </button>
+    );
+  }
+  return (
+    <form onSubmit={save} className="space-y-3 rounded-2xl border border-accent/40 bg-accent/5 p-4">
+      <label htmlFor="alvo" className="block text-sm font-bold">
+        🔔 Me avise quando custar até
+      </label>
+      <div className="flex gap-2">
+        <span className="flex flex-1 items-center rounded-xl border border-line bg-bg px-3 text-sm">
+          R$&nbsp;
+          <input id="alvo" inputMode="decimal" autoFocus value={target} onChange={(e) => setTarget(e.target.value)} placeholder="0,00" className="w-full bg-transparent py-2 outline-none" />
+        </span>
+        <button type="submit" disabled={status === "saving"} className="rounded-full bg-accent px-4 py-2 text-sm font-bold text-white disabled:opacity-60">
+          {status === "saving" ? "Salvando…" : "Criar alerta"}
+        </button>
+      </div>
+      {price != null && <p className="text-xs text-ink-soft">Hoje: {formatMoney(price, "BRL")}. Sugestão: 10% abaixo.</p>}
+      {message && (
+        <p role="status" className={`text-sm ${status === "error" ? "text-accent" : "font-semibold"}`}>
+          {message} {status === "saved" && <Link href="/colecao#alertas" className="underline">Ver meus alertas</Link>}
+        </p>
+      )}
+    </form>
   );
 }
 

@@ -257,7 +257,7 @@ function CardsPanel({
               set_name: data?.set ?? null,
               image: picked.image,
             });
-            onAdded(card, { brl: data?.estimate?.brl ?? null, localId: data?.localId ?? picked.localId, official: data?.official });
+            onAdded(card, { brl: data?.estimate?.brl ?? null, br: false, change7d: null, localId: data?.localId ?? picked.localId, official: data?.official });
           } catch (e) {
             setError(e instanceof Error ? e.message : "Não foi possível adicionar.");
           }
@@ -285,7 +285,10 @@ function CardsPanel({
                 <p className="truncate font-bold">{c.card_name}</p>
                 <p className="truncate text-xs text-ink-soft">{c.set_name}</p>
                 <p className="text-xs">
-                  {unit == null ? "Sem preço" : <><strong>{formatMoney(unit, "BRL")}</strong> <span className="text-ink-soft">({valueSource(c, radar)})</span></>}
+                  {unit == null ? "Sem preço" : <><strong>{formatMoney(unit, "BRL")}</strong> <span className="text-ink-soft">({valueSource(c, radar, info)})</span>
+                  {ref?.change7d != null && Math.abs(ref.change7d) >= 0.5 && (
+                    <span className={`ml-1 font-bold ${ref.change7d > 0 ? "text-good" : "text-accent"}`}>{ref.change7d > 0 ? "▲" : "▼"} {Math.abs(ref.change7d).toFixed(1)}% 7d</span>
+                  )}</>}
                   {c.paid_brl != null && <span className="text-ink-soft"> · paguei {formatMoney(c.paid_brl, "BRL")}</span>}
                 </p>
                 {hit && <p className="text-xs font-bold text-good">🎯 Chegou no seu preço-alvo!</p>}

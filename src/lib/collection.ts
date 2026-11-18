@@ -1,5 +1,6 @@
 "use client";
 
+import type { PricedCard } from "@/lib/tcg/types";
 import { getSupabase } from "@/lib/supabase";
 
 /** Minha coleção: decks e pastas no Supabase (tabelas e Storage protegidos por RLS). */
@@ -128,38 +129,53 @@ export async function signedUrls(paths: string[]): Promise<Record<string, string
   return urls;
 }
 
-/** Informações de preço e numeração de uma carta (vindas de /api/tcg/card). */
-export type CardInfo = { brl: number | null; localId: string; official?: number };
+/** Preço (R$), variação e numeração de uma carta, vindos de /api/tcg/prices. */
+export type CardInfo = {
+  brl: number | null;
+  /** true quando o preço é do Brasil (MYP Cards); false = internacional convertido. */
+  br: boolean;
+  /** Variação em % nos últimos 7 dias. */
+  change7d: number | null;
+  localId: string;
+  official?: number;
+};
 
 /**
  * Valor unitário em R$, do mais confiável para o menos:
- * 1) preço que o dono anotou, 2) mediana do Radar BR, 3) mercado internacional convertido.
+ * 1) preço que o dono anotou, 2) menor preço no Brasil (MYP Cards), 3) mediana do Radar BR, 4) mercado internacional convertido.
  */
 export function unitValue(card: CollectionCard, info: Record<string, CardInfo>, radar: Record<string, { median_brl: number }> = {}) {
-  return card.market_brl ?? radar[card.card_id]?.median_brl ?? info[card.card_id]?.brl ?? null;
+  const ref = info[card.card_id];
+  return card.market_brl ?? (ref?.br ? ref.brl : null) ?? radar[card.card_id]?.median_brl ?? ref?.brl ?? null;
 }
 
-export function valueSource(card: CollectionCard, radar: Record<string, { median_brl: number }>) {
+export function valueSource(card: CollectionCard, radar: Record<string, { median_brl: number }>, info: Record<string, CardInfo> = {}) {
   if (card.market_brl != null) return "anotado por você";
+  if (info[card.card_id]?.br) return "Brasil · MYP Cards";
   if (radar[card.card_id]) return "Radar BR";
   return "internacional";
 }
 
-/** Busca preço internacional (R$) e numeração de várias cartas. */
+/** Busca preço (Brasil quando houver), variação de 7 dias e numeração de várias cartas, 60 por chamada. */
 export async function fetchCardInfo(ids: string[]): Promise<Record<string, CardInfo>> {
   const unique = [...new Set(ids)];
-  const entries = await Promise.all(
-    unique.map(async (id): Promise<[string, CardInfo]> => {
-      const fallback: CardInfo = { brl: null, localId: id.split("-").pop() ?? id };
+  const out: Record<string, CardInfo> = {};
+  for (const id of unique) out[id] = { brl: null, br: false, change7d: null, localId: id.split("-").pop() ?? id };
+  const chunks: string[][] = [];
+  for (let i = 0; i < unique.length; i += 60) chunks.push(unique.slice(i, i + 60));
+  await Promise.all(
+    chunks.map(async (chunk) => {
       try {
-        const response = await fetch(`/api/tcg/card/${encodeURIComponent(id)}`);
-        if (!response.ok) return [id, fallback];
-        const data = (await response.json()) as { estimate: { brl: number } | null; localId: string; official?: number };
-        return [id, { brl: data.estimate?.brl ?? null, localId: data.localId, official: data.official }];
+        const response = await fetch(`/api/tcg/prices?ids=${encodeURIComponent(chunk.join(","))}`);
+        if (!response.ok) return;
+        const data = (await response.json()) as Record<string, PricedCard>;
+        for (const [id, p] of Object.entries(data)) {
+          out[id] = { brl: p.brl, br: Boolean(p.br), change7d: p.change7d, localId: p.meta?.localId ?? out[id].localId, official: p.meta?.official };
+        }
       } catch {
-        return [id, fallback];
+        // mantém o valor vazio
       }
     }),
   );
-  return Object.fromEntries(entries);
+  return out;
 }
