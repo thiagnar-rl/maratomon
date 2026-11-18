@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eraColor, getAllEpisodes, getEpisode, getNeighbors, getSeason, pad2 } from "@/lib/catalog";
+import { eraColor, getEpisode, getNeighbors, getSeason, pad2 } from "@/lib/catalog";
 import { EpisodeActions } from "@/components/episode-actions";
 import { WatchPanel } from "@/components/watch-panel";
 
 type Props = { params: Promise<{ slug: string }> };
 
+/**
+ * Os 1.361 episódios NÃO são gerados na publicação: cada página é montada na primeira visita e fica guardada
+ * (cache de 1 dia). Antes, gerar todos ocupava ~145 MB por publicação na Vercel (limite grátis: 10 GB no total).
+ */
 export function generateStaticParams() {
-  return getAllEpisodes().map((e) => ({ slug: e.slug }));
+  return [];
 }
+export const dynamicParams = true;
+export const revalidate = 86400;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const episode = getEpisode((await params).slug);

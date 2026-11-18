@@ -5,6 +5,17 @@ Site publicado: https://forja-arcana.vercel.app
 
 ---
 
+## 18/11/2026
+
+### Economia de espaço na Vercel (plano grátis)
+- **Aviso recebido:** "75% of Deployment Storage used" (limite grátis de 10 GB). No plano Hobby não há cobrança: se passar do limite, a Vercel apaga publicações antigas e pode travar novas publicações até liberar espaço.
+- **Causa:** cada publicação gerava as 1.361 páginas de episódios na hora da montagem (~145 MB de ~177 MB por publicação), e ontem foram muitas publicações seguidas.
+- **Correções:**
+  - os episódios agora são montados **na primeira visita** e guardados por 1 dia (`generateStaticParams` vazio + `revalidate`). Cada publicação caiu de **~177 MB para ~32 MB** (−82%);
+  - novo `vercel.json` com `ignoreCommand`: commits que só mexem em documentação (`CHANGELOG.md`, `README.md`, `LEGAL.md`, `*.cmd`) **não geram publicação**;
+  - política de retenção de publicações na Vercel reduzida (ver abaixo, se aplicada).
+- Arquivos: `src/app/episodios/[slug]/page.tsx`, `vercel.json` (novo).
+
 ## 17/11/2026
 
 ### Anime dublado dentro do site (sem ir para o YouTube)
