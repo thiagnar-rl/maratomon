@@ -14,6 +14,7 @@ Site publicado: https://forja-arcana.vercel.app
   - os episódios agora são montados **na primeira visita** e guardados por 1 dia (`generateStaticParams` vazio + `revalidate`). Cada publicação caiu de **~177 MB para ~32 MB** (−82%);
   - novo `vercel.json` com `ignoreCommand`: commits que só mexem em documentação (`CHANGELOG.md`, `README.md`, `LEGAL.md`, `*.cmd`) **não geram publicação**;
   - **política de retenção na Vercel** (Settings › Build and Deployment › Deployment Retention Policy): publicações canceladas, com erro e de pré-produção ficam **1 dia**; de produção, **1 semana** (antes: 30 dias). A publicação atual do site nunca é apagada. Uso no momento da mudança: 8,16 GB de 10 GB.
+- **Política para toda a conta da Vercel (thiagnar-rl):** a mesma retenção (1 dia para canceladas, com erro e pré-produção; 1 semana para produção) foi aplicada também nos projetos `thamarasantanaadvocacia` e `thamara-santana-advocacia`. No `thamarasantanaadvocacia` também foi ligado o "Ignored Build Step" para pular publicações de commits só de documentação (`*.md`, `*.cmd`). Regra para os próximos projetos: retenção curta, sem publicação para mudanças só de documentação, páginas geradas sob demanda e mudanças agrupadas (sem commits de teste).
 - Arquivos: `src/app/episodios/[slug]/page.tsx`, `vercel.json` (novo).
 
 ## 17/11/2026
