@@ -57,7 +57,7 @@ export function SharedCollection() {
   return (
     <div className="space-y-6">
       <header className="night-card rounded-[2rem] p-6 sm:p-8">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">{TITLES[payload.k]} compartilhada</p>
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">Lista compartilhada · {TITLES[payload.k]}</p>
         <h1 className="mt-1 font-display text-4xl font-extrabold tracking-tight">{payload.t}</h1>
         <p className="mt-2 text-white/70">
           {copies} {copies === 1 ? "carta" : "cartas"}

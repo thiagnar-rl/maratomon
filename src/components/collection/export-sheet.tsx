@@ -232,7 +232,7 @@ export function ExportSheet({ open, onClose, initialScope }: { open: boolean; on
               <label className="flex items-start gap-2">
                 <input type="radio" checked={textStyle === "live"} onChange={() => setTextStyle("live")} className="mt-1" />
                 <span>
-                  <strong>Padrão Pokémon TCG Live</strong> — <code className="text-cyan-200">4 Pikachu ex SVI 57</code>. Aceito por montadores de deck e pelo jogo online.
+                  <strong>Padrão Pokémon TCG Live</strong> — <code className="text-cyan-200">4 Pikachu ex SSP 57</code>. Aceito por montadores de deck e pelo jogo online.
                 </span>
               </label>
             </div>

@@ -45,7 +45,7 @@ function parseCondition(v: unknown) {
 
 /**
  * Lê uma linha de lista de texto. Aceita, por exemplo:
- *   4 Pikachu ex SVI 57          (padrão Pokémon TCG Live)
+ *   4 Pikachu ex SSP 57          (padrão Pokémon TCG Live)
  *   1x Charizard ex (199/165) PT (quantidade, nome, número/total, idioma)
  *   Mew ex 151/165
  *   2 Ultra Ball
@@ -339,7 +339,7 @@ export function toCsv(rows: ExportRow[], prices: boolean) {
   return "﻿" + lines.join("\r\n");
 }
 
-/** Lista de texto no padrão do Pokémon TCG Live: "4 Pikachu ex SVI 57". */
+/** Lista de texto no padrão do Pokémon TCG Live: "4 Pikachu ex SSP 57". */
 export function toLiveText(rows: ExportRow[]) {
   return rows.map((r) => `${r.quantity} ${r.name} ${r.setCode || r.cardId.split("-")[0].toUpperCase()} ${r.number.replace(/^0+(?=\d)/, "")}`).join("\n");
 }

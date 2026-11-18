@@ -95,10 +95,11 @@ export async function identify(q: CardQuery, limit = 8): Promise<Candidate[]> {
     });
   }
 
-  // Sem número (ou nada encontrado): busca pelo nome, em inglês e em português.
-  if (!found.length && q.name && q.name.trim().length >= 2) {
+  // Sem número, nada encontrado ou nome bem diferente do pedido: busca também pelo nome (inglês e português).
+  const weak = found.length > 0 && Math.max(...found.map((c) => nameScore(q.name, c.name))) < 0.6;
+  if ((!found.length || weak) && q.name && q.name.trim().length >= 2) {
     const [en, pt] = await Promise.all([searchCards(q.name, 40), searchCards(q.name, 40, "pt")]);
-    const seen = new Set<string>();
+    const seen = new Set<string>(found.map((c) => c.id));
     for (const c of [...en, ...pt]) {
       if (seen.has(c.id)) continue;
       seen.add(c.id);

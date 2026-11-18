@@ -12,7 +12,7 @@ import { LANGUAGES, type Language } from "@/lib/tcg/card-ref";
 type Candidate = { id: string; name: string; localId: string; setId: string; setName: string; setCode?: string; official: number; image: string | null; score: number };
 type Row = ImportLine & { key: number; candidates: Candidate[]; pick: number; skip: boolean; searching?: boolean };
 
-const EXAMPLE = `4 Pikachu ex SVI 57
+const EXAMPLE = `4 Pikachu ex SSP 57
 1 Charizard ex (199/165) PT
 2x Mega Venusaur ex 003/132 [EN]
 Mew ex 151/165
@@ -293,7 +293,7 @@ export function ImportFlow() {
         <div className="rounded-[1.5rem] border border-line bg-surface p-5 text-sm">
           <h2 className="font-display text-lg font-bold">Formatos de lista aceitos</h2>
           <ul className="mt-2 space-y-1.5 font-mono text-xs text-ink-soft">
-            <li>4 Pikachu ex SVI 57 <span className="font-sans">(Pokémon TCG Live)</span></li>
+            <li>4 Pikachu ex SSP 57 <span className="font-sans">(Pokémon TCG Live)</span></li>
             <li>1 Charizard ex (199/165) PT</li>
             <li>2x Mew ex 151/165 [EN] (NM)</li>
             <li>3 Ultra Ball</li>
