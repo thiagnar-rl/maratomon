@@ -31,6 +31,17 @@ import { formatMoney, parseBRL } from "@/lib/tcg/prices";
 import { CardPicker } from "@/components/tcg/card-picker";
 import { RequireLogin } from "./require-login";
 import { ShoppingList, type ShoppingItem } from "./shopping-list";
+import { ExportSheet } from "./export-sheet";
+import { refreshCollection } from "@/lib/collection-store";
+import { removeCards, updateCards } from "@/lib/collection";
+import { LANGUAGES, LANG_FLAG, VARIANTS, type Language } from "@/lib/tcg/card-ref";
+
+/** Atualiza o painel da coleção um pouco depois da última mudança (agrupa várias edições seguidas). */
+let syncTimer: ReturnType<typeof setTimeout> | undefined;
+const syncStore = () => {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => void refreshCollection(), 1500);
+};
 
 export function CollectionDetail({ id }: { id: string }) {
   return (
@@ -59,6 +70,8 @@ function Detail({ id }: { id: string }) {
   const [radar, setRadar] = useState<Record<string, RadarSummary>>({});
   const [owned, setOwned] = useState<Record<string, number>>({});
   const [tab, setTab] = useState<"cartas" | "midia">("cartas");
+  const [exportOpen, setExportOpen] = useState(false);
+  const [allCollections, setAllCollections] = useState<Collection[]>([]);
   const [error, setError] = useState("");
 
   const refreshMedia = useCallback(async () => {
@@ -70,8 +83,9 @@ function Detail({ id }: { id: string }) {
   useEffect(() => {
     (async () => {
       try {
-        const [col, items] = await Promise.all([getCollection(id), listCards(id)]);
+        const [col, items, cols] = await Promise.all([getCollection(id), listCards(id), listCollections()]);
         setCollection(col);
+        setAllCollections(cols);
         setCards(items);
         await refreshMedia();
         const ids = items.map((c) => c.card_id);
@@ -120,12 +134,14 @@ function Detail({ id }: { id: string }) {
   }
 
   const label = KIND_LABEL[collection.kind];
+  const [exporting, setExporting] = [exportOpen, setExportOpen];
 
   async function handleDelete() {
     if (!collection) return;
     const typed = window.prompt(`Para apagar "${collection.name}" com todas as cartas, fotos e vídeos, digite o nome:`);
     if (typed !== collection.name) return;
     await deleteCollection(collection.id);
+    void refreshCollection();
     router.push("/colecao");
   }
 
@@ -147,6 +163,13 @@ function Detail({ id }: { id: string }) {
           <p className="font-display text-4xl font-extrabold tabular-nums">{formatMoney(total, "BRL")}</p>
         </div>
       </header>
+
+      <div className="flex flex-wrap gap-2">
+        <Link href={`/colecao/escanear?pasta=${collection.id}`} className="rounded-full bg-gradient-to-r from-violet-600 to-blue-600 px-4 py-2 text-sm font-bold text-white">📷 Escanear para cá</Link>
+        <Link href="/colecao/importar" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-bold">⬆️ Importar</Link>
+        <button type="button" onClick={() => setExporting(true)} className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-bold">⬇️ Exportar / 🔗 Compartilhar</button>
+      </div>
+      <ExportSheet open={exporting} onClose={() => setExporting(false)} initialScope={`pasta:${collection.id}`} />
 
       {collection.kind === "deck" && cards.length > 0 && (
         <p className="rounded-2xl bg-surface-2 p-4 text-sm">
@@ -179,12 +202,20 @@ function Detail({ id }: { id: string }) {
           info={info}
           radar={radar}
           owned={owned}
+          collections={allCollections}
           onAdded={(card, cardInfo) => {
             setCards((prev) => [card, ...prev]);
             setInfo((prev) => ({ ...prev, [card.card_id]: cardInfo }));
+            syncStore();
           }}
-          onChange={(cardId, patch) => setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, ...patch } : c)))}
-          onRemoved={(cardId) => setCards((prev) => prev.filter((c) => c.id !== cardId))}
+          onChange={(cardId, patch) => {
+            setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, ...patch } : c)));
+            syncStore();
+          }}
+          onRemoved={(cardId) => {
+            setCards((prev) => prev.filter((c) => c.id !== cardId));
+            syncStore();
+          }}
         />
       ) : (
         <MediaPanel collectionId={collection.id} media={media} urls={urls} onChanged={refreshMedia} />
@@ -224,6 +255,7 @@ function CardsPanel({
   info,
   radar,
   owned,
+  collections,
   onAdded,
   onChange,
   onRemoved,
@@ -233,14 +265,92 @@ function CardsPanel({
   info: Record<string, CardInfo>;
   radar: Record<string, RadarSummary>;
   owned: Record<string, number>;
+  collections: Collection[];
   onAdded: (card: CollectionCard, info: CardInfo) => void;
   onChange: (id: string, patch: Partial<CollectionCard>) => void;
   onRemoved: (id: string) => void;
 }) {
   const [error, setError] = useState("");
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [q, setQ] = useState("");
+  const [sort, setSort] = useState<"recentes" | "valor" | "nome" | "numero">("recentes");
+  const shown = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    const list = cards.filter((c) => !term || `${c.card_name} ${c.set_name ?? ""}`.toLowerCase().includes(term));
+    const value = (c: CollectionCard) => (unitValue(c, info, radar) ?? 0) * c.quantity;
+    if (sort === "valor") return [...list].sort((a, b) => value(b) - value(a));
+    if (sort === "nome") return [...list].sort((a, b) => a.card_name.localeCompare(b.card_name));
+    if (sort === "numero") return [...list].sort((a, b) => a.card_id.localeCompare(b.card_id, undefined, { numeric: true }));
+    return list;
+  }, [cards, q, sort, info, radar]);
+  const toggle = (id: string) =>
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const others = collections.filter((c) => c.id !== collection.id);
+
+  async function bulk(action: "apagar" | "mover" | "idioma", value?: string) {
+    const ids = [...selected];
+    if (!ids.length) return;
+    setError("");
+    try {
+      if (action === "apagar") {
+        if (!window.confirm(`Remover ${ids.length} ${ids.length === 1 ? "carta" : "cartas"} desta ${KIND_LABEL[collection.kind].toLowerCase()}?`)) return;
+        await removeCards(ids);
+        ids.forEach(onRemoved);
+      } else if (action === "mover" && value) {
+        await updateCards(ids, { collection_id: value });
+        ids.forEach(onRemoved);
+      } else if (action === "idioma" && value) {
+        await updateCards(ids, { language: value as Language });
+        ids.forEach((id) => onChange(id, { language: value as Language }));
+      }
+      setSelected(new Set());
+      setSelecting(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível alterar.");
+    }
+  }
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 Buscar nesta pasta" className="min-w-0 flex-1 rounded-full border border-line bg-surface px-4 py-2 text-sm outline-none focus:border-accent" />
+        <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label="Ordenar" className="rounded-full border border-line bg-surface px-3 py-2 text-sm font-semibold">
+          <option value="recentes">Mais recentes</option>
+          <option value="valor">Mais valiosas</option>
+          <option value="nome">Nome</option>
+          <option value="numero">Coleção e número</option>
+        </select>
+        <button type="button" aria-pressed={selecting} onClick={() => (setSelecting(!selecting), setSelected(new Set()))} className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-bold aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-white">
+          ☑ Selecionar
+        </button>
+      </div>
+      {selecting && (
+        <div className="sticky top-[4.5rem] z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-accent/40 bg-surface/95 p-3 shadow-lg backdrop-blur">
+          <span className="text-sm font-bold">{selected.size} selecionadas</span>
+          <button type="button" onClick={() => setSelected(new Set(shown.map((c) => c.id)))} className="rounded-full bg-surface-2 px-3 py-1.5 text-xs font-bold">Todas</button>
+          {others.length > 0 && (
+            <select value="" onChange={(e) => void bulk("mover", e.target.value)} disabled={!selected.size} className="rounded-full border border-line bg-bg px-3 py-1.5 text-xs font-bold" aria-label="Mover para">
+              <option value="">Mover para…</option>
+              {others.map((c) => (
+                <option key={c.id} value={c.id}>{KIND_LABEL[c.kind]}: {c.name}</option>
+              ))}
+            </select>
+          )}
+          <select value="" onChange={(e) => void bulk("idioma", e.target.value)} disabled={!selected.size} className="rounded-full border border-line bg-bg px-3 py-1.5 text-xs font-bold" aria-label="Trocar idioma">
+            <option value="">Idioma…</option>
+            {LANGUAGES.map(([code, name, flag]) => (
+              <option key={code} value={code}>{flag} {name}</option>
+            ))}
+          </select>
+          <button type="button" onClick={() => void bulk("apagar")} disabled={!selected.size} className="ml-auto rounded-full bg-accent px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50">🗑 Remover</button>
+        </div>
+      )}
       <CardPicker
         placeholder="Adicionar carta: busque pelo nome (em inglês)"
         onPick={async (picked) => {
@@ -266,15 +376,21 @@ function CardsPanel({
       {error && <p role="alert" className="text-sm text-accent">{error}</p>}
       {cards.length === 0 && <p className="text-ink-soft">Nenhuma carta ainda. Busque acima para adicionar.</p>}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((c) => {
+        {shown.map((c) => {
           const unit = unitValue(c, info, radar);
           const ref = info[c.card_id];
           const ligaRef = { name: c.card_name, localId: ref?.localId ?? c.card_id.split("-").pop() ?? "", official: ref?.official };
           const hit = collection.kind === "desejos" && c.target_brl != null && unit != null && unit <= c.target_brl;
           const have = owned[c.card_id] ?? 0;
           return (
-            <li key={c.id} className={`flex gap-3 rounded-2xl border bg-surface p-3 ${hit ? "border-good" : "border-line"}`}>
-              <Link href={`/tcg/cartas/${c.card_id}`} className="shrink-0">
+            <li key={c.id} className={`relative flex gap-3 rounded-2xl border bg-surface p-3 ${selected.has(c.id) ? "border-accent ring-2 ring-accent/40" : hit ? "border-good" : "border-line"}`}>
+              {selecting && (
+                <button type="button" onClick={() => toggle(c.id)} className="absolute inset-0 z-10 rounded-2xl" aria-pressed={selected.has(c.id)} aria-label={`Selecionar ${c.card_name}`}>
+                  <span className={`absolute right-2 top-2 grid size-6 place-items-center rounded-full border-2 text-xs font-black ${selected.has(c.id) ? "border-accent bg-accent text-white" : "border-line bg-surface"}`}>{selected.has(c.id) ? "✓" : ""}</span>
+                </button>
+              )}
+              <Link href={`/tcg/cartas/${c.card_id}`} className="relative shrink-0">
+                <span className="absolute bottom-1 left-1 z-[1] text-sm drop-shadow">{LANG_FLAG[c.language ?? "PT"]}</span>
                 {c.image ? (
                   <img src={c.image} alt={c.card_name} loading="lazy" className="aspect-[5/7] w-20 rounded-lg object-cover" />
                 ) : (
@@ -283,7 +399,10 @@ function CardsPanel({
               </Link>
               <div className="min-w-0 flex-1 space-y-1.5 text-sm">
                 <p className="truncate font-bold">{c.card_name}</p>
-                <p className="truncate text-xs text-ink-soft">{c.set_name}</p>
+                <p className="truncate text-xs text-ink-soft">
+                  {c.set_name}
+                  {c.variant && <span className="ml-1 rounded bg-surface-2 px-1 font-bold">{c.variant}</span>}
+                </p>
                 <p className="text-xs">
                   {unit == null ? "Sem preço" : <><strong>{formatMoney(unit, "BRL")}</strong> <span className="text-ink-soft">({valueSource(c, radar, info)})</span>
                   {ref?.change7d != null && Math.abs(ref.change7d) >= 0.5 && (
@@ -343,6 +462,34 @@ function CardsPanel({
                       </select>
                     </>
                   )}
+                  <select
+                    value={c.language ?? "PT"}
+                    aria-label="Idioma"
+                    onChange={async (e) => {
+                      const language = e.target.value as Language;
+                      await updateCard(c.id, { language });
+                      onChange(c.id, { language });
+                    }}
+                    className="rounded-lg border border-line bg-bg px-1.5 py-1"
+                  >
+                    {LANGUAGES.map(([code, , flag]) => (
+                      <option key={code} value={code}>{flag} {code}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={c.variant ?? "Normal"}
+                    aria-label="Versão"
+                    onChange={async (e) => {
+                      const variant = e.target.value === "Normal" ? null : e.target.value;
+                      await updateCard(c.id, { variant });
+                      onChange(c.id, { variant });
+                    }}
+                    className="rounded-lg border border-line bg-bg px-1.5 py-1"
+                  >
+                    {VARIANTS.map((v) => (
+                      <option key={v}>{v}</option>
+                    ))}
+                  </select>
                   <a href={liga.card(ligaRef)} target="_blank" rel="noopener noreferrer" className="rounded-lg px-2 py-1 text-xs font-bold text-accent-3 hover:bg-surface-2" title="Ver ofertas desta carta na Liga Pokémon">
                     Liga ↗
                   </a>

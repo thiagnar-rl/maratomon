@@ -4,12 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import { computeAchievements, streaks, type Achievement } from "@/lib/achievements";
 import { useProgress } from "@/lib/progress/hooks";
 import { artwork } from "@/lib/pokemon";
+import { useCollectionData } from "@/lib/collection-store";
+import { tcgAchievementsFrom, useTcgAchievements } from "./collection/tcg-achievements";
 
 const GROUPS: [Achievement["group"], string][] = [
   ["episodios", "Episódios"],
   ["sequencia", "Sequência de dias"],
   ["temporadas", "Temporadas completas"],
   ["series", "Séries completas"],
+  ["colecao", "Coleção TCG"],
 ];
 
 /** Hook com as conquistas e a sequência de dias da pessoa logada. */
@@ -55,8 +58,14 @@ function Medal({ a }: { a: Achievement }) {
 
 /** Painel de conquistas e sequência (página Minha jornada). */
 export function AchievementsPanel() {
-  const { list, streak, unlocked } = useAchievements();
-  const [group, setGroup] = useState<Achievement["group"]>("episodios");
+  const anime = useAchievements();
+  const tcg = useTcgAchievements(true);
+  const { streak } = anime;
+  const list = useMemo(() => [...anime.list, ...tcg.list], [anime.list, tcg.list]);
+  const unlocked = list.filter((a) => a.unlocked).length;
+  const [group, setGroup] = useState<Achievement["group"]>(() =>
+    typeof window !== "undefined" && new URLSearchParams(location.search).get("aba") === "colecao" ? "colecao" : "episodios",
+  );
   const shown = list.filter((a) => a.group === group);
 
   return (
@@ -108,6 +117,7 @@ export function AchievementsPanel() {
           })}
         </div>
       </div>
+      {group === "colecao" && !tcg.list.length && <p className="text-ink-soft">Carregando sua coleção…</p>}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {shown.map((a) => (
           <Medal key={a.id} a={a} />
@@ -124,33 +134,44 @@ export function AchievementsPanel() {
 export function AchievementToaster() {
   const { ready, loggedIn, status, email } = useProgress();
   const { list } = useAchievements();
+  // A coleção só entra se já estiver carregada (não busca a coleção em toda página).
+  const collection = useCollectionData(false);
+  const tcgList = useMemo(() => (collection.status === "ready" && collection.pricesReady ? tcgAchievementsFrom(collection) : null), [collection]);
   const [toast, setToast] = useState<Achievement | null>(null);
 
   useEffect(() => {
     if (!ready || !loggedIn || status === "syncing" || !email) return;
-    const key = `maratomon:conquistas:${email}`;
-    const unlockedIds = list.filter((a) => a.unlocked).map((a) => a.id);
-    let seen: string[] | null = null;
-    try {
-      seen = JSON.parse(localStorage.getItem(key) ?? "null") as string[] | null;
-      localStorage.setItem(key, JSON.stringify(unlockedIds));
-    } catch {
-      return;
+    const groups: [string, Achievement[] | null][] = [
+      [`maratomon:conquistas:${email}`, list],
+      [`forja:conquistas-tcg:${email}`, tcgList],
+    ];
+    let fresh: Achievement | undefined;
+    for (const [key, items] of groups) {
+      if (!items) continue;
+      const unlockedIds = items.filter((a) => a.unlocked).map((a) => a.id);
+      let seen: string[] | null = null;
+      try {
+        seen = JSON.parse(localStorage.getItem(key) ?? "null") as string[] | null;
+        localStorage.setItem(key, JSON.stringify([...new Set([...(seen ?? []), ...unlockedIds])]));
+      } catch {
+        continue;
+      }
+      if (!seen) continue; // primeira vez: só registra, sem chuva de avisos
+      fresh ??= items.find((a) => a.unlocked && !seen!.includes(a.id));
     }
-    if (!seen) return;
-    const fresh = list.find((a) => a.unlocked && !seen!.includes(a.id));
     if (!fresh) return;
-    const show = setTimeout(() => setToast(fresh), 0);
+    const found = fresh;
+    const show = setTimeout(() => setToast(found), 0);
     const hide = setTimeout(() => setToast(null), 6000);
     return () => {
       clearTimeout(show);
       clearTimeout(hide);
     };
-  }, [list, ready, loggedIn, status, email]);
+  }, [list, tcgList, ready, loggedIn, status, email]);
 
   if (!toast) return null;
   return (
-    <div role="status" className="fixed inset-x-4 bottom-4 z-[60] mx-auto flex max-w-sm items-center gap-3 rounded-3xl border border-accent-2/60 bg-surface p-4 shadow-2xl sm:left-auto sm:right-6">
+    <div role="status" className="fixed inset-x-4 bottom-24 z-[60] mx-auto flex max-w-sm items-center gap-3 rounded-3xl border border-accent-2/60 bg-surface p-4 shadow-2xl sm:bottom-6 sm:left-auto sm:right-6">
       <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-accent-2/25 text-2xl">
         {toast.mon ? <img src={artwork(toast.mon.id)} alt="" className="size-10 object-contain" /> : toast.icon}
       </span>
@@ -158,7 +179,7 @@ export function AchievementToaster() {
         <span className="block text-xs font-black uppercase tracking-wider text-accent">Conquista desbloqueada!</span>
         <span className="block truncate font-bold">{toast.title}</span>
       </span>
-      <a href="/minha-jornada#conquistas" className="ml-auto shrink-0 rounded-full bg-accent px-3 py-1.5 text-xs font-bold text-white">
+      <a href={`/minha-jornada${toast.group === "colecao" ? "?aba=colecao" : ""}#conquistas`} className="ml-auto shrink-0 rounded-full bg-accent px-3 py-1.5 text-xs font-bold text-white">
         Ver
       </a>
     </div>

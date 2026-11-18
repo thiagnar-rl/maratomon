@@ -5,6 +5,8 @@ import { cardImage, formatMoney } from "@/lib/tcg/prices";
 import type { CardBrief, PricedCard } from "@/lib/tcg/types";
 import { CardTile } from "./card-tile";
 import { ActiveFilters, FilterLayout, FilterPanel, useCardFilters } from "./card-filters";
+import { ownedCounts, useCollectionData } from "@/lib/collection-store";
+import { useProgress } from "@/lib/progress/hooks";
 
 type Sort = "numero" | "maior" | "menor" | "alta" | "baixa";
 
@@ -35,6 +37,13 @@ export function PricedCardGrid({
   const [done, setDone] = useState(false);
   const [sort, setSort] = useState<Sort>("numero");
   const filters = useCardFilters();
+  // Coleção da pessoa logada: marca as cartas que ela tem e filtra as que faltam.
+  const { email } = useProgress();
+  const collection = useCollectionData(Boolean(email));
+  const owned = useMemo(() => (collection.status === "ready" ? ownedCounts(collection) : null), [collection]);
+  const [ownership, setOwnership] = useState<"todas" | "tenho" | "faltam">(() =>
+    typeof window !== "undefined" && new URLSearchParams(location.search).get("faltam") === "1" ? "faltam" : "todas",
+  );
 
   useEffect(() => {
     let active = true;
@@ -58,9 +67,15 @@ export function PricedCardGrid({
 
   const metas = useMemo(() => cards.map((c) => data[c.id]?.meta), [cards, data]);
   const filtered = useMemo(
-    () => cards.filter((c) => filters.matches({ name: c.name, localId: c.localId, meta: data[c.id]?.meta, brl: data[c.id]?.brl })),
-    [cards, data, filters],
+    () =>
+      cards.filter(
+        (c) =>
+          filters.matches({ name: c.name, localId: c.localId, meta: data[c.id]?.meta, brl: data[c.id]?.brl }) &&
+          (!owned || ownership === "todas" || (ownership === "tenho" ? owned.has(c.id) : !owned.has(c.id))),
+      ),
+    [cards, data, filters, owned, ownership],
   );
+  const ownedHere = owned ? cards.filter((c) => owned.has(c.id)).length : 0;
 
   const sorted = useMemo(() => {
     if (sort === "numero") return filtered;
@@ -151,6 +166,29 @@ export function PricedCardGrid({
             </select>
           </div>
         </div>
+        {owned && (
+          <div className="flex flex-wrap items-center gap-2 rounded-[1.5rem] border border-line bg-surface px-4 py-2.5">
+            <span className="text-sm font-bold">
+              Você tem <span className="text-accent">{ownedHere}</span> de {cards.length}
+            </span>
+            <span className="h-1.5 min-w-16 flex-1 overflow-hidden rounded-full bg-surface-2">
+              <span className="block h-full rounded-full bg-gradient-to-r from-sky-400 to-violet-500" style={{ width: `${(ownedHere / Math.max(cards.length, 1)) * 100}%` }} />
+            </span>
+            <span className="flex gap-1 rounded-full bg-surface-2 p-1 text-xs font-bold" role="group" aria-label="Mostrar">
+              {(
+                [
+                  ["todas", "Todas"],
+                  ["tenho", "✓ Tenho"],
+                  ["faltam", "Faltam"],
+                ] as const
+              ).map(([v, label]) => (
+                <button key={v} type="button" aria-pressed={ownership === v} onClick={() => setOwnership(v)} className="rounded-full px-3 py-1.5 aria-pressed:bg-accent aria-pressed:text-white">
+                  {label}
+                </button>
+              ))}
+            </span>
+          </div>
+        )}
         <ActiveFilters api={filters} />
 
         {sorted.length === 0 ? (
@@ -159,7 +197,7 @@ export function PricedCardGrid({
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
             {sorted.map((card) => (
               <li key={card.id}>
-                <CardTile card={card} subtitle={subtitles?.[card.id]} price={data[card.id] ?? (done ? EMPTY : null)} />
+                <CardTile card={card} subtitle={subtitles?.[card.id]} price={data[card.id] ?? (done ? EMPTY : null)} owned={owned ? (owned.get(card.id) ?? 0) : undefined} />
               </li>
             ))}
           </ul>

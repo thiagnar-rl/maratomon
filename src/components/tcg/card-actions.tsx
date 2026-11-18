@@ -6,6 +6,8 @@ import { addCard, CONDITIONS, createCollection, listCards, listCollections, upda
 import { addToCompare, MAX_COMPARE, useCompareIds } from "@/lib/tcg/compare-store";
 import { useProgress } from "@/lib/progress/hooks";
 import { formatMoney, parseBRL } from "@/lib/tcg/prices";
+import { refreshCollection, patchLocal } from "@/lib/collection-store";
+import { LANGUAGES, VARIANTS, type Language } from "@/lib/tcg/card-ref";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 type CardInfo = { id: string; name: string; set: string; image: string | null };
@@ -30,7 +32,7 @@ export function CardActions({ card, price }: { card: CardInfo; price?: number | 
         </Link>
       </div>
       <PriceAlert card={card} price={price ?? null} />
-      <AddToCollection card={card} />
+      <AddToCollection card={card} price={price ?? null} />
     </div>
   );
 }
@@ -72,6 +74,7 @@ function PriceAlert({ card, price }: { card: CardInfo; price: number | null }) {
       } catch {
         // ignorado
       }
+      void refreshCollection();
       setStatus("saved");
       setMessage(`Pronto! Quando o preço no Brasil chegar a ${formatMoney(value, "BRL")}, o sino 🔔 no topo do site avisa você.`);
     } catch (error) {
@@ -115,7 +118,9 @@ function PriceAlert({ card, price }: { card: CardInfo; price: number | null }) {
   );
 }
 
-function AddToCollection({ card }: { card: CardInfo }) {
+function AddToCollection({ card, price }: { card: CardInfo; price: number | null }) {
+  const [language, setLanguage] = useState<Language>("PT");
+  const [variant, setVariant] = useState("Normal");
   const { email } = useProgress();
   const [collections, setCollections] = useState<Collection[] | null>(null);
   const [collectionId, setCollectionId] = useState("");
@@ -164,7 +169,10 @@ function AddToCollection({ card }: { card: CardInfo }) {
         quantity,
         condition,
         paid_brl: parseBRL(paid),
-      });
+        language,
+        variant: variant === "Normal" ? null : variant,
+        added_brl: price,
+      }).then((saved) => patchLocal((d) => ({ cards: [saved, ...d.cards] })));
       setStatus("saved");
       setMessage(`Adicionada a “${collections?.find((c) => c.id === collectionId)?.name}”.`);
     } catch (error) {
@@ -196,6 +204,20 @@ function AddToCollection({ card }: { card: CardInfo }) {
         <div>
           <label className="block text-xs font-semibold text-ink-soft" htmlFor="pago">Paguei (R$)</label>
           <input id="pago" inputMode="decimal" value={paid} onChange={(e) => setPaid(e.target.value)} placeholder="0,00" className="w-full rounded-xl border border-line bg-bg px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="block text-xs font-semibold text-ink-soft" htmlFor="idioma">Idioma</label>
+          <select id="idioma" value={language} onChange={(e) => setLanguage(e.target.value as Language)} className="w-full rounded-xl border border-line bg-bg px-3 py-2 text-sm">
+            {LANGUAGES.map(([code, name, flag]) => <option key={code} value={code}>{flag} {name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-ink-soft" htmlFor="versao">Versão</label>
+          <select id="versao" value={variant} onChange={(e) => setVariant(e.target.value)} className="w-full rounded-xl border border-line bg-bg px-3 py-2 text-sm">
+            {VARIANTS.map((v) => <option key={v}>{v}</option>)}
+          </select>
         </div>
       </div>
       <button type="submit" disabled={status === "saving" || !collectionId} className="w-full rounded-full bg-accent px-4 py-2.5 text-sm font-bold text-accent-ink disabled:opacity-60">

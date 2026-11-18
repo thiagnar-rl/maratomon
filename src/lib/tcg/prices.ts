@@ -166,9 +166,16 @@ const VARIANT_PT: Record<string, string> = {
 
 /** Raridade, versões e ilustrador, para os filtros. */
 export function cardMeta(
-  card: Pick<CardDetail, "rarity" | "illustrator" | "variants" | "types" | "category"> & { localId?: string; set?: { name: string; cardCount?: { official?: number } } },
+  card: Pick<CardDetail, "rarity" | "illustrator" | "variants" | "types" | "category"> & {
+    localId?: string;
+    name?: string;
+    image?: string;
+    set?: { name: string; cardCount?: { official?: number } };
+  },
 ): CardMeta {
   return {
+    name: card.name,
+    image: card.image ? cardImage(card.image, "low") : undefined,
     localId: card.localId,
     official: card.set?.cardCount?.official,
     set: card.set?.name ?? null,

@@ -5,7 +5,22 @@ import { CardPlaceholder } from "./card-placeholder";
 import { HoloCard } from "./holo-card";
 
 /** Miniatura de carta para grades (coleção, busca), com o preço do dia embaixo. */
-export function CardTile({ card, subtitle, price, changeTitle = "Variação em 7 dias", showDelta = false }: { card: CardBrief; subtitle?: string; price?: (PriceSnapshot & { br?: BrPrice | null }) | null; changeTitle?: string; showDelta?: boolean }) {
+export function CardTile({
+  card,
+  subtitle,
+  price,
+  changeTitle = "Variação em 7 dias",
+  showDelta = false,
+  owned,
+}: {
+  card: CardBrief;
+  subtitle?: string;
+  price?: (PriceSnapshot & { br?: BrPrice | null }) | null;
+  changeTitle?: string;
+  showDelta?: boolean;
+  /** Quantas cópias a pessoa tem (undefined = não logada). */
+  owned?: number;
+}) {
   const src = cardImage(card.image, "low");
   const change = price?.change7d;
   return (
@@ -13,13 +28,20 @@ export function CardTile({ card, subtitle, price, changeTitle = "Variação em 7
       href={`/tcg/cartas/${card.id}`}
       className="group block rounded-2xl p-1.5 transition hover:bg-surface-2"
     >
-      <HoloCard className="aspect-[5/7]" faceClassName="size-full rounded-xl bg-surface-2 shadow-md">
+      <span className="relative block">
+      {owned != null && owned > 0 && (
+        <span className="absolute right-1 top-1 z-10 rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-black text-white shadow" title={`Você tem ${owned}`}>
+          ✓ x{owned}
+        </span>
+      )}
+      <HoloCard className={`aspect-[5/7] ${owned === 0 ? "opacity-55 grayscale-[40%] transition group-hover:opacity-100 group-hover:grayscale-0" : ""}`} faceClassName="size-full rounded-xl bg-surface-2 shadow-md">
         {src ? (
           <img src={src} alt={card.name} loading="lazy" decoding="async" className="size-full object-cover" />
         ) : (
           <CardPlaceholder name={card.name} />
         )}
       </HoloCard>
+      </span>
       <p className="mt-2 truncate text-sm font-semibold">{card.name}</p>
       <p className="truncate text-xs text-ink-soft">{subtitle ?? `#${card.localId}`}</p>
       {price !== undefined && (

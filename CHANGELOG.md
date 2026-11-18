@@ -5,6 +5,22 @@ Site publicado: https://forja-arcana.vercel.app
 
 ---
 
+## 18/11/2026 (noite)
+
+### Minha coleção 2.0: scan, importação, exportação, link compartilhável e conquistas de TCG
+- **Novo painel "Sua coleção vale"**: valor total em reais, variação em 7 dias, **"Vale hoje × Valia ao entrar × Desde que entraram"** (lucro ou prejuízo desde que cada carta entrou), quantas cópias e cartas diferentes, % com preço do Brasil, divisão por **idioma** (🇧🇷 PT, 🇺🇸 EN…), maior alta da semana, cópias sem preço pago e botão para esconder os valores (👁️).
+- **Progresso por coleção (set)**: cada coleção mostra logo, sigla, **% da base** (ex.: 44/217, faltam 173) e **% com secretas**, valor e as cartas que você tem. "Ver as que faltam" abre a coleção já filtrada.
+- **Marcação nas grades de cartas**: quem está logado vê "✓ x2" nas cartas que já tem, as que faltam ficam apagadinhas, e há filtros **Todas / Tenho / Faltam** (coleções e páginas de Pokémon).
+- **Scan pela câmera** (`/colecao/escanear`): moldura de carta, lanterna, leitura do número (ex.: 025/165), da sigla e do nome **no próprio aparelho** (a foto não é enviada), confirmação com preço, quantidade, idioma, condição e versão, e scans em sequência com "desfazer". Também aceita foto da galeria ou digitar "Pikachu 025/165". Botão flutuante 📷 no celular.
+- **Importar** (`/colecao/importar`): cole uma lista (padrão Pokémon TCG Live "4 Pikachu ex SVI 57", "1 Charizard ex (199/165) PT"…) ou envie **Excel (.xlsx), CSV ou .txt**. O site identifica cada carta, mostra outras opções quando há dúvida, deixa buscar à mão, escolher idioma/condição e somar quantidades na pasta escolhida.
+- **Exportar e compartilhar**: Excel, CSV, PDF, **imagem** (cartas mais valiosas, pronta para postar) e lista de texto (com número/total ou padrão TCG Live), com ou sem preços — de toda a coleção, de uma pasta, da lista de desejos ou das **faltantes de uma coleção**. **Link compartilhável** público: a lista vai dentro do próprio link (nada fica salvo em servidor).
+- **Pastas e decks**: busca, ordenação, idioma e versão por carta, **modo Selecionar** (mover em lote, trocar idioma, remover várias), e botões de escanear/importar/exportar dentro da pasta.
+- **Cada carta guarda** idioma, versão (Foil, Reverse, 1ª edição…) e o **preço do dia em que entrou** (cartas antigas foram preenchidas com o histórico de preços).
+- **22 novas conquistas de coleção TCG** (aba "Coleção TCG" em Minha jornada e faixa no painel): cópias (1 a 1.000), cartas diferentes, coleções, 25/50/75/100% de uma base, master set, valor (R$ 100 a R$ 10.000), idiomas, primeiro deck, alertas, primeiro scan, scanner turbo e primeira importação — com aviso de "Conquista desbloqueada!".
+- **Banco de dados**: migração `supabase/007_colecao_pro.sql` (colunas `language`, `variant`, `added_brl`), já aplicada.
+- **Novas rotas**: `/api/tcg/identify` (acha a carta por número/total, sigla ou nome, em inglês e português), `/api/tcg/sets` e `/api/tcg/sets/[id]`, `/api/colecao/imagem`.
+- **Segurança**: Next.js atualizado de 16.0.10 para **16.4.6**, que corrige falhas graves (inclusive execução remota de código) publicadas para as versões anteriores.
+
 ## 18/11/2026
 
 ### Conquistas, sequência de dias, Pokédex, alertas de preço e valor da coleção (tudo numa publicação só)

@@ -196,3 +196,20 @@ h3 {
   html { scroll-behavior: auto; }
   .animate-drift, .animate-pop, .animate-float, .animate-ticker { animation: none; }
 }
+
+/* Coleção: folha subindo e brilho do scanner */
+@keyframes sheet {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes scanline {
+  0%, 100% { top: 6%; }
+  50% { top: 90%; }
+}
+.night-card {
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgb(91 108 255 / 0.28), transparent 55%),
+    radial-gradient(90% 70% at 0% 100%, rgb(139 92 246 / 0.25), transparent 60%),
+    linear-gradient(160deg, #1b2450 0%, #121a3a 45%, #0d1230 100%);
+  color: #fff;
+}

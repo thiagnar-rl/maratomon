@@ -2,6 +2,7 @@
 
 import type { PricedCard } from "@/lib/tcg/types";
 import { getSupabase } from "@/lib/supabase";
+import type { Language } from "@/lib/tcg/card-ref";
 
 /** Minha coleção: decks e pastas no Supabase (tabelas e Storage protegidos por RLS). */
 export type CollectionKind = "deck" | "pasta" | "desejos";
@@ -30,7 +31,21 @@ export type CollectionCard = {
   market_brl: number | null;
   /** Lista de desejos: avisa quando o preço chegar neste valor (R$). */
   target_brl: number | null;
+  /** Idioma da carta (PT, EN, JP…). */
+  language: Language;
+  /** Versão: Normal, Foil, Reverse, 1ª edição… */
+  variant: string | null;
+  /** Preço (R$, por unidade) quando a carta entrou na coleção. */
+  added_brl: number | null;
+  created_at: string;
 };
+
+/** Campos editáveis de uma carta da coleção. */
+export type CardPatch = Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl" | "market_brl" | "target_brl" | "language" | "variant" | "added_brl" | "collection_id">>;
+/** Carta nova: só id, nome e coleção são obrigatórios. */
+export type NewCard = Pick<CollectionCard, "collection_id" | "card_id" | "card_name"> &
+  Partial<Pick<CollectionCard, "set_name" | "image">> &
+  Omit<CardPatch, "collection_id">;
 
 export type CollectionMedia = {
   id: string;
@@ -81,16 +96,34 @@ export async function listCards(collectionId?: string): Promise<CollectionCard[]
   return check(await query);
 }
 
-export async function addCard(input: Omit<CollectionCard, "id" | "quantity" | "condition" | "paid_brl" | "market_brl" | "target_brl"> & Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl" | "market_brl" | "target_brl">>) {
+export async function addCard(input: NewCard) {
   return check<CollectionCard>(await client().from("collection_cards").insert(input).select().single());
 }
 
-export async function updateCard(id: string, patch: Partial<Pick<CollectionCard, "quantity" | "condition" | "paid_brl" | "market_brl" | "target_brl">>) {
+/** Adiciona várias cartas de uma vez (importação e scan), em lotes de 200. */
+export async function addCards(inputs: NewCard[]): Promise<CollectionCard[]> {
+  const out: CollectionCard[] = [];
+  for (let i = 0; i < inputs.length; i += 200) {
+    out.push(...check<CollectionCard[]>(await client().from("collection_cards").insert(inputs.slice(i, i + 200)).select()));
+  }
+  return out;
+}
+
+export async function updateCard(id: string, patch: CardPatch) {
   check(await client().from("collection_cards").update(patch).eq("id", id));
+}
+
+/** Mesma alteração em várias cartas (ex.: mover para outra pasta, trocar idioma). */
+export async function updateCards(ids: string[], patch: CardPatch) {
+  if (ids.length) check(await client().from("collection_cards").update(patch).in("id", ids));
 }
 
 export async function removeCard(id: string) {
   check(await client().from("collection_cards").delete().eq("id", id));
+}
+
+export async function removeCards(ids: string[]) {
+  if (ids.length) check(await client().from("collection_cards").delete().in("id", ids));
 }
 
 export async function listMedia(collectionId: string): Promise<CollectionMedia[]> {

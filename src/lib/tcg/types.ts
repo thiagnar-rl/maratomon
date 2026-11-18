@@ -114,6 +114,9 @@ export type CardMeta = {
   /** Número da carta e total oficial da coleção (ex.: 4 e 102 → "004/102"). */
   localId?: string;
   official?: number;
+  /** Nome e imagem pequena (para listas, exportação e link compartilhável). */
+  name?: string;
+  image?: string | null;
 };
 /** Preço no Brasil (MYP Cards): menor anúncio, unidades à venda e link. */
 export type BrPrice = { low: number; units: number | null; url: string };

@@ -90,11 +90,11 @@ export async function getCard(id: string): Promise<CardDetail | null> {
   return card;
 }
 
-export async function searchCards(query: string, limit = 60): Promise<CardBrief[]> {
+export async function searchCards(query: string, limit = 60, lang: "en" | "pt" = "en"): Promise<CardBrief[]> {
   const q = query.trim();
   if (q.length < 2) return [];
   const results = await tcgdex<CardBrief[]>(
-    `en/cards?name=like:${encodeURIComponent(q)}&pagination:itemsPerPage=${limit}`,
+    `${lang}/cards?name=like:${encodeURIComponent(q)}&pagination:itemsPerPage=${limit}`,
     REVALIDATE.card,
   );
   return (results ?? []).map((c) => {
