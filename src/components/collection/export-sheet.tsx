@@ -4,18 +4,28 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { fetchCardInfo, type CardInfo, type CollectionCard } from "@/lib/collection";
 import { computeStats, useCollectionData } from "@/lib/collection-store";
-import { download, encodeShare, exportRows, toCsv, toLiveText, toNumberedText, toPdf, toXlsx, type SharePayload } from "@/lib/collection-io";
+import { download, encodeShare, exportRows, toCsv, toLigaText, toLiveText, toNumberedText, toPdf, toXlsx, type SharePayload } from "@/lib/collection-io";
+import { FileIcon, KIND_TONE } from "./file-icons";
 
 import { Sheet, Toggle } from "./ui";
 
-type Format = "xlsx" | "csv" | "pdf" | "imagem" | "texto";
+type Format = "xlsx" | "csv" | "pdf" | "imagem" | "liga" | "texto";
 const FORMATS: [Format, string, string][] = [
-  ["xlsx", "▦", "Excel"],
-  ["csv", "📄", "CSV"],
-  ["pdf", "📕", "PDF"],
-  ["imagem", "🖼️", "Imagem"],
-  ["texto", "📝", "Lista de texto"],
+  ["xlsx", "excel", "Excel"],
+  ["csv", "csv", "CSV"],
+  ["pdf", "pdf", "PDF"],
+  ["imagem", "imagem", "Imagem"],
 ];
+const LABEL: Record<Format, string> = { xlsx: "Excel", csv: "CSV", pdf: "PDF", imagem: "Imagem", liga: "lista da Liga", texto: "lista de texto" };
+
+/** Arquivo pronto: o usuário toca para salvar ou compartilhar (funciona no iPhone, que bloqueia download automático). */
+type Ready = { blob: Blob; name: string; url: string; text?: string };
+
+const localDate = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const sizeLabel = (n: number) => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(0)} KB` : `${(n / 1048576).toFixed(1)} MB`);
 
 const slug = (s: string) =>
   s
@@ -36,6 +46,26 @@ export function ExportSheet({ open, onClose, initialScope }: { open: boolean; on
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [link, setLink] = useState("");
+  const [ready, setReady] = useState<Ready | null>(null);
+
+  function finish(content: Blob | string, filename: string, type: string, text?: string) {
+    const blob = typeof content === "string" ? new Blob([content], { type }) : content;
+    if (ready) URL.revokeObjectURL(ready.url);
+    setReady({ blob, name: filename, url: URL.createObjectURL(blob), text });
+    // No computador baixa na hora; no celular o usuário toca em Salvar/Compartilhar.
+    if (window.matchMedia("(pointer: fine)").matches) download(blob, filename);
+  }
+
+  async function shareReady() {
+    if (!ready) return;
+    const file = new File([ready.blob], ready.name, { type: ready.blob.type });
+    try {
+      if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: ready.name });
+      else download(ready.blob, ready.name);
+    } catch {
+      // compartilhamento cancelado
+    }
+  }
 
   const wishlists = data.collections.filter((c) => c.kind === "desejos");
   const folders = data.collections.filter((c) => c.kind !== "desejos");
@@ -89,19 +119,19 @@ export function ExportSheet({ open, onClose, initialScope }: { open: boolean; on
       const rows = exportRows(cards, data.collections, info, data.sets, data.radar);
       const value = rows.reduce((n, r) => n + (r.total ?? 0), 0);
       const copies = rows.reduce((n, r) => n + r.quantity, 0);
-      const name = `${slug(title)}-${new Date().toISOString().slice(0, 10)}`;
-      if (format === "csv") download(toCsv(rows, prices), `${name}.csv`, "text/csv;charset=utf-8");
-      if (format === "xlsx") download(await toXlsx(rows, prices, title), `${name}.xlsx`);
-      if (format === "pdf") download(await toPdf(rows, prices, title, { value, copies }), `${name}.pdf`);
-      if (format === "texto") {
-        const text = textStyle === "live" ? toLiveText(rows) : toNumberedText(rows, prices);
+      const name = `${slug(title)}-${localDate()}`;
+      if (format === "csv") finish(toCsv(rows, prices), `${name}.csv`, "text/csv;charset=utf-8");
+      if (format === "xlsx") finish(await toXlsx(rows, prices, title), `${name}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      if (format === "pdf") finish(await toPdf(rows, prices, title, { value, copies }), `${name}.pdf`, "application/pdf");
+      if (format === "liga" || format === "texto") {
+        const text = format === "liga" ? toLigaText(rows) : textStyle === "live" ? toLiveText(rows) : toNumberedText(rows, prices);
         try {
           await navigator.clipboard.writeText(text);
-          setMessage("Lista copiada! Também baixamos um arquivo .txt.");
+          setMessage(format === "liga" ? "Lista da Liga copiada! Cole na Liga Pokémon (Compra por Lista ou na sua coleção) — ou salve o arquivo abaixo." : "Lista copiada! Também dá para salvar o arquivo abaixo.");
         } catch {
-          setMessage("Baixamos a lista em um arquivo .txt.");
+          setMessage("Lista pronta — salve ou compartilhe abaixo.");
         }
-        download(text, `${name}.txt`);
+        finish(text, `${name}${format === "liga" ? "-liga" : ""}.txt`, "text/plain;charset=utf-8", text);
       }
       if (format === "imagem") {
         const top = [...rows].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 12);
@@ -117,12 +147,9 @@ export function ExportSheet({ open, onClose, initialScope }: { open: boolean; on
           }),
         });
         if (!response.ok) throw new Error("Não foi possível gerar a imagem.");
-        const blob = await response.blob();
-        const file = new File([blob], `${name}.png`, { type: "image/png" });
-        if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title }).catch(() => download(blob, `${name}.png`));
-        else download(blob, `${name}.png`);
+        finish(await response.blob(), `${name}.png`, "image/png");
       }
-      if (format !== "texto") setMessage("Pronto! O arquivo foi baixado.");
+      if (format !== "texto" && format !== "liga") setMessage("");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Não foi possível exportar.");
     } finally {
@@ -155,7 +182,7 @@ export function ExportSheet({ open, onClose, initialScope }: { open: boolean; on
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="Exportar coleção" icon="⬆">
+    <Sheet open={open} onClose={onClose} title="Exportar coleção" icon={<FileIcon kind="upload" className="size-7" />}>
       <div className="space-y-5">
         <label className="block">
           <span className="mb-1.5 block text-sm font-bold text-white/60">O que exportar</span>
@@ -185,7 +212,7 @@ export function ExportSheet({ open, onClose, initialScope }: { open: boolean; on
             disabled={busy}
             className="flex w-full items-center gap-3 rounded-2xl border border-blue-400/40 bg-gradient-to-r from-blue-600/25 to-violet-600/25 p-4 text-left shadow-[0_0_30px_-10px_rgb(59_130_246/0.7)] disabled:opacity-60"
           >
-            <span className="grid size-11 place-items-center rounded-xl bg-blue-500/25 text-xl">🔗</span>
+            <span className="grid size-11 place-items-center rounded-xl bg-blue-500/25 text-blue-300"><FileIcon kind="link" className="size-6" /></span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2 font-bold">
                 Link compartilhável <span className="rounded-md bg-blue-500 px-1.5 py-0.5 text-[10px] font-black">NOVO</span>
@@ -206,34 +233,53 @@ export function ExportSheet({ open, onClose, initialScope }: { open: boolean; on
 
         <div>
           <p className="mb-2 text-sm font-bold text-white/60">Formato do arquivo</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="Formato do arquivo">
             {FORMATS.map(([f, icon, label]) => (
               <button
                 key={f}
                 type="button"
-                aria-pressed={format === f}
-                onClick={() => setFormat(f)}
-                className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3.5 font-bold transition ${f === "texto" ? "col-span-2" : ""} ${
-                  format === f ? "border-blue-400 bg-blue-500/15 text-blue-300" : "border-white/10 bg-white/5 text-white/80"
+                role="radio"
+                aria-checked={format === f}
+                onClick={() => (setFormat(f), setReady(null), setMessage(""))}
+                className={`flex items-center justify-center gap-2.5 rounded-2xl px-3 py-4 text-lg font-extrabold transition ${
+                  format === f ? "bg-blue-500/15 text-blue-300 ring-2 ring-blue-400" : "bg-white/[0.06] text-white/80 ring-1 ring-white/10 hover:bg-white/10"
                 }`}
               >
-                <span aria-hidden="true">{icon}</span> {label}
+                <FileIcon kind={icon} className="size-6" /> {label}
               </button>
             ))}
           </div>
+
+          <div className={`mt-3 rounded-2xl p-4 ring-1 transition ${format === "liga" ? "bg-cyan-500/15 ring-2 ring-cyan-300" : "bg-cyan-500/[0.07] ring-cyan-400/30"}`}>
+            <p className="flex gap-3 text-[15px] font-semibold text-white/85">
+              <FileIcon kind="liga" className="size-6 shrink-0 text-cyan-300" />
+              Vai levar as cartas para a Liga Pokémon? A Liga não aceita planilha: ela lê a lista no formato dela.
+            </p>
+            <button type="button" onClick={() => (setFormat("liga"), setReady(null), setMessage(""))} aria-pressed={format === "liga"} className="ml-9 mt-2 font-extrabold text-cyan-300 underline-offset-4 hover:underline">
+              {format === "liga" ? "✓ Lista da Liga selecionada" : "Gerar a lista da Liga"}
+            </button>
+            {format === "liga" && (
+              <p className="ml-9 mt-2 font-mono text-xs text-cyan-100/80">1 Charizard ex (199/165) [QUALIDADE=NM] [IDIOMA=PT]</p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => (setFormat("texto"), setReady(null), setMessage(""))}
+            aria-pressed={format === "texto"}
+            className={`mt-2 flex w-full items-center gap-2.5 rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${format === "texto" ? "bg-amber-400/15 text-amber-200 ring-2 ring-amber-300" : "bg-white/[0.04] text-white/70 ring-1 ring-white/10"}`}
+          >
+            <FileIcon kind="texto" className="size-5" /> Lista de texto simples (para grupos e sites de deck)
+          </button>
           {format === "texto" && (
-            <div className="mt-3 space-y-2 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4 text-sm">
+            <div className="mt-2 space-y-2 rounded-2xl bg-white/5 p-3 text-sm">
               <label className="flex items-start gap-2">
                 <input type="radio" checked={textStyle === "numero"} onChange={() => setTextStyle("numero")} className="mt-1" />
-                <span>
-                  <strong>Com número da carta</strong> — <code className="text-cyan-200">1 Charizard ex (199/165) PT</code>. Fácil de ler e de colar em sites de venda, grupos e na busca da Liga.
-                </span>
+                <span>Com número — <code className="text-amber-200">1 Charizard ex (199/165) PT</code></span>
               </label>
               <label className="flex items-start gap-2">
                 <input type="radio" checked={textStyle === "live"} onChange={() => setTextStyle("live")} className="mt-1" />
-                <span>
-                  <strong>Padrão Pokémon TCG Live</strong> — <code className="text-cyan-200">4 Pikachu ex SSP 57</code>. Aceito por montadores de deck e pelo jogo online.
-                </span>
+                <span>Pokémon TCG Live — <code className="text-amber-200">4 Pikachu ex SSP 57</code></span>
               </label>
             </div>
           )}
@@ -241,8 +287,25 @@ export function ExportSheet({ open, onClose, initialScope }: { open: boolean; on
 
         {message && <p role="status" className="rounded-xl bg-white/10 px-3 py-2 text-sm">{message}</p>}
 
+        {ready && (
+          <div className="flex items-center gap-3 rounded-2xl bg-emerald-500/10 p-3 ring-1 ring-emerald-400/40">
+            <span className={`grid size-11 shrink-0 place-items-center rounded-xl ring-1 ${KIND_TONE[format === "xlsx" ? "excel" : format] ?? KIND_TONE.texto}`}>
+              <FileIcon kind={format === "xlsx" ? "excel" : format} className="size-6" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-bold">{ready.name}</span>
+              <span className="text-xs text-white/60">{sizeLabel(ready.blob.size)} · pronto</span>
+            </span>
+            <a href={ready.url} download={ready.name} className="rounded-xl bg-white/15 px-3 py-2 text-sm font-bold">Salvar</a>
+            {typeof navigator !== "undefined" && "share" in navigator && (
+              <button type="button" onClick={shareReady} className="rounded-xl bg-emerald-500 px-3 py-2 text-sm font-bold text-white">Enviar</button>
+            )}
+          </div>
+        )}
+
         <button type="button" onClick={run} disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-500 py-4 text-lg font-extrabold text-white shadow-lg transition hover:bg-blue-400 disabled:opacity-60">
-          {busy ? "Gerando…" : `⬆ Exportar ${FORMATS.find(([f]) => f === format)?.[2]}`}
+          <FileIcon kind="upload" className="size-5" />
+          {busy ? "Gerando…" : `Exportar ${LABEL[format]}`}
         </button>
         <p className="text-center text-xs text-white/40">Para trazer cartas de outro site ou planilha, use <Link href="/colecao/importar" className="underline">Importar</Link>.</p>
       </div>

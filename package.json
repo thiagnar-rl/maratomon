@@ -23,6 +23,7 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.9",
     "next": "^16.4.6",
+    "pdfjs-dist": "^5.7.284",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "read-excel-file": "^9.3.17",

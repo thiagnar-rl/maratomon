@@ -1,27 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { addCards, createCollection, updateCard, type CollectionCard, type NewCard } from "@/lib/collection";
 import { refreshCollection, useCollectionData } from "@/lib/collection-store";
-import { parseText, readImportFile, type ImportLine } from "@/lib/collection-io";
+import { ACCEPT_ALL, IMPORT_KINDS, parseText, readImportFile, type ImportKind, type ImportLine } from "@/lib/collection-io";
+import { FileIcon, KIND_TONE } from "./file-icons";
 import { bumpCounter } from "@/lib/achievements";
 import { CONDITIONS } from "@/lib/collection";
 import { LANGUAGES, type Language } from "@/lib/tcg/card-ref";
+import { useProgress } from "@/lib/progress/hooks";
+
+const PENDING = "forja:importacao-pendente";
 
 type Candidate = { id: string; name: string; localId: string; setId: string; setName: string; setCode?: string; official: number; image: string | null; score: number };
 type Row = ImportLine & { key: number; candidates: Candidate[]; pick: number; skip: boolean; searching?: boolean };
 
-const EXAMPLE = `4 Pikachu ex SSP 57
-1 Charizard ex (199/165) PT
+const EXAMPLE = `1 Charizard ex (199/165) [QUALIDADE=NM] [IDIOMA=PT]
+4 Pikachu ex SSP 57
 2x Mega Venusaur ex 003/132 [EN]
 Mew ex 151/165
 3 Ultra Ball`;
 
 export function ImportFlow() {
-  const data = useCollectionData();
+  const { email, ready: authReady } = useProgress();
+  const data = useCollectionData(Boolean(email));
   const [step, setStep] = useState<"entrada" | "identificando" | "conferir" | "salvando" | "pronto">("entrada");
-  const [mode, setMode] = useState<"colar" | "arquivo">("colar");
+  const [busyMsg, setBusyMsg] = useState("");
+  const [source, setSource] = useState<{ name: string; kind: ImportKind } | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [text, setText] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [progress, setProgress] = useState(0);
@@ -31,7 +38,63 @@ export function ImportFlow() {
   const [defaultLang, setDefaultLang] = useState<Language>("PT");
   const [merge, setMerge] = useState(true);
   const [result, setResult] = useState<{ added: number; merged: number; collectionId: string } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const pasteRef = useRef<HTMLTextAreaElement>(null);
+
+  // Quem conferiu a lista sem estar logado volta para ela depois de entrar
+  useEffect(() => {
+    if (!email) return;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(PENDING) ?? "null") as { rows: Row[]; source: typeof source } | null;
+      if (!saved?.rows?.length) return;
+      sessionStorage.removeItem(PENDING);
+      const t = setTimeout(() => {
+        setRows(saved.rows);
+        setSource(saved.source);
+        setStep("conferir");
+      }, 0);
+      return () => clearTimeout(t);
+    } catch {
+      // ignorado
+    }
+  }, [email]);
+
+  // Arrastar um arquivo para qualquer lugar da página (computador)
+  useEffect(() => {
+    if (step !== "entrada") return;
+    let depth = 0;
+    const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes("Files");
+    const enter = (e: DragEvent) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      depth++;
+      setDragging(true);
+    };
+    const over = (e: DragEvent) => {
+      if (hasFiles(e)) e.preventDefault();
+    };
+    const leave = () => {
+      depth = Math.max(0, depth - 1);
+      if (!depth) setDragging(false);
+    };
+    const drop = (e: DragEvent) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      depth = 0;
+      setDragging(false);
+      void onFile(e.dataTransfer?.files?.[0]);
+    };
+    window.addEventListener("dragenter", enter);
+    window.addEventListener("dragover", over);
+    window.addEventListener("dragleave", leave);
+    window.addEventListener("drop", drop);
+    return () => {
+      window.removeEventListener("dragenter", enter);
+      window.removeEventListener("dragover", over);
+      window.removeEventListener("dragleave", leave);
+      window.removeEventListener("drop", drop);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   const folders = data.collections.filter((c) => c.kind !== "desejos");
   const wishlists = data.collections.filter((c) => c.kind === "desejos");
@@ -71,9 +134,17 @@ export function ImportFlow() {
 
   async function onFile(file: File | undefined) {
     if (!file) return;
+    setError("");
+    setStep("identificando");
+    setProgress(0);
+    setBusyMsg("Abrindo o arquivo…");
     try {
-      await identifyAll(await readImportFile(file));
+      const { kind, lines } = await readImportFile(file, setBusyMsg);
+      setSource({ name: file.name, kind });
+      setBusyMsg("");
+      await identifyAll(lines);
     } catch (e) {
+      setBusyMsg("");
       setError(e instanceof Error ? e.message : "Não foi possível ler o arquivo.");
       setStep("entrada");
     }
@@ -149,8 +220,8 @@ export function ImportFlow() {
     return (
       <div className="night-card space-y-4 rounded-[2rem] p-8 text-center">
         <p className="text-5xl motion-safe:animate-bounce">{step === "salvando" ? "💾" : "🔎"}</p>
-        <p className="font-display text-2xl font-extrabold">{step === "salvando" ? "Guardando na sua coleção…" : "Identificando as cartas…"}</p>
-        {step === "identificando" && (
+        <p className="font-display text-2xl font-extrabold">{step === "salvando" ? "Guardando na sua coleção…" : busyMsg || "Identificando as cartas…"}</p>
+        {step === "identificando" && !busyMsg && (
           <div className="mx-auto h-2 max-w-sm overflow-hidden rounded-full bg-white/10">
             <div className="h-full rounded-full bg-gradient-to-r from-sky-400 to-violet-500 transition-[width]" style={{ width: `${progress * 100}%` }} />
           </div>
@@ -171,7 +242,7 @@ export function ImportFlow() {
         <div className="flex flex-wrap justify-center gap-2">
           <Link href={`/colecao/${result.collectionId}`} className="rounded-full bg-blue-500 px-6 py-3 font-bold text-white">Ver a pasta</Link>
           <Link href="/colecao" className="rounded-full bg-white/10 px-6 py-3 font-bold">Ir para a coleção</Link>
-          <button type="button" onClick={() => (setRows([]), setText(""), setStep("entrada"))} className="rounded-full bg-white/10 px-6 py-3 font-bold">Importar mais</button>
+          <button type="button" onClick={() => (setRows([]), setText(""), setSource(null), setStep("entrada"))} className="rounded-full bg-white/10 px-6 py-3 font-bold">Importar mais</button>
         </div>
       </div>
     );
@@ -184,10 +255,15 @@ export function ImportFlow() {
       <div className="space-y-5">
         <div className="night-card flex flex-wrap items-center gap-4 rounded-[1.75rem] p-5">
           <div>
+            {source && (
+              <p className="mb-1 flex items-center gap-1.5 text-xs font-bold text-white/60">
+                <FileIcon kind={source.kind} className="size-4" /> {source.name}
+              </p>
+            )}
             <p className="font-display text-2xl font-extrabold">{found} de {rows.length} linhas identificadas</p>
             <p className="text-sm text-white/65">{copies} cópias vão entrar. Confira as que estão em amarelo ou vermelho.</p>
           </div>
-          <button type="button" onClick={() => setStep("entrada")} className="ml-auto rounded-full bg-white/10 px-4 py-2 text-sm font-bold">← Voltar</button>
+          <button type="button" onClick={() => (setSource(null), setStep("entrada"))} className="ml-auto rounded-full bg-white/10 px-4 py-2 text-sm font-bold">← Voltar</button>
         </div>
 
         <ul className="space-y-2">
@@ -228,9 +304,25 @@ export function ImportFlow() {
                 ))}
               </select>
             </label>
-            <button type="button" disabled={!found} onClick={save} className="self-end rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 py-3 text-lg font-extrabold text-white shadow-lg disabled:opacity-50">
-              Importar {copies} {copies === 1 ? "carta" : "cartas"}
-            </button>
+            {email ? (
+              <button type="button" disabled={!found} onClick={save} className="self-end rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 py-3 text-lg font-extrabold text-white shadow-lg disabled:opacity-50">
+                Importar {copies} {copies === 1 ? "carta" : "cartas"}
+              </button>
+            ) : (
+              <Link
+                href="/entrar"
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem(PENDING, JSON.stringify({ rows, source }));
+                  } catch {
+                    // ignorado
+                  }
+                }}
+                className="self-end rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 py-3 text-center text-lg font-extrabold text-white shadow-lg"
+              >
+                {authReady ? "Entre para salvar na sua coleção" : "…"}
+              </Link>
+            )}
           </div>
           {error && <p role="alert" className="text-sm font-semibold text-accent">{error}</p>}
         </div>
@@ -239,73 +331,136 @@ export function ImportFlow() {
   }
 
   return (
-    <div className="space-y-5">
-      <div role="tablist" className="flex w-max gap-1 rounded-full bg-surface-2 p-1">
-        {(
-          [
-            ["colar", "📋 Colar lista"],
-            ["arquivo", "📁 Enviar arquivo"],
-          ] as const
-        ).map(([m, label]) => (
-          <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className="rounded-full px-4 py-2 text-sm font-bold text-ink-soft aria-selected:bg-accent aria-selected:text-white">
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {mode === "colar" ? (
-        <div className="space-y-3">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={10}
-            placeholder={EXAMPLE}
-            aria-label="Lista de cartas"
-            className="w-full rounded-[1.5rem] border border-line bg-surface p-4 font-mono text-sm outline-none focus:border-accent"
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" disabled={!text.trim()} onClick={() => identifyAll(parseText(text))} className="rounded-full bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-3 font-bold text-white disabled:opacity-50">
-              Identificar cartas →
-            </button>
-            <button type="button" onClick={() => setText(EXAMPLE)} className="rounded-full border border-line px-4 py-3 text-sm font-bold">Usar exemplo</button>
+    <div className="space-y-6">
+      {dragging && (
+        <div className="pointer-events-none fixed inset-0 z-[90] grid place-items-center bg-[#0b1230]/80 backdrop-blur-sm">
+          <div className="rounded-[2rem] border-2 border-dashed border-sky-400 px-10 py-12 text-center text-white">
+            <FileIcon kind="upload" className="mx-auto size-14 text-sky-400" />
+            <p className="mt-3 font-display text-2xl font-extrabold">Solte para importar</p>
+            <p className="text-white/60">Excel, CSV, PDF, imagem, Liga ou texto</p>
           </div>
         </div>
-      ) : (
+      )}
+
+      <label
+        htmlFor="arquivo-importar"
+        onDragOver={(e) => e.preventDefault()}
+        className="night-card group relative flex cursor-pointer flex-col items-center gap-3 overflow-hidden rounded-[2rem] p-8 text-center ring-1 ring-white/10 transition hover:ring-sky-400/60 focus-within:ring-2 focus-within:ring-sky-400 sm:p-10"
+      >
+        <span className="grid size-16 place-items-center rounded-2xl bg-gradient-to-br from-sky-500 to-violet-600 text-white shadow-[0_12px_40px_-10px_rgb(56_189_248/0.8)] transition group-hover:scale-105">
+          <FileIcon kind="upload" className="size-8" />
+        </span>
+        <span className="font-display text-2xl font-extrabold">Escolha o arquivo da sua coleção</span>
+        <span className="max-w-md text-sm text-white/65">
+          <span className="hidden sm:inline">Arraste para cá ou clique. </span>
+          Aceitamos Excel, CSV, PDF, imagem (print ou foto), lista da Liga Pokémon e texto — até 15 MB.
+        </span>
+        <span className="mt-1 rounded-full bg-white px-6 py-3 font-bold text-[#121a3a] shadow-lg transition group-hover:bg-sky-100">Selecionar arquivo</span>
+        <input
+          id="arquivo-importar"
+          type="file"
+          accept={ACCEPT_ALL}
+          className="sr-only"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            void onFile(f);
+          }}
+        />
+      </label>
+
+      {error && (
+        <div role="alert" className="flex gap-3 rounded-2xl border border-rose-400/50 bg-rose-500/10 p-4 text-sm">
+          <span className="text-xl">⚠️</span>
+          <p className="font-semibold">{error}</p>
+        </div>
+      )}
+
+      <section aria-labelledby="formatos-t" className="space-y-3">
+        <h2 id="formatos-t" className="text-sm font-black uppercase tracking-[0.18em] text-ink-soft">Ou escolha pelo tipo</h2>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {IMPORT_KINDS.map((k) => (
+            <label key={k.kind} className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-2xl p-3 text-center ring-1 transition hover:-translate-y-0.5 focus-within:ring-2 ${KIND_TONE[k.kind]}`}>
+              <FileIcon kind={k.kind} className="size-7" />
+              <span className="text-sm font-extrabold text-ink">{k.label}</span>
+              <span className="text-[11px] text-ink-soft">{k.hint}</span>
+              <input
+                type="file"
+                accept={k.accept}
+                className="sr-only"
+                aria-label={`Importar ${k.label}`}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  void onFile(f);
+                }}
+              />
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="colar-t" className="space-y-3 rounded-[2rem] border border-line bg-surface p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="colar-t" className="flex items-center gap-2 font-display text-xl font-extrabold">
+            <FileIcon kind="paste" className="size-5 text-accent" /> Colar uma lista
+          </h2>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const clip = await navigator.clipboard.readText();
+                  if (clip) setText(clip);
+                  else pasteRef.current?.focus();
+                } catch {
+                  pasteRef.current?.focus();
+                }
+              }}
+              className="rounded-full bg-surface-2 px-3 py-1.5 text-xs font-bold"
+            >
+              Colar da área de transferência
+            </button>
+            <button type="button" onClick={() => setText(EXAMPLE)} className="rounded-full bg-surface-2 px-3 py-1.5 text-xs font-bold">Exemplo</button>
+          </div>
+        </div>
+        <textarea
+          ref={pasteRef}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={6}
+          placeholder={EXAMPLE}
+          aria-label="Lista de cartas"
+          className="w-full rounded-2xl border border-line bg-bg p-4 font-mono text-sm outline-none focus:border-accent"
+        />
         <button
           type="button"
-          onClick={() => fileRef.current?.click()}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            void onFile(e.dataTransfer.files[0]);
+          disabled={!text.trim()}
+          onClick={() => {
+            setSource(null);
+            void identifyAll(parseText(text));
           }}
-          className="flex w-full flex-col items-center gap-2 rounded-[2rem] border-2 border-dashed border-accent/50 bg-accent/5 p-10 text-center transition hover:bg-accent/10"
+          className="w-full rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 py-3.5 font-extrabold text-white shadow-lg transition hover:brightness-110 disabled:opacity-40 sm:w-auto sm:px-8"
         >
-          <span className="text-5xl">📁</span>
-          <span className="font-display text-xl font-extrabold">Toque para escolher ou arraste o arquivo</span>
-          <span className="text-sm text-ink-soft">Excel (.xlsx), CSV ou texto (.txt) — até 5 MB</span>
-          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={(e) => void onFile(e.target.files?.[0])} />
+          Identificar cartas →
         </button>
-      )}
-      {error && <p role="alert" className="font-semibold text-accent">{error}</p>}
+      </section>
 
       <section className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-[1.5rem] border border-line bg-surface p-5 text-sm">
-          <h2 className="font-display text-lg font-bold">Formatos de lista aceitos</h2>
+          <h2 className="font-display text-lg font-bold">Listas aceitas</h2>
           <ul className="mt-2 space-y-1.5 font-mono text-xs text-ink-soft">
+            <li>1 Charizard ex (199/165) [QUALIDADE=NM] [IDIOMA=PT] <span className="font-sans">(Liga)</span></li>
             <li>4 Pikachu ex SSP 57 <span className="font-sans">(Pokémon TCG Live)</span></li>
-            <li>1 Charizard ex (199/165) PT</li>
             <li>2x Mew ex 151/165 [EN] (NM)</li>
             <li>3 Ultra Ball</li>
           </ul>
-          <p className="mt-2 text-ink-soft">Idioma (PT, EN, JP…), condição (NM, LP…) e versão (foil, reverse) entre colchetes ou parênteses são opcionais.</p>
         </div>
         <div id="dica-pago" className="scroll-mt-32 rounded-[1.5rem] border border-line bg-surface p-5 text-sm">
-          <h2 className="font-display text-lg font-bold">Planilhas (Excel ou CSV)</h2>
+          <h2 className="font-display text-lg font-bold">Planilhas, PDF e imagens</h2>
           <p className="mt-2 text-ink-soft">
-            A primeira linha precisa ter os nomes das colunas. Reconhecemos: <strong>Quantidade, Nome, Número</strong> (ex.: 025/165), <strong>Coleção</strong> ou <strong>Sigla</strong>, <strong>Idioma, Condição, Versão</strong> e <strong>Pago (R$)</strong> — o preço que você pagou entra no cálculo de lucro.
+            Em planilhas (Excel ou CSV), a primeira linha deve ter os nomes das colunas: <strong>Quantidade, Nome, Número</strong> (025/165), <strong>Coleção</strong> ou <strong>Sigla, Idioma, Condição, Versão, Pago (R$)</strong> — em português ou inglês. PDFs com tabela e prints de listas são lidos automaticamente; foto de uma carta funciona como o scanner.
           </p>
-          <p className="mt-2 text-ink-soft">Arquivos exportados daqui (Excel ou CSV) voltam exatamente como saíram.</p>
         </div>
       </section>
     </div>

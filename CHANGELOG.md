@@ -7,6 +7,13 @@ Site publicado: https://forja-arcana.vercel.app
 
 ## 18/11/2026 (noite)
 
+### Importar e exportar: todos os tipos de arquivo validados (18/11, noite)
+- **Importar aceita e reconhece pelo conteúdo** (não só pela extensão): **Excel (.xlsx, todas as abas), CSV/TSV, PDF, imagem (print de lista ou foto de carta, inclusive HEIC do iPhone), lista da Liga Pokémon** (`1 Charizard ex (199/165) [QUALIDADE=NM] [IDIOMA=PT] [EXTRAS=foil]`) **e texto**. CSV salvo pelo Excel no Windows (acentos em Windows-1252) agora é lido certo. PDF escaneado e imagens passam pelo leitor de texto no próprio aparelho. Excel antigo (.xls) mostra como converter.
+- **Cabeçalhos em português e inglês** (Nome/Name, Número/Card Number, Sigla/Set Code, Qualidade/Condition, Extras/Foil…), escala de qualidade da Liga (M/NM/SP/MP/HP/D) e linhas de tabela com coleção, idioma e condição depois do número.
+- **Novo visual da importação**: área grande para escolher ou **arrastar o arquivo para qualquer lugar da página**, atalhos por tipo (Excel, CSV, PDF, Imagem, Liga, Texto) que abrem o seletor já filtrado, botão "Colar da área de transferência" e mensagens claras de erro. A escolha de arquivo agora usa o seletor nativo do navegador (mais confiável no iPhone). Dá para conferir a lista antes de entrar na conta; depois de entrar, ela volta.
+- **Exportar**: Excel, CSV, PDF e Imagem em botões grandes, quadro **"Vai levar as cartas para a Liga Pokémon?"** que gera a **lista no formato da Liga** (qualidade, idioma e foil/reverse), lista de texto simples e cartão de **arquivo pronto com Salvar e Enviar** — no celular o arquivo não se perde mais por bloqueio de download.
+- Testes automáticos de ponta a ponta (navegador Chrome) com cada tipo de arquivo: CSV com acentos do Windows, Excel, PDF exportado pelo site, lista da Liga, texto, arrastar e soltar, salvar na coleção e exportar Excel/CSV/PDF/Imagem/Liga.
+
 ### Minha coleção 2.0: scan, importação, exportação, link compartilhável e conquistas de TCG
 - **Novo painel "Sua coleção vale"**: valor total em reais, variação em 7 dias, **"Vale hoje × Valia ao entrar × Desde que entraram"** (lucro ou prejuízo desde que cada carta entrou), quantas cópias e cartas diferentes, % com preço do Brasil, divisão por **idioma** (🇧🇷 PT, 🇺🇸 EN…), maior alta da semana, cópias sem preço pago e botão para esconder os valores (👁️).
 - **Progresso por coleção (set)**: cada coleção mostra logo, sigla, **% da base** (ex.: 44/217, faltam 173) e **% com secretas**, valor e as cartas que você tem. "Ver as que faltam" abre a coleção já filtrada.

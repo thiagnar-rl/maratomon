@@ -37,7 +37,10 @@ function parseMoney(v: unknown): number | undefined {
 function parseCondition(v: unknown) {
   const s = String(v ?? "").trim().toUpperCase();
   if (!s) return undefined;
-  const map: Record<string, string> = { M: "NM", NM: "NM", "NEAR MINT": "NM", SP: "LP", LP: "LP", MP: "MP", PL: "MP", HP: "HP", D: "DMG", DMG: "DMG", DM: "DMG" };
+  const map: Record<string, string> = {
+    M: "NM", MINT: "NM", NM: "NM", "NEAR MINT": "NM", SP: "LP", LP: "LP", "LIGHTLY PLAYED": "LP", EX: "LP", EXCELLENT: "LP",
+    MP: "MP", PL: "MP", "MODERATELY PLAYED": "MP", HP: "HP", "HEAVILY PLAYED": "HP", D: "DMG", DMG: "DMG", DM: "DMG", DAMAGED: "DMG", PO: "DMG", POOR: "DMG",
+  };
   if (map[s]) return map[s];
   if (/^(PSA|CGC|BGS|GRAD)/.test(s)) return "Gradeada";
   return (CONDITIONS as readonly string[]).includes(s) ? s : undefined;
@@ -68,6 +71,15 @@ export function parseLine(line: string): ImportLine | null {
     }
   }
 
+  // Tags da Liga: [QUALIDADE=NM] [IDIOMA=PT] [EXTRAS=foil] [EDICAO=MEW]
+  s = s.replace(/\[\s*(QUALIDADE|IDIOMA|EXTRAS|EDICAO|EDIÇÃO)\s*=\s*([^\]]*)\]/gi, (_, key: string, value: string) => {
+    const k = key.toUpperCase();
+    if (k === "QUALIDADE") item.condition = parseCondition(value);
+    else if (k === "IDIOMA") item.language = parseLanguage(value) ?? undefined;
+    else if (k === "EXTRAS") item.variant = /rev/i.test(value) ? "Reverse" : /foil|holo/i.test(value) ? "Foil" : value.trim().slice(0, 30) || undefined;
+    else item.setCode = value.trim().toUpperCase() || undefined;
+    return " ";
+  });
   // idioma e condição entre colchetes/parênteses ou no fim
   s = s.replace(/[[(]\s*(PT|PT-BR|EN|JP|ES|FR|DE|IT|KO|ZH|Português|Inglês|Japonês)\s*[\])]/gi, (_, l) => {
     item.language = parseLanguage(l) ?? undefined;
@@ -93,7 +105,14 @@ export function parseLine(line: string): ImportLine | null {
   if (numTotal) {
     item.number = numTotal[1];
     item.total = numTotal[2].replace(/\D/g, "");
-    s = s.replace(numTotal[0], " ");
+    const at = s.indexOf(numTotal[0]);
+    // o que vem depois do número (linhas de tabela/PDF) é coleção, idioma, condição e preço
+    const after = s.slice(at + numTotal[0].length);
+    for (const token of after.split(/\s+/)) {
+      if (!item.language && /^(PT|PT-BR|EN|JP|ES|FR|DE|IT|KO|ZH)$/i.test(token)) item.language = parseLanguage(token) ?? undefined;
+      else if (!item.condition && /^(NM|LP|MP|HP|DMG|SP|M|D)$/.test(token)) item.condition = parseCondition(token);
+    }
+    s = at > 0 ? s.slice(0, at) : s.slice(numTotal[0].length);
   } else {
     // padrão PTCG Live: "Nome SIGLA 123"
     const live = s.match(/\s+([A-Z][A-Z0-9]{1,5}(?:-[A-Z0-9]+)?)\s+([A-Z]{0,3}\d{1,3}[a-z]?)$/);
@@ -124,17 +143,17 @@ export function parseText(text: string): ImportLine[] {
 /* ------------------------------ planilhas ------------------------------ */
 
 const HEADERS: [keyof ImportLine | "numTotal", RegExp][] = [
-  ["cardId", /^(id|card ?id|id da carta|tcgdex)$/],
-  ["quantity", /^(qtd|qtde|quant|quantidade|qty|quantity|count|copias|copies|n)$/],
-  ["name", /^(nome|name|carta|card|card name|nome da carta|pokemon)$/],
-  ["numTotal", /^(numero|n[uú]mero|number|num|card number|#|no|nº|n°|colecionador|collector number)$/],
-  ["total", /^(total|total da colecao|set total)$/],
-  ["setCode", /^(sigla|codigo|set code|code|abrev|abreviacao|edicao sigla)$/],
-  ["setName", /^(colecao|cole[cç][aã]o|edicao|edi[cç][aã]o|set|expansao|expansion|set name)$/],
+  ["cardId", /^(id|card ?id|id da carta|tcgdex|tcgdex id|product id)$/],
+  ["quantity", /^(qtd|qtde|quant|quantidade|qty|quantity|count|copias|copies|unidades|estoque|have|owned)$/],
+  ["name", /^(nome|name|carta|card|card name|nome da carta|nome pt|nome en|card pt|card en|nome portugues|nome ingles|pokemon|product name|produto)$/],
+  ["numTotal", /^(numero|number|num|n|card number|#|no|n o|colecionador|collector number|numero da carta|card no|card #)$/],
+  ["total", /^(total|total da colecao|set total|total oficial)$/],
+  ["setCode", /^(sigla|codigo|set code|code|abrev|abreviacao|edicao sigla|sigla da edicao|codigo da edicao|set id|ptcgo code)$/],
+  ["setName", /^(colecao|edicao|set|expansao|expansion|set name|nome da edicao|nome da colecao|edition)$/],
   ["language", /^(idioma|lingua|language|lang)$/],
-  ["condition", /^(condicao|condi[cç][aã]o|estado|qualidade|condition|quality)$/],
-  ["variant", /^(versao|vers[aã]o|variante|variant|acabamento|finish|extras?)$/],
-  ["paid", /^(pago|preco pago|valor pago|paid|purchase price|custo|preco de compra)/],
+  ["condition", /^(condicao|estado|qualidade|condition|quality|cond)$/],
+  ["variant", /^(versao|variante|variant|acabamento|finish|extras?|foil|printing|tipo)$/],
+  ["paid", /^(pago|preco pago|valor pago|paid|purchase price|custo|preco de compra|pago r|paid price|valor de compra)/],
 ];
 
 const plain = (s: unknown) =>
@@ -188,7 +207,8 @@ export function parseRows(rows: unknown[][]): ImportLine[] {
     item.language = parseLanguage(get(r, "language")) ?? undefined;
     item.condition = parseCondition(get(r, "condition"));
     const variant = String(get(r, "variant") ?? "").trim();
-    if (variant) item.variant = variant.slice(0, 30);
+    if (variant && !/^(nao|não|no|false|0|normal|-)$/i.test(variant))
+      item.variant = /^(sim|yes|true|1|x)$/i.test(variant) ? "Foil" : /rev/i.test(variant) ? "Reverse" : /foil|holo/i.test(variant) ? "Foil" : variant.slice(0, 30);
     item.paid = parseMoney(get(r, "paid"));
     out.push(item);
   }
@@ -231,22 +251,177 @@ export function parseCsv(text: string): unknown[][] {
   return rows;
 }
 
-/** Lê um arquivo enviado: .csv, .txt ou planilha do Excel (.xlsx). */
-export async function readImportFile(file: File): Promise<ImportLine[]> {
-  if (file.size > 5 * 1024 * 1024) throw new Error("Arquivo maior que 5 MB.");
+/* --------------------------- tipos de arquivo --------------------------- */
+
+export type ImportKind = "excel" | "csv" | "pdf" | "imagem" | "liga" | "texto";
+export const IMPORT_KINDS: { kind: ImportKind; label: string; hint: string; accept: string }[] = [
+  { kind: "excel", label: "Excel", hint: ".xlsx", accept: ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+  { kind: "csv", label: "CSV", hint: ".csv · .tsv", accept: ".csv,.tsv,text/csv,text/tab-separated-values" },
+  { kind: "pdf", label: "PDF", hint: "lista em PDF", accept: ".pdf,application/pdf" },
+  { kind: "imagem", label: "Imagem", hint: "print ou foto", accept: "image/*,.heic,.heif" },
+  { kind: "liga", label: "Liga Pokémon", hint: "lista ou arquivo", accept: ".txt,.csv,text/plain,text/csv" },
+  { kind: "texto", label: "Texto", hint: ".txt", accept: ".txt,text/plain" },
+];
+export const ACCEPT_ALL = [...new Set(IMPORT_KINDS.flatMap((k) => k.accept.split(",")))].join(",");
+export const MAX_IMPORT_BYTES = 15 * 1024 * 1024;
+
+/** Descobre o tipo pelo conteúdo (não só pela extensão), para aceitar arquivos com nome errado. */
+export async function detectKind(file: File): Promise<ImportKind | "xls" | "desconhecido"> {
+  const head = new Uint8Array(await file.slice(0, 8).arrayBuffer());
+  const hex = [...head].map((b) => b.toString(16).padStart(2, "0")).join("");
   const name = file.name.toLowerCase();
-  if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
-    if (name.endsWith(".xls")) throw new Error("Salve a planilha como .xlsx ou .csv e envie de novo.");
-    const { readSheet } = await import("read-excel-file/browser");
-    return parseRows((await readSheet(file)) as unknown[][]);
+  if (hex.startsWith("504b0304")) return name.endsWith(".ods") || name.endsWith(".numbers") ? "desconhecido" : "excel";
+  if (hex.startsWith("d0cf11e0")) return "xls";
+  if (hex.startsWith("25504446")) return "pdf";
+  if (file.type.startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|heic|heif|avif)$/.test(name) || hex.startsWith("89504e47") || hex.startsWith("ffd8ff")) return "imagem";
+  const sample = decodeText(new Uint8Array(await file.slice(0, 4096).arrayBuffer()));
+  if (/\[\s*(QUALIDADE|IDIOMA|EXTRAS)\s*=/i.test(sample)) return "liga";
+  if (/\u0000/.test(sample)) return "desconhecido";
+  const first = sample.split(/\r?\n/, 1)[0];
+  if (name.endsWith(".csv") || name.endsWith(".tsv") || first.split(/[;\t]/).length >= 3 || first.split(",").length >= 3) return "csv";
+  return "texto";
+}
+
+/** Texto em UTF-8; se não for (CSV salvo pelo Excel no Windows), usa Windows-1252 para não estragar acentos. */
+export function decodeText(bytes: Uint8Array): string {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return new TextDecoder("windows-1252").decode(bytes);
   }
-  const text = await file.text();
-  if (name.endsWith(".csv") || name.endsWith(".tsv") || /[;\t,]/.test(text.split(/\r?\n/, 1)[0])) {
-    const rows = parseCsv(text);
-    const lines = parseRows(rows);
-    if (lines.length) return lines;
+}
+
+/** Planilha .xlsx: lê todas as abas e junta as cartas. */
+async function readExcel(file: File): Promise<ImportLine[]> {
+  const { default: readXlsxFile } = await import("read-excel-file/browser");
+  const sheets = (await readXlsxFile(file)) as unknown as { sheet: string; data: unknown[][] }[];
+  return sheets.flatMap((s) => parseRows(s.data ?? []));
+}
+
+/** PDF: junta os pedaços de texto em linhas e colunas (pela posição) e lê como tabela ou lista. */
+async function readPdf(file: File, onProgress?: (msg: string) => void): Promise<ImportLine[]> {
+  onProgress?.("Lendo o PDF…");
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  pdfjs.GlobalWorkerOptions.workerSrc = "/vendor/pdf.worker-5.min.mjs";
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const rows: string[][] = [];
+  let chars = 0;
+  for (let n = 1; n <= Math.min(doc.numPages, 60); n++) {
+    const page = await doc.getPage(n);
+    const content = await page.getTextContent();
+    type Item = { str: string; x: number; y: number; w: number };
+    const items: Item[] = (content.items as { str?: string; transform?: number[]; width?: number }[])
+      .filter((i) => i.str && i.str.trim() && i.transform)
+      .map((i) => ({ str: i.str as string, x: i.transform![4], y: i.transform![5], w: i.width ?? 0 }));
+    chars += items.reduce((t, i) => t + i.str.length, 0);
+    const lines: Item[][] = [];
+    for (const it of items.sort((a, b) => b.y - a.y || a.x - b.x)) {
+      const line = lines.find((l) => Math.abs(l[0].y - it.y) < 3);
+      if (line) line.push(it);
+      else lines.push([it]);
+    }
+    for (const line of lines) {
+      line.sort((a, b) => a.x - b.x);
+      const cells: string[] = [];
+      let end = -Infinity;
+      for (const it of line) {
+        if (it.x - end > 8 || !cells.length) cells.push(it.str.trim());
+        else cells[cells.length - 1] += ` ${it.str.trim()}`;
+        end = it.x + it.w;
+      }
+      rows.push(cells);
+    }
   }
-  return parseText(text);
+  if (chars > 20) return parseRows(rows);
+  // PDF escaneado (só imagem): passa as primeiras páginas no leitor de texto
+  const out: ImportLine[] = [];
+  for (let n = 1; n <= Math.min(doc.numPages, 5); n++) {
+    onProgress?.(`Lendo a página ${n} (PDF escaneado)…`);
+    const page = await doc.getPage(n);
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvas, canvasContext: canvas.getContext("2d")!, viewport }).promise;
+    out.push(...(await ocrLines(canvas)));
+  }
+  return out;
+}
+
+async function ocrLines(canvas: HTMLCanvasElement): Promise<ImportLine[]> {
+  const { getOcrWorker } = await import("@/lib/card-ocr");
+  const worker = await getOcrWorker();
+  await worker.setParameters({ tessedit_char_whitelist: "" } as never);
+  const { data } = await worker.recognize(canvas);
+  return parseText(data.text);
+}
+
+/** Abre qualquer imagem que o navegador saiba mostrar (inclusive HEIC no iPhone) num canvas. */
+async function imageToCanvas(file: File): Promise<HTMLCanvasElement> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = url;
+    await img.decode().catch(() => new Promise((ok, fail) => ((img.onload = ok), (img.onerror = () => fail(new Error("Não foi possível abrir esta imagem."))))));
+    const scale = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/** Imagem: se for print de uma lista, lê as linhas; se for foto de uma carta, lê como o scanner. */
+async function readImage(file: File, onProgress?: (msg: string) => void): Promise<ImportLine[]> {
+  onProgress?.("Lendo o texto da imagem…");
+  const canvas = await imageToCanvas(file);
+  const lines = await ocrLines(canvas);
+  const numbered = lines.filter((l) => l.number && l.total);
+  if (numbered.length >= 2) return lines.filter((l) => l.number || (l.quantity > 1 && l.name && l.name.length > 3));
+  onProgress?.("Parece uma carta: lendo nome e número…");
+  const { readCard } = await import("@/lib/card-ocr");
+  // recorte central na proporção da carta
+  const ratio = 63 / 88;
+  let w = canvas.width;
+  let h = w / ratio;
+  if (h > canvas.height) {
+    h = canvas.height;
+    w = h * ratio;
+  }
+  const card = document.createElement("canvas");
+  card.width = Math.round(Math.min(1100, w));
+  card.height = Math.round(card.width / ratio);
+  card.getContext("2d")!.drawImage(canvas, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h, 0, 0, card.width, card.height);
+  const r = await readCard(card);
+  if (!r.number && !r.name) return numbered;
+  return [{ raw: `Foto: ${[r.name, r.number && `${r.number}/${r.total}`].filter(Boolean).join(" ")}`, quantity: 1, name: r.name, number: r.number, total: r.total, setCode: r.setCode }];
+}
+
+export type ImportResult = { kind: ImportKind; lines: ImportLine[] };
+
+/** Lê um arquivo enviado (Excel, CSV, PDF, imagem, lista da Liga ou texto) e devolve as linhas de cartas. */
+export async function readImportFile(file: File, onProgress?: (msg: string) => void): Promise<ImportResult> {
+  if (file.size === 0) throw new Error("O arquivo está vazio.");
+  if (file.size > MAX_IMPORT_BYTES) throw new Error("Arquivo maior que 15 MB. Divida em partes menores.");
+  const kind = await detectKind(file);
+  if (kind === "xls") throw new Error("Este é o Excel antigo (.xls). No Excel, use Arquivo › Salvar como › Pasta de Trabalho do Excel (.xlsx) ou CSV e envie de novo.");
+  if (kind === "desconhecido") throw new Error("Não reconhecemos este arquivo. Envie Excel (.xlsx), CSV, PDF, imagem, lista da Liga ou texto (.txt).");
+  onProgress?.("Lendo o arquivo…");
+  let lines: ImportLine[];
+  if (kind === "excel") lines = await readExcel(file);
+  else if (kind === "pdf") lines = await readPdf(file, onProgress);
+  else if (kind === "imagem") lines = await readImage(file, onProgress);
+  else {
+    const text = decodeText(new Uint8Array(await file.arrayBuffer()));
+    lines = kind === "csv" ? parseRows(parseCsv(text)) : [];
+    if (!lines.length) lines = parseText(text);
+  }
+  if (!lines.length) throw new Error("Não encontramos cartas neste arquivo. Confira se ele tem nome e número das cartas (ex.: Pikachu 025/165).");
+  return { kind, lines };
 }
 
 /* ================================ EXPORTAR ================================ */
@@ -342,6 +517,29 @@ export function toCsv(rows: ExportRow[], prices: boolean) {
 /** Lista de texto no padrão do Pokémon TCG Live: "4 Pikachu ex SSP 57". */
 export function toLiveText(rows: ExportRow[]) {
   return rows.map((r) => `${r.quantity} ${r.name} ${r.setCode || r.cardId.split("-")[0].toUpperCase()} ${r.number.replace(/^0+(?=\d)/, "")}`).join("\n");
+}
+
+/** Qualidade e idioma no padrão da Liga (M/NM/SP/MP/HP/D; inglês é o padrão e não vai na linha). */
+const LIGA_QUALITY: Record<string, string> = { NM: "NM", LP: "SP", MP: "MP", HP: "HP", DMG: "D", Gradeada: "NM" };
+const LIGA_LANG: Partial<Record<Language, string>> = { PT: "PT", JP: "JP", ZH: "CN", ES: "ES", FR: "FR", DE: "DE", IT: "IT", KO: "KO" };
+
+/**
+ * Lista no formato da Liga Pokémon ("Compra por Lista" e listas da coleção):
+ *   1 Charizard ex (199/165) [QUALIDADE=NM] [IDIOMA=PT] [EXTRAS=foil]
+ */
+export function toLigaText(rows: ExportRow[]) {
+  return rows
+    .map((r) => {
+      const n = r.number.replace(/^0+(?=\d)/, "");
+      const num = /^\d+$/.test(n) && r.official ? `(${n.padStart(3, "0")}/${String(r.official).padStart(3, "0")})` : r.number ? `(${r.number})` : "";
+      const parts = [`${r.quantity} ${r.name}${num ? ` ${num}` : ""}`, `[QUALIDADE=${LIGA_QUALITY[r.condition] ?? "NM"}]`];
+      const lang = LIGA_LANG[r.language];
+      if (lang) parts.push(`[IDIOMA=${lang}]`);
+      if (/foil|holo/i.test(r.variant)) parts.push("[EXTRAS=foil]");
+      else if (/reverse/i.test(r.variant)) parts.push("[EXTRAS=reverse holo]");
+      return parts.join(" ");
+    })
+    .join("\n");
 }
 
 /** Lista de texto com número/total: "1 Charizard ex (199/165)" — fácil de ler e de colar em sites e conversas. */
