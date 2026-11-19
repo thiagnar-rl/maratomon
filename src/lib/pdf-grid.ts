@@ -130,7 +130,11 @@ export function parseGrid(pages: PdfItem[][]): GridCard[] | null {
           leftovers.push(t);
         }
       }
-      card.name = leftovers.find((l) => /[A-Za-zÀ-ÿ]{2,}/.test(l));
+      // nome: prefere texto com minúsculas (selos como "SET STAMP" ou "POKEMON DAY" vêm em maiúsculas)
+      const named = leftovers.filter((l) => /[A-Za-zÀ-ÿ]{2,}/.test(l));
+      const stamps = named.filter((l) => !/[a-zà-ÿ]/.test(l) && l.length > 3);
+      card.name = named.find((l) => /[a-zà-ÿ]/.test(l)) ?? named[0];
+      if (!card.variant && stamps.length && card.name !== stamps[0]) card.variant = stamps[0].toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase()).slice(0, 30);
       card.raw = [`#${card.number}`, card.name, setName, card.language, card.variant].filter(Boolean).join(" · ");
       if (card.name || card.number) out.push(card);
     }
