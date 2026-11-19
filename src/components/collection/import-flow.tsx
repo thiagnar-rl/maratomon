@@ -29,6 +29,7 @@ export function ImportFlow() {
   const [busyMsg, setBusyMsg] = useState("");
   const [source, setSource] = useState<{ name: string; kind: ImportKind } | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [view, setView] = useState<"todas" | "duvida" | "faltando">("todas");
   const [text, setText] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [progress, setProgress] = useState(0);
@@ -104,29 +105,49 @@ export function ImportFlow() {
       setError("Não encontramos cartas nesse conteúdo. Confira o formato nos exemplos.");
       return;
     }
-    if (lines.length > 1500) {
-      setError("Envie no máximo 1.500 linhas por vez.");
+    if (lines.length > 6000) {
+      setError("Envie no máximo 6.000 cartas por vez.");
       return;
     }
     setError("");
     setStep("identificando");
     setProgress(0);
-    const out: Row[] = [];
-    for (let i = 0; i < lines.length; i += 40) {
-      const chunk = lines.slice(i, i + 40);
-      let results: Candidate[][] = chunk.map(() => []);
-      try {
-        const r = await fetch("/api/tcg/identify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items: chunk.map(({ cardId, name, number, total, setCode, setName }) => ({ cardId, name, number, total, setCode, setName })) }),
-        });
-        if (r.ok) results = ((await r.json()) as { results: Candidate[][] }).results;
-      } catch {
-        // linhas ficam sem candidatas e podem ser buscadas à mão
+    const out: Row[] = new Array(lines.length);
+    const chunks: number[] = [];
+    for (let i = 0; i < lines.length; i += 40) chunks.push(i);
+    let done = 0;
+    // 4 pedidos ao mesmo tempo: rápido sem sobrecarregar
+    const worker = async () => {
+      while (chunks.length) {
+        const i = chunks.shift()!;
+        const chunk = lines.slice(i, i + 40);
+        let results: Candidate[][] = chunk.map(() => []);
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const r = await fetch("/api/tcg/identify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ items: chunk.map(({ cardId, name, number, total, setCode, setName }) => ({ cardId, name, number, total, setCode, setName })) }),
+            });
+            if (r.ok) {
+              results = ((await r.json()) as { results: Candidate[][] }).results;
+              break;
+            }
+          } catch {
+            // tenta mais uma vez; depois a linha fica para buscar à mão
+          }
+        }
+        chunk.forEach((line, j) => (out[i + j] = { ...line, key: i + j, candidates: results[j] ?? [], pick: 0, skip: !(results[j] ?? []).length }));
+        done += chunk.length;
+        setProgress(Math.min(1, done / lines.length));
       }
-      chunk.forEach((line, j) => out.push({ ...line, key: i + j, candidates: results[j] ?? [], pick: 0, skip: !(results[j] ?? []).length }));
-      setProgress(Math.min(1, (i + chunk.length) / lines.length));
+    };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    // arquivo de faltantes/desejos: sugere guardar numa lista de desejos
+    const wanted = lines.filter((l) => l.status === "falta").length;
+    if (wanted > lines.length * 0.6) {
+      setTarget("nova-desejos");
+      setNewName(`Faltantes ${new Date().toLocaleDateString("pt-BR")}`);
     }
     setRows(out);
     setStep("conferir");
@@ -170,7 +191,8 @@ export function ImportFlow() {
     setError("");
     try {
       let collectionId = target;
-      if (target === "nova") collectionId = (await createCollection({ kind: "pasta", name: newName.trim().slice(0, 80) || "Importação" })).id;
+      if (target === "nova" || target === "nova-desejos")
+        collectionId = (await createCollection({ kind: target === "nova" ? "pasta" : "desejos", name: newName.trim().slice(0, 80) || "Importação" })).id;
       const chosen = rows.filter((r) => !r.skip && r.candidates[r.pick]);
       // junta linhas repetidas (mesma carta, idioma e condição)
       const grouped = new Map<string, NewCard>();
@@ -266,8 +288,24 @@ export function ImportFlow() {
           <button type="button" onClick={() => (setSource(null), setStep("entrada"))} className="ml-auto rounded-full bg-white/10 px-4 py-2 text-sm font-bold">← Voltar</button>
         </div>
 
+        <div className="flex flex-wrap gap-1 rounded-full bg-surface-2 p-1 text-sm font-bold" role="group" aria-label="Mostrar">
+          {(
+            [
+              ["todas", `Todas (${rows.length})`],
+              ["duvida", `Conferir (${rows.filter((r) => r.candidates[r.pick] && r.candidates[r.pick].score < 0.75).length})`],
+              ["faltando", `Não encontradas (${rows.filter((r) => !r.candidates.length).length})`],
+            ] as const
+          ).map(([v, label]) => (
+            <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className="rounded-full px-4 py-1.5 text-ink-soft aria-pressed:bg-accent aria-pressed:text-white">
+              {label}
+            </button>
+          ))}
+        </div>
+
         <ul className="space-y-2">
-          {rows.map((r) => (
+          {rows
+            .filter((r) => view === "todas" || (view === "faltando" ? !r.candidates.length : r.candidates[r.pick] && r.candidates[r.pick].score < 0.75))
+            .map((r) => (
             <ImportRow key={r.key} row={r} onChange={(p) => update(r.key, p)} onSearch={(q) => searchAgain(r, q)} defaultLang={defaultLang} />
           ))}
         </ul>
@@ -278,6 +316,7 @@ export function ImportFlow() {
               Guardar em
               <select value={target} onChange={(e) => setTarget(e.target.value)} className="mt-1 w-full rounded-xl border border-line bg-bg px-3 py-2.5 font-normal">
                 <option value="nova">➕ Nova pasta</option>
+                <option value="nova-desejos">⭐ Nova lista de desejos</option>
                 {folders.map((c) => (
                   <option key={c.id} value={c.id}>{c.kind === "deck" ? "Deck" : "Pasta"}: {c.name}</option>
                 ))}
@@ -286,9 +325,9 @@ export function ImportFlow() {
                 ))}
               </select>
             </label>
-            {target === "nova" ? (
+            {target === "nova" || target === "nova-desejos" ? (
               <label className="text-sm font-bold">
-                Nome da pasta
+                {target === "nova" ? "Nome da pasta" : "Nome da lista"}
                 <input value={newName} onChange={(e) => setNewName(e.target.value)} maxLength={80} className="mt-1 w-full rounded-xl border border-line bg-bg px-3 py-2.5 font-normal" />
               </label>
             ) : (
@@ -473,7 +512,7 @@ function ImportRow({ row, onChange, onSearch, defaultLang }: { row: Row; onChang
   const sure = c && c.score >= 0.75;
   const tone = !c ? "border-rose-400/60 bg-rose-500/5" : row.skip ? "border-line opacity-60" : sure ? "border-line" : "border-amber-400/60 bg-amber-400/5";
   return (
-    <li className={`rounded-2xl border bg-surface p-3 ${tone}`}>
+    <li className={`rounded-2xl border bg-surface p-3 [contain-intrinsic-size:auto_150px] [content-visibility:auto] ${tone}`}>
       <div className="flex gap-3">
         <span className="w-14 shrink-0">
           {c?.image ? <img src={c.image} alt={c.name} loading="lazy" className="aspect-[5/7] w-14 rounded-lg object-cover shadow" /> : <span className="grid aspect-[5/7] w-14 place-items-center rounded-lg bg-surface-2 text-xl">?</span>}

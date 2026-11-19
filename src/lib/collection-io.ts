@@ -2,6 +2,7 @@
 
 
 import { LANG_NAME, normNumber, parseLanguage, splitCardId, type Language } from "@/lib/tcg/card-ref";
+import { parseGrid, type PdfItem } from "@/lib/pdf-grid";
 import { CONDITIONS, unitValue, type CardInfo, type Collection, type CollectionCard } from "@/lib/collection";
 import type { SetSummary } from "@/lib/collection-store";
 
@@ -21,6 +22,8 @@ export type ImportLine = {
   condition?: string;
   variant?: string;
   paid?: number;
+  /** Quando o arquivo diz se a pessoa tem ou quer a carta. */
+  status?: "tenho" | "falta";
 };
 
 const SKIP = /^(pok[eé]mon|treinador|trainer|energ(y|ia)|total|deck|lista|cartas?)\s*[:(-]?\s*\d*\)?\s*$/i;
@@ -142,7 +145,7 @@ export function parseText(text: string): ImportLine[] {
 
 /* ------------------------------ planilhas ------------------------------ */
 
-const HEADERS: [keyof ImportLine | "numTotal", RegExp][] = [
+const HEADERS: [keyof ImportLine | "numTotal" | "ligaLink", RegExp][] = [
   ["cardId", /^(id|card ?id|id da carta|tcgdex|tcgdex id|product id)$/],
   ["quantity", /^(qtd|qtde|quant|quantidade|qty|quantity|count|copias|copies|unidades|estoque|have|owned)$/],
   ["name", /^(nome|name|carta|card|card name|nome da carta|nome pt|nome en|card pt|card en|nome portugues|nome ingles|pokemon|product name|produto)$/],
@@ -153,6 +156,8 @@ const HEADERS: [keyof ImportLine | "numTotal", RegExp][] = [
   ["language", /^(idioma|lingua|language|lang)$/],
   ["condition", /^(condicao|estado|qualidade|condition|quality|cond)$/],
   ["variant", /^(versao|variante|variant|acabamento|finish|extras?|foil|printing|tipo)$/],
+  ["ligaLink", /^(link da liga|link liga|liga|url liga|liga pokemon|link)$/],
+  ["status", /^(status|situacao|tenho|possui|owned)$/],
   ["paid", /^(pago|preco pago|valor pago|paid|purchase price|custo|preco de compra|pago r|paid price|valor de compra)/],
 ];
 
@@ -210,6 +215,27 @@ export function parseRows(rows: unknown[][]): ImportLine[] {
     if (variant && !/^(nao|não|no|false|0|normal|-)$/i.test(variant))
       item.variant = /^(sim|yes|true|1|x)$/i.test(variant) ? "Foil" : /rev/i.test(variant) ? "Reverse" : /foil|holo/i.test(variant) ? "Foil" : variant.slice(0, 30);
     item.paid = parseMoney(get(r, "paid"));
+    const status = plain(get(r, "status"));
+    if (/^(falta|faltando|missing|quero|want|nao|no)/.test(status)) item.status = "falta";
+    else if (/^(tenho|possui|owned|have|sim|yes)/.test(status)) item.status = "tenho";
+    // Link da Liga Pokémon: "card=Hoppip (001/193)&ed=PAL&num=001" completa número, total e sigla
+    const link = String(get(r, "ligaLink") ?? "");
+    if (/liga/i.test(link)) {
+      try {
+        const u = new URL(link);
+        const nt = (u.searchParams.get("card") ?? "").match(/\(([A-Z]{0,4}\d{1,4}[A-Z]?)\s*\/\s*([A-Z]{0,4}\d{1,4})\)/i);
+        if (nt) {
+          item.number ??= nt[1].replace(/[A-Z]$/i, "");
+          item.total ??= nt[2].replace(/\D/g, "");
+        }
+        const ed = u.searchParams.get("ed");
+        if (ed && !item.setCode) item.setCode = ed.toUpperCase();
+        if (!item.number) item.number = u.searchParams.get("num") ?? undefined;
+      } catch {
+        // link inválido: ignora
+      }
+    }
+    if (!item.name && !item.number && !item.cardId) continue;
     out.push(item);
   }
   return out;
@@ -264,6 +290,8 @@ export const IMPORT_KINDS: { kind: ImportKind; label: string; hint: string; acce
 ];
 export const ACCEPT_ALL = [...new Set(IMPORT_KINDS.flatMap((k) => k.accept.split(",")))].join(",");
 export const MAX_IMPORT_BYTES = 15 * 1024 * 1024;
+/** PDFs com as fotos das cartas ficam grandes: aceitamos até 60 MB. */
+export const MAX_PDF_BYTES = 60 * 1024 * 1024;
 
 /** Descobre o tipo pelo conteúdo (não só pela extensão), para aceitar arquivos com nome errado. */
 export async function detectKind(file: File): Promise<ImportKind | "xls" | "desconhecido"> {
@@ -305,14 +333,17 @@ async function readPdf(file: File, onProgress?: (msg: string) => void): Promise<
   pdfjs.GlobalWorkerOptions.workerSrc = "/vendor/pdf.worker-5.min.mjs";
   const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
   const rows: string[][] = [];
+  const pages: PdfItem[][] = [];
   let chars = 0;
-  for (let n = 1; n <= Math.min(doc.numPages, 60); n++) {
+  for (let n = 1; n <= Math.min(doc.numPages, 300); n++) {
+    if (n % 10 === 0) onProgress?.(`Lendo o PDF… página ${n} de ${doc.numPages}`);
     const page = await doc.getPage(n);
     const content = await page.getTextContent();
-    type Item = { str: string; x: number; y: number; w: number };
+    type Item = PdfItem;
     const items: Item[] = (content.items as { str?: string; transform?: number[]; width?: number }[])
       .filter((i) => i.str && i.str.trim() && i.transform)
       .map((i) => ({ str: i.str as string, x: i.transform![4], y: i.transform![5], w: i.width ?? 0 }));
+    pages.push(items);
     chars += items.reduce((t, i) => t + i.str.length, 0);
     const lines: Item[][] = [];
     for (const it of items.sort((a, b) => b.y - a.y || a.x - b.x)) {
@@ -332,6 +363,9 @@ async function readPdf(file: File, onProgress?: (msg: string) => void): Promise<
       rows.push(cells);
     }
   }
+  // Relatório em grade (cartas lado a lado, cada uma com "#número")
+  const grid = parseGrid(pages);
+  if (grid) return grid.map((c) => ({ raw: c.raw, quantity: c.quantity, name: c.name, number: c.number, total: c.total, setName: c.setName, language: c.language, variant: c.variant }));
   if (chars > 20) return parseRows(rows);
   // PDF escaneado (só imagem): passa as primeiras páginas no leitor de texto
   const out: ImportLine[] = [];
@@ -406,8 +440,9 @@ export type ImportResult = { kind: ImportKind; lines: ImportLine[] };
 /** Lê um arquivo enviado (Excel, CSV, PDF, imagem, lista da Liga ou texto) e devolve as linhas de cartas. */
 export async function readImportFile(file: File, onProgress?: (msg: string) => void): Promise<ImportResult> {
   if (file.size === 0) throw new Error("O arquivo está vazio.");
-  if (file.size > MAX_IMPORT_BYTES) throw new Error("Arquivo maior que 15 MB. Divida em partes menores.");
   const kind = await detectKind(file);
+  if (file.size > (kind === "pdf" ? MAX_PDF_BYTES : MAX_IMPORT_BYTES))
+    throw new Error(kind === "pdf" ? "PDF maior que 60 MB. Exporte em partes menores." : "Arquivo maior que 15 MB. Divida em partes menores.");
   if (kind === "xls") throw new Error("Este é o Excel antigo (.xls). No Excel, use Arquivo › Salvar como › Pasta de Trabalho do Excel (.xlsx) ou CSV e envie de novo.");
   if (kind === "desconhecido") throw new Error("Não reconhecemos este arquivo. Envie Excel (.xlsx), CSV, PDF, imagem, lista da Liga ou texto (.txt).");
   onProgress?.("Lendo o arquivo…");

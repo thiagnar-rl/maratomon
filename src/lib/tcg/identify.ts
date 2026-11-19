@@ -52,6 +52,12 @@ function setsFor(q: CardQuery, sets: SetInfo[]): SetInfo[] {
   }
   if (q.setName) {
     const n = normName(q.setName);
+    // "Mega Evolution Promos", "SV Promos" → coleção de promos da mesma série
+    if (/promo/.test(n)) {
+      const serie = n.replace(/\b(black star )?promos?\b/g, "").trim();
+      const promos = sets.filter((s) => /promo/i.test(s.name) && (!serie || normName(s.serie) === serie || normName(s.name).includes(serie)));
+      if (promos.length) return promos;
+    }
     const byName = sets.filter((s) => normName(s.name) === n || (s.namePt && normName(s.namePt) === n));
     if (byName.length) return byName;
     const loose = sets.filter((s) => normName(s.name).includes(n) || (s.namePt && normName(s.namePt).includes(n)));

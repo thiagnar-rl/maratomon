@@ -7,6 +7,12 @@ Site publicado: https://forja-arcana.vercel.app
 
 ## 18/11/2026 (noite)
 
+### Importar PDF em grade e arquivos de outros apps (18/11, 22h)
+- **PDF em grade** (relatórios com várias cartas por linha, como o "Cartas que tenho" de apps de coleção): o site agora separa as colunas, entende cada carta pelo selo **"#número"**, pega o **nome da coleção** do título da seção (inclusive quando continua na página seguinte), o **idioma** (Português/Inglês…), a **versão** ([HOLO], [REV], Poké Ball…) e ignora raridade, preço, "TENHO" e "Verificado". Antes as colunas saíam misturadas numa linha só. Testado com um PDF real de 50 páginas e 246 cartas de 13 coleções: 246 lidas, todas com nome, coleção e idioma.
+- **Planilhas de outros apps**: coluna **"Link da Liga"** completa número/total e sigla da carta; coluna **"Status"** (Tenho/Falta) — arquivos de faltantes sugerem salvar numa **nova lista de desejos**. Testado com CSV real de 3.727 cartas.
+- **Coleções de promos** ("Mega Evolution Promos", "Scarlet & Violet Promos") passam a ser encontradas.
+- PDFs até 60 MB e até 6.000 cartas por importação; identificação 4× mais rápida (pedidos em paralelo, com nova tentativa automática); filtros **Todas / Conferir / Não encontradas** na revisão.
+
 ### Importar e exportar: todos os tipos de arquivo validados (18/11, noite)
 - **Importar aceita e reconhece pelo conteúdo** (não só pela extensão): **Excel (.xlsx, todas as abas), CSV/TSV, PDF, imagem (print de lista ou foto de carta, inclusive HEIC do iPhone), lista da Liga Pokémon** (`1 Charizard ex (199/165) [QUALIDADE=NM] [IDIOMA=PT] [EXTRAS=foil]`) **e texto**. CSV salvo pelo Excel no Windows (acentos em Windows-1252) agora é lido certo. PDF escaneado e imagens passam pelo leitor de texto no próprio aparelho. Excel antigo (.xls) mostra como converter.
 - **Cabeçalhos em português e inglês** (Nome/Name, Número/Card Number, Sigla/Set Code, Qualidade/Condition, Extras/Foil…), escala de qualidade da Liga (M/NM/SP/MP/HP/D) e linhas de tabela com coleção, idioma e condição depois do número.
